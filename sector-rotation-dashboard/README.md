@@ -57,6 +57,10 @@ Quadrants:
 
 Trend and momentum use two different normalizations so scales differ between axes. Unlike total-return sector ranking, these metrics describe *relative* trend and its momentum against the selected benchmark.
 
+## Chart scaling
+
+Adaptive (default) fits both axes independently to all selected trails, with padding and the 100 neutral lines retained. Balanced retains the original symmetric axes. Focus uses the 10th–90th percentiles of selected trail coordinates when at least four assets and 20 points are available, with padding and neutral lines retained; otherwise it uses Adaptive bounds. Historical trails outside the Focus viewport are clipped; off-chart current endpoints are represented by hollow edge diamonds, labeled OFF with a direction arrow and actual values on hover. Use Adaptive for the full range. Scale modes do not change the underlying calculations or weekly observations. Labels are placed in pixel space to reduce collisions.
+
 ## Trading context in the standings
 
 - Direction and speed describe the latest weekly displacement in RS-ratio and RS-momentum coordinates. Speed is Euclidean distance in raw metric points, classified as Crawl (at or below the 33rd percentile), Walk (above the 33rd and at or below the 67th percentile), or Run (above the 67th percentile) against the preceding 52 weekly movements pooled across the full sector universe, separately for the active benchmark and sensitivity. The latest move is excluded from calibration; filtering visible sectors does not change the thresholds. Hover for raw speed. A Run is neither inherently bullish nor bearish. Hover on the quadrant for RS ratio, RS momentum and weekly ratio change.

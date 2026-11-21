@@ -9,7 +9,7 @@
   <meta name="description" content="Interactive sector Relative Rotation Graph with historical trails, sector strength rankings, and automatically refreshed data." />
   <link rel="stylesheet" href="styles.css?v=3" />
   <script src="https://cdn.plot.ly/plotly-3.3.1.min.js" defer></script>
-  <script src="app.js?v=8" defer></script>
+  <script src="app.js?v=9" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -86,6 +86,13 @@
                 <option value="12">12 weeks</option><option value="20">20 weeks</option>
               </select>
             </label>
+            <label class="control-group">CHART SCALE
+              <select id="scale-select" aria-label="Chart scale">
+                <option value="adaptive" selected>Adaptive</option>
+                <option value="balanced">Balanced</option>
+                <option value="focus">Focus</option>
+              </select>
+            </label>
             <label class="control-group">SYMBOL LABELS
               <select id="label-select" aria-label="Symbol labels">
                 <option value="ticker" selected>Ticker</option>
@@ -98,6 +105,7 @@
           <div class="chart-foot">
             <div class="chart-scale"><span class="axis-x">●</span> X: RS RATIO <span class="axis-divider">/</span><span class="axis-y">●</span> Y: RS MOMENTUM</div>
             <div class="chart-scale">DOTS = WEEKLY OBSERVATIONS <span class="arrow-icon">→</span> LARGER DOT = CURRENT</div>
+            <div id="scale-note" hidden aria-live="polite" style="width:100%;color:#d6b67a;letter-spacing:0;font-size:11px;text-transform:none"></div>
           </div>
         </div>
 

@@ -25,6 +25,7 @@ const state = {
   selected: new Set(),
   week: 0,
   trail: 8,
+  scale: 'adaptive',
   fullNames: false,
   sort: 'return_4w',
   desc: true,
@@ -220,6 +221,14 @@ function initEvents() {
     updateSensitivityHint();
     updateUniverse(true);
   });
+  $('scale-select').addEventListener('change', event => {
+    state.scale = event.target.value; renderChart();
+  });
+  let resizeFrame;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame=requestAnimationFrame(()=>{if(state.data) renderChart();});
+  });
   $('trail-select').addEventListener('change', event => {
     state.trail = Number(event.target.value); render();
   });
@@ -332,20 +341,83 @@ function renderTable(existing = null) {
   });
 }
 
-function calculateBounds() {
-  let maxX = 0.5, maxY = 0.20;
-  for (const sector of activeAssets()) {
-    if (!state.selected.has(sector.ticker)) continue;
-    const { ratio, momentum } = seriesFor(sector.ticker);
-    const start = Math.max(0, state.week - state.trail + 1);
-    for (let i = start; i <= state.week; i++) {
-      if (!Number.isFinite(ratio[i]) || !Number.isFinite(momentum[i])) continue;
-      maxX = Math.max(maxX, Math.abs(ratio[i] - 100));
-      maxY = Math.max(maxY, Math.abs(momentum[i] - 100));
+function collectTrails() {
+  return activeAssets().filter(s=>state.selected.has(s.ticker)).map(sector=>{
+    const s=seriesFor(sector.ticker), limit=Math.max(0,state.week-state.trail+1);
+    let start=state.week;
+    while(start>limit && validPoint(s,start-1)) start--;
+    return {sector,x:s.ratio.slice(start,state.week+1),y:s.momentum.slice(start,state.week+1),
+      dates:state.data.dates.slice(start,state.week+1)};
+  });
+}
+function quantile(values,q) {
+  const sorted=values.slice().sort((a,b)=>a-b);
+  const p=(sorted.length-1)*q, i=Math.floor(p);
+  return sorted[i]+(sorted[Math.min(i+1,sorted.length-1)]-sorted[i])*(p-i);
+}
+function calculateBounds(trails=collectTrails(),mode=state.scale) {
+  const x=trails.flatMap(t=>t.x).filter(Number.isFinite), y=trails.flatMap(t=>t.y).filter(Number.isFinite);
+  const axis=(values,minHalf,oldPadding)=>{
+    if(mode==='balanced') {
+      const half=Math.max(minHalf,...values.map(v=>Math.abs(v-100)))*oldPadding;
+      return [100-half,100+half];
     }
+    const focus=mode==='focus' && trails.length>=4 && values.length>=20;
+    const lo=focus?quantile(values,.10):Math.min(100,...values);
+    const hi=focus?quantile(values,.90):Math.max(100,...values);
+    const min=Math.min(100-minHalf,lo), max=Math.max(100+minHalf,hi);
+    const span=max-min;
+    // Asymmetric padding; keep the neutral crosshair visible even if all assets are on one side.
+    const pad=Math.max(span*.09,minHalf*.2);
+    return [min-pad,max+pad];
+  };
+  const [xmin,xmax]=axis(x,.5,1.38),[ymin,ymax]=axis(y,.2,1.50);
+  return {xmin,xmax,ymin,ymax};
+}
+function inside(x,y,b) {return x>=b.xmin&&x<=b.xmax&&y>=b.ymin&&y<=b.ymax;}
+function edgePoint(x,y,b) {
+  const dx=x-100,dy=y-100;
+  const padX=(b.xmax-b.xmin)*.025,padY=(b.ymax-b.ymin)*.025;
+  const tx=dx>0?(b.xmax-padX-100)/dx:dx<0?(b.xmin+padX-100)/dx:Infinity;
+  const ty=dy>0?(b.ymax-padY-100)/dy:dy<0?(b.ymin+padY-100)/dy:Infinity;
+  const t=Math.max(0,Math.min(1,tx,ty));
+  const east=x>b.xmax,west=x<b.xmin,north=y>b.ymax,south=y<b.ymin;
+  const arrow=north?(east?'↗':west?'↖':'↑'):south?(east?'↘':west?'↙':'↓'):east?'→':'←';
+  return {x:100+dx*t,y:100+dy*t,arrow};
+}
+function escapeLabel(s) {return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
+function layoutLabels(points,b,width,height) {
+  const occupied=[], annotations=[];
+  const toPixel=p=>({x:(p.x-b.xmin)/(b.xmax-b.xmin)*width,y:(b.ymax-p.y)/(b.ymax-b.ymin)*height});
+  const markers=points.map(p=>({...toPixel(p)}));
+  // Keep labels clear of the four corner quadrant captions.
+  const reserve=Math.min(105,width*.23);
+  occupied.push({l:0,r:reserve,t:0,b:23},{l:width-reserve,r:width,t:0,b:23},
+    {l:0,r:reserve,t:height-23,b:height},{l:width-reserve,r:width,t:height-23,b:height});
+  const overlap=(a,c)=>Math.max(0,Math.min(a.r,c.r)-Math.max(a.l,c.l))*Math.max(0,Math.min(a.b,c.b)-Math.max(a.t,c.t));
+  for(const p of [...points].sort((a,c)=>a.y-c.y||a.x-c.x)) {
+    const pos=toPixel(p);
+    const raw=p.label, words=raw.split(' '), lines=[];
+    let line='';
+    for(const word of words) {if(line&&(line+' '+word).length>25){lines.push(line);line=word;}else line+=(line?' ':'')+word;}
+    if(line)lines.push(line);
+    const label=lines.map(escapeLabel).join('<br>');
+    const w=Math.min(width-8,Math.max(22,...lines.map(s=>s.length*6.9))+8), h=lines.length*15+4;
+    const candidates=[];
+    for(const gap of [14,26,42,60,82]) for(const [sx,sy] of [[0,-1],[1,0],[-1,0],[0,1],[1,-1],[-1,-1],[1,1],[-1,1]]) {
+      const cx=Math.max(w/2+2,Math.min(width-w/2-2,pos.x+sx*(gap+w/2)));
+      const cy=Math.max(h/2+2,Math.min(height-h/2-2,pos.y+sy*(gap+h/2)));
+      const rect={l:cx-w/2,r:cx+w/2,t:cy-h/2,b:cy+h/2};
+      const conflict=occupied.reduce((n,r)=>n+overlap(rect,r),0)+markers.reduce((n,m)=>n+overlap(rect,{l:m.x-7,r:m.x+7,t:m.y-7,b:m.y+7}),0);
+      candidates.push({cx,cy,rect,score:conflict*100+Math.hypot(cx-pos.x,cy-pos.y)});
+    }
+    candidates.sort((a,c)=>a.score-c.score);
+    const best=candidates[0];occupied.push(best.rect);
+    annotations.push({x:p.x,y:p.y,xref:'x',yref:'y',text:label,showarrow:true,ax:best.cx-pos.x,ay:best.cy-pos.y,
+      axref:'pixel',ayref:'pixel',xanchor:'center',yanchor:'middle',arrowhead:0,arrowwidth:.8,arrowcolor:p.color,
+      standoff:7,font:{color:p.color,size:12,family:'Arial, sans-serif'},bgcolor:'rgba(16,23,36,.82)',borderpad:2,captureevents:false,align:'center'});
   }
-  maxX *= 1.38; maxY *= 1.50;
-  return { xmin: 100 - maxX, xmax: 100 + maxX, ymin: 100 - maxY, ymax: 100 + maxY };
+  return annotations;
 }
 // Centripetal Catmull–Rom spline, evaluated densely in two dimensions.
  // Normalize axes for tangent calculation; preserve the original observation coordinates.
@@ -384,41 +456,40 @@ function renderChart() {
     $('rrg-chart').innerHTML = '<div class="loading-table">Chart library could not load. Check your internet connection.</div>';
     return;
   }
-  const b = calculateBounds();
-  const traces = [];
-  for (const sector of activeAssets()) {
-    const ticker = sector.ticker;
-    if (!state.selected.has(ticker)) continue;
-    const s = seriesFor(ticker);
-    let start = state.week;
-    const limit = Math.max(0,state.week-state.trail+1);
-    while(start>limit && validPoint(s,start-1)) start--;
-    const x = s.ratio.slice(start, state.week + 1);
-    const y = s.momentum.slice(start, state.week + 1);
-    const q = quadrant(x.at(-1), y.at(-1));
-    const color = sectorColor(ticker);
-    const dates = state.data.dates.slice(start, state.week + 1);
-    const curve = smoothTrail(x, y, b);
-    traces.push({
-      type: 'scatter', mode: 'lines', x: curve.x, y: curve.y,
-      line: { color, width: 2.8, shape: 'linear', simplify: false },
-      opacity: 0.95, hoverinfo: 'skip', showlegend: false, cliponaxis: false,
-    });
-    traces.push({
-      type: 'scatter', mode: 'markers', x: x.slice(0,-1), y: y.slice(0,-1),
-      marker: { color, size: 4.5, opacity: 0.75 },
-      hoverinfo: 'skip', showlegend: false, cliponaxis: false,
-    });
-    traces.push({
-      type: 'scatter', mode: 'markers+text', x: [x.at(-1)], y: [y.at(-1)], text: [sectorLabel(sector)],
-      textposition: 'top center', textfont: { color, size: 12, family: 'Arial, sans-serif' },
-      marker: { color, size: 13, line: { color: '#0c1420', width: 2 } },
-      customdata: [[sector.name, q, dates.at(-1), ticker, state.benchmark==='sector' ? sector.sector : state.benchmark]],
-      hovertemplate: `<b>${ticker} · %{customdata[0]}</b><br>%{customdata[1]} · vs %{customdata[4]}<br>RS Ratio: %{x:.3f}<br>RS Momentum: %{y:.3f}<br>%{customdata[2]}<extra></extra>`,
-      showlegend: false, cliponaxis: false,
-    });
-  }
+  const trails=collectTrails(), b=calculateBounds(trails), smoothingBounds=calculateBounds(trails,'adaptive');
+  const traces=[], points=[], offscreen=[], clipped=[];
   const margin = window.innerWidth < 660 ? { l: 55, r: 19, t: 24, b: 45 } : { l: 70, r: 35, t: 28, b: 55 };
+  for (const {sector,x,y,dates} of trails) {
+    const ticker=sector.ticker, actualX=x.at(-1), actualY=y.at(-1);
+    const q=quadrant(actualX,actualY), color=sectorColor(ticker);
+    const off=!inside(actualX,actualY,b);
+    const mark=off?edgePoint(actualX,actualY,b):{x:actualX,y:actualY,arrow:''};
+    if(off)offscreen.push(ticker);
+    const curve=smoothTrail(x,y,smoothingBounds);
+    if(curve.x.some((v,i)=>!inside(v,curve.y[i],b)))clipped.push(ticker);
+    traces.push({
+      type:'scatter',mode:'lines',x:curve.x,y:curve.y,
+      line:{color,width:2.8,shape:'linear',simplify:false},opacity:.95,hoverinfo:'skip',showlegend:false,cliponaxis:true,
+    },{
+      type:'scatter',mode:'markers',x:x.slice(0,-1),y:y.slice(0,-1),
+      marker:{color,size:4.5,opacity:.75},hoverinfo:'skip',showlegend:false,cliponaxis:true,
+    },{
+      type:'scatter',mode:'markers',x:[mark.x],y:[mark.y],
+      marker:{color,size:off?14:13,symbol:off?'diamond-open':'circle',line:{color:off?color:'#0c1420',width:2}},
+      customdata:[[sector.name,q,dates.at(-1),ticker,state.benchmark==='sector'?sector.sector:state.benchmark,actualX,actualY,off?' · OFF CHART':'']],
+      hovertemplate:`<b>${ticker} · %{customdata[0]}</b><br>%{customdata[1]} · vs %{customdata[4]}%{customdata[7]}<br>RS Ratio: %{customdata[5]:.3f}<br>RS Momentum: %{customdata[6]:.3f}<br>%{customdata[2]}<extra></extra>`,
+      showlegend:false,cliponaxis:true,
+    });
+    points.push({x:mark.x,y:mark.y,label:sectorLabel(sector)+(off?' '+mark.arrow+' OFF':''),color});
+  }
+  const chart=$('rrg-chart');
+  const labels=layoutLabels(points,b,Math.max(160,chart.clientWidth-margin.l-margin.r),Math.max(180,chart.clientHeight-margin.t-margin.b));
+  const note=$('scale-note');
+  note.hidden=state.scale!=='focus';
+  note.textContent=state.scale==='focus'
+    ? (offscreen.length?'Off-chart endpoints (hollow diamonds): '+offscreen.join(', ')+'. ':'All current endpoints visible. ')+
+      (clipped.length?'Some historical trails are clipped. ':'')+'Switch to Adaptive to see the full range.'
+    : '';
   const boxStyle = (x0, x1, y0, y1, fillcolor) => ({
     type: 'rect', xref: 'x', yref: 'y', x0, x1, y0, y1,
     fillcolor, line: { width: 0 }, layer: 'below',
@@ -456,6 +527,7 @@ function renderChart() {
       quadrantLabel('Leading', 0.97, 0.96, 'right', 'top', '#58ae91'),
       quadrantLabel('Lagging', 0.03, 0.045, 'left', 'bottom', '#bd6a87'),
       quadrantLabel('Weakening', 0.97, 0.045, 'right', 'bottom', '#c59662'),
+      ...labels,
       ...(!state.selected.size ? [{ x: 0.5, y: 0.5, xref: 'paper', yref: 'paper', showarrow: false,
         text: 'Select one or more available symbols', font: { color: '#c4d3e5', size: 15 } }] : []),
     ],
@@ -470,7 +542,7 @@ function renderChart() {
       state.chartReady = true;
       $('rrg-chart').on('plotly_click', event => {
         const point = event.points?.[0];
-        if (!point || !point.customdata || !point.data?.text) return;
+        if (!point || !point.customdata) return;
         const symbol = point.customdata[3];
         if (!symbol || !seriesFor(symbol)) return;
         state.selected = state.selected.size === 1 && state.selected.has(symbol)
