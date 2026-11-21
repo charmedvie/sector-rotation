@@ -18,6 +18,7 @@ const $ = id => document.getElementById(id);
 const state = {
   data: null,
   benchmark: 'SPY',
+  sensitivity: 'medium',
   selected: new Set(),
   week: 0,
   trail: 8,
@@ -41,7 +42,15 @@ function dateLabel(iso, compact = false) {
     ? { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }
     : { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
-function seriesFor(ticker) { return state.data.benchmarks[state.benchmark][ticker]; }
+function seriesFor(ticker) {
+  return (state.data.sensitivities?.[state.sensitivity] ?? state.data.benchmarks)[state.benchmark][ticker];
+}
+function updateSensitivityHint() {
+  const p = state.data.preset_parameters?.[state.sensitivity];
+  $('sensitivity-select').title = p
+    ? `RS smoothing: ${p.smoothing === 1 ? 'None' : p.smoothing + ' weeks'}; trend EMA: ${p.trend} weeks; momentum EMA: ${p.momentum} weeks`
+    : 'Original High calculation; refresh data to enable all presets';
+}
 function observationFor(sector) {
   const s = seriesFor(sector.ticker);
   const i = state.week;
@@ -67,6 +76,15 @@ async function loadData() {
     if (!data || !data.dates || data.dates.length < 24 || !data.benchmarks || !data.sectors)
       throw new Error('The data file is missing required fields');
     state.data = data;
+    const selector = $('sensitivity-select');
+    if (!data.sensitivities) {
+      state.sensitivity = 'high';
+      selector.value = 'high';
+      selector.disabled = true;
+    } else {
+      selector.value = state.sensitivity;
+    }
+    updateSensitivityHint();
     state.selected = new Set(data.sectors.map(s => s.ticker));
     state.week = data.dates.length - 1;
     $('demo-banner').hidden = !data.is_demo;
@@ -106,6 +124,11 @@ function initFilters() {
 function initEvents() {
   $('benchmark-select').addEventListener('change', event => {
     state.benchmark = event.target.value;
+    render();
+  });
+  $('sensitivity-select').addEventListener('change', event => {
+    state.sensitivity = event.target.value;
+    updateSensitivityHint();
     render();
   });
   $('trail-select').addEventListener('change', event => {

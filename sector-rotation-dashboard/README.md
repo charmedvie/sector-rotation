@@ -33,10 +33,20 @@ GitHub Actions updates **Monday–Friday 23:17 UTC**, after US close. Scheduled 
 Weekly adjusted closing prices are used. Weeks end on Friday, but the date displayed is always the last **actual trading session** of the week, never a future Friday.
 
 ```
-RS = sector adjusted close / benchmark adjusted close
-RS Ratio = 100 × RS / EMA(RS, 20 weeks)
-RS Momentum = 100 × RS Ratio / EMA(RS Ratio, 4 weeks)
+RS = EMA(sector adjusted close / benchmark adjusted close, smoothing weeks)
+RS Ratio = 100 × RS / EMA(RS, trend weeks)
+RS Momentum = 100 × RS Ratio / EMA(RS Ratio, momentum weeks)
 ```
+
+Sensitivity presets (all in weeks):
+
+| Preset | Relative-price smoothing | Trend EMA | Momentum EMA |
+|---|---:|---:|---:|
+| Low | 10 | 30 | 10 |
+| Medium (default) | 5 | 20 | 6 |
+| High (original) | None | 20 | 4 |
+
+All presets share the same observation dates and are computed from the same underlying prices at deployment. Switching presets updates the graph and standings without network requests. Smoothing is intended to reduce short-term noise but does not guarantee smaller metric values or later quadrant crossings. These are experimental presets, not calibrated JdK formulas.
 
 Quadrants:
 
@@ -54,7 +64,7 @@ python -m http.server 8000 --directory site
 # http://localhost:8000
 ```
 
-The initial preview is **demo data** until you run the Python generator with network connectivity:
+The bundled preview is **demo data** in the original High mode. Run `python -m src.make_demo` to generate all three presets with synthetic data, or use the Python generator with network connectivity for actual data:
 
 ```bash
 python -m pip install -r requirements.txt

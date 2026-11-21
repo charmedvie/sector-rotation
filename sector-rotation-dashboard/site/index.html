@@ -9,7 +9,7 @@
   <meta name="description" content="Interactive sector Relative Rotation Graph with historical trails, sector strength rankings, and automatically refreshed data." />
   <link rel="stylesheet" href="styles.css?v=2" />
   <script src="https://cdn.plot.ly/plotly-3.3.1.min.js" defer></script>
-  <script src="app.js?v=3" defer></script>
+  <script src="app.js?v=4" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -65,6 +65,13 @@
                 <option value="SPY">SPY · S&P 500</option>
                 <option value="RSP">RSP · Equal-weight S&P</option>
                 <option value="QQQ">QQQ · Nasdaq 100</option>
+              </select>
+            </label>
+            <label class="control-group">SENSITIVITY
+              <select id="sensitivity-select" aria-label="Calculation sensitivity">
+                <option value="low">Low · Smoothed</option>
+                <option value="medium" selected>Medium · Balanced</option>
+                <option value="high">High · Original</option>
               </select>
             </label>
             <label class="control-group">TRAIL LENGTH

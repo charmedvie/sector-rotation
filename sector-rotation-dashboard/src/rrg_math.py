@@ -3,16 +3,21 @@ from __future__ import annotations
 
 import pandas as pd
 
+# (relative price smoothing, trend reference, momentum reference), in weeks.
+PRESETS = {'low': (10, 30, 10), 'medium': (5, 20, 6), 'high': (1, 20, 4)}
+
 
 def relative_rotation(
     asset: pd.Series,
     benchmark: pd.Series,
     trend_span: int = 20,
     momentum_span: int = 4,
+    smoothing_span: int = 1,
 ) -> pd.DataFrame:
     """Return weekly RS-Ratio and RS-Momentum, both centered at 100.
 
-    Relative price = adjusted_asset_close / adjusted_benchmark_close
+    Relative price = EMA(adjusted_asset_close / adjusted_benchmark_close, smoothing_span)
+    A smoothing span of 1 preserves the original unsmoothed calculation.
     RS-Ratio = 100 * relative_price / EMA(relative_price, trend_span)
     RS-Momentum = 100 * RS-Ratio / EMA(RS-Ratio, momentum_span)
 
@@ -21,10 +26,14 @@ def relative_rotation(
     """
     if trend_span < 2 or momentum_span < 2:
         raise ValueError("EMA spans must each be >= 2")
+    if smoothing_span < 1:
+        raise ValueError('Smoothing span must be >= 1')
     values = pd.concat([asset.rename('asset'), benchmark.rename('benchmark')], axis=1)
     values = values.apply(pd.to_numeric, errors='coerce')
     values = values.where(values.gt(0))
     relative_price = values['asset'] / values['benchmark']
+    if smoothing_span > 1:
+        relative_price = relative_price.ewm(span=smoothing_span, adjust=False, min_periods=smoothing_span).mean()
     trend = relative_price.ewm(span=trend_span, adjust=False, min_periods=trend_span).mean()
     ratio = 100.0 * relative_price / trend
     momentum_trend = ratio.ewm(span=momentum_span, adjust=False, min_periods=momentum_span).mean()
@@ -67,41 +76,51 @@ def build_dataset(
     if len(weekly_prices) < 32:
         raise ValueError('Need at least 32 weekly observations')
 
-    all_metrics: dict[str, dict[str, pd.DataFrame]] = {}
-    for benchmark in benchmarks:
-        all_metrics[benchmark] = {}
-        for sector in sector_names:
-            all_metrics[benchmark][sector] = relative_rotation(
-                weekly_prices[sector], weekly_prices[benchmark]
-            )
-
-    # A shared date index keeps all benchmark/sector paths aligned in the UI.
+    # Precompute all sensitivities from the same full price history.
+    all_metrics = {}
     valid = pd.Series(True, index=weekly_prices.index)
-    for metrics in all_metrics.values():
-        for frame in metrics.values():
-            valid &= frame['ratio'].notna() & frame['momentum'].notna()
-    valid_dates = weekly_prices.index[valid]
-    valid_dates = valid_dates[-history_weeks:]
-    if len(valid_dates) < 24:
-        raise ValueError(f'Insufficient valid weeks across all symbols: {len(valid_dates)}')
+    for preset, (smoothing, trend, momentum) in PRESETS.items():
+        all_metrics[preset] = {}
+        for benchmark in benchmarks:
+            all_metrics[preset][benchmark] = {}
+            for sector in sector_names:
+                frame = relative_rotation(
+                    weekly_prices[sector], weekly_prices[benchmark],
+                    trend_span=trend, momentum_span=momentum, smoothing_span=smoothing,
+                )
+                all_metrics[preset][benchmark][sector] = frame
+                valid &= frame['ratio'].notna() & frame['momentum'].notna()
 
-    data = {'dates': [dt.strftime('%Y-%m-%d') for dt in valid_dates], 'benchmarks': {}}
-    for bench, metrics in all_metrics.items():
-        data['benchmarks'][bench] = {
-            ticker: {
-                'ratio': [round(float(n), 5) for n in frame.loc[valid_dates, 'ratio']],
-                'momentum': [round(float(n), 5) for n in frame.loc[valid_dates, 'momentum']],
+    valid_dates = weekly_prices.index[valid][-history_weeks:]
+    if len(valid_dates) < 24:
+        raise ValueError(f'Insufficient valid weeks across all sensitivity modes: {len(valid_dates)}')
+
+    data = {'dates': [dt.strftime('%Y-%m-%d') for dt in valid_dates], 'sensitivities': {}}
+    for preset, benchmarks_data in all_metrics.items():
+        data['sensitivities'][preset] = {
+            bench: {
+                ticker: {
+                    'ratio': [round(float(n), 5) for n in frame.loc[valid_dates, 'ratio']],
+                    'momentum': [round(float(n), 5) for n in frame.loc[valid_dates, 'momentum']],
+                }
+                for ticker, frame in metrics.items()
             }
-            for ticker, frame in metrics.items()
+            for bench, metrics in benchmarks_data.items()
         }
+    # Preserve the original schema's benchmark path as the High reference.
+    data['benchmarks'] = data['sensitivities']['high']
+    data['preset_parameters'] = {
+        name: {'smoothing': spans[0], 'trend': spans[1], 'momentum': spans[2]}
+        for name, spans in PRESETS.items()
+    }
     data.update({
-        'schema_version': 1,
+        'schema_version': 2,
         'is_demo': demo,
         'source': 'Synthetic illustration (not market prices)' if demo else 'Yahoo Finance adjusted daily closing prices via yfinance',
         'as_of': data['dates'][-1],
         'formula': {
-            'x': '100 × (sector / benchmark) ÷ EMA_20(sector / benchmark)',
-            'y': '100 × RS_Ratio ÷ EMA_4(RS_Ratio)',
+            'x': '100 × smoothed relative price ÷ EMA_trend(smoothed relative price)',
+            'y': '100 × RS_Ratio ÷ EMA_momentum(RS_Ratio)',
             'note': 'RRG-style approximation, not proprietary JdK RS-Ratio/RS-Momentum',
             'frequency': 'Weekly, last available trading session of each week',
         },

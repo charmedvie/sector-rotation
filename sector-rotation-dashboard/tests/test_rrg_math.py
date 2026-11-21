@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.rrg_math import build_dataset, relative_rotation, week_closes
+from src.rrg_math import PRESETS, build_dataset, relative_rotation, week_closes
 
 
 def test_constant_relative_price_is_centered():
@@ -50,3 +50,29 @@ def test_rejects_missing_symbols():
     ix = pd.date_range('2020-01-03', periods=60, freq='W-FRI')
     with pytest.raises(ValueError, match='Missing symbols'):
         build_dataset(pd.DataFrame({'XLK': 1.0}, index=ix), {'XLK': 'Technology'}, ['SPY'])
+
+
+def test_presets_preserve_high_and_share_observation_dates():
+    ix = pd.date_range('2020-01-03', periods=150, freq='W-FRI')
+    t = np.arange(len(ix))
+    prices = pd.DataFrame({'XLK': 100*np.exp(.003*t+.06*np.sin(t/6)), 'SPY': 100*np.exp(.002*t)}, index=ix)
+    data = build_dataset(prices, {'XLK': 'Technology'}, ['SPY'])
+    assert set(data['sensitivities']) == set(PRESETS)
+    expected = relative_rotation(prices['XLK'], prices['SPY']).loc[pd.to_datetime(data['dates'])]
+    assert data['benchmarks'] == data['sensitivities']['high']
+    assert data['sensitivities']['high']['SPY']['XLK']['ratio'] == pytest.approx(expected.ratio.tolist(), abs=5.1e-6)
+    assert data['sensitivities']['high']['SPY']['XLK']['momentum'] == pytest.approx(expected.momentum.tolist(), abs=5.1e-6)
+    for mode in PRESETS:
+        series = data['sensitivities'][mode]['SPY']['XLK']
+        assert len(series['ratio']) == len(series['momentum']) == len(data['dates'])
+        assert np.isfinite(series['ratio']).all() and np.isfinite(series['momentum']).all()
+    assert data['sensitivities']['low']['SPY']['XLK']['ratio'] != data['sensitivities']['high']['SPY']['XLK']['ratio']
+
+
+def test_all_presets_center_constant_relative_prices():
+    ix = pd.date_range('2020-01-03', periods=100, freq='W-FRI')
+    base = pd.Series(np.linspace(100, 200, len(ix)), index=ix)
+    for smoothing, trend, momentum in PRESETS.values():
+        result = relative_rotation(base*1.5, base, trend, momentum, smoothing).dropna()
+        assert len(result) > 0
+        assert np.allclose(result.to_numpy(), 100.0)
