@@ -7,9 +7,9 @@ const COLORS = {
   Improving: '#63bdf8',
 };
 const SECTOR_COLORS = {
-  XLK: '#00caff', XLF: '#ff9f1c', XLY: '#f56bd8', XLC: '#aa8bfa',
+  XLK: '#00caff', XLF: '#ff8200', XLY: '#f56bd8', XLC: '#aa8bfa',
   XLI: '#a7e34b', XLV: '#ff5656', XLP: '#19d5a1', XLE: '#f9e64f',
-  XLB: '#f59775', XLU: '#689bff', XLRE: '#e4eaf4',
+  XLB: '#9faab6', XLU: '#689bff', XLRE: '#e4eaf4',
 };
 const sectorColor = ticker => SECTOR_COLORS[ticker] || '#ddd';
 const sectorLabel = sector => state.fullNames ? sector.name : sector.ticker;

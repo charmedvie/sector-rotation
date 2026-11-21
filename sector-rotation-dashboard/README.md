@@ -1,6 +1,6 @@
 # Sector Rotation Lab
 
-A personal, free, public, interactive **RRG-style sector rotation dashboard**. The chart shows 11 US SPDR sector ETFs relative to a chosen benchmark (SPY, RSP, or QQQ) with selectable 4–20-week historical trails, a ticker/full-name label selector, distinct sector colors, quadrant counts, recent crossings, and a sortable strength table.
+A personal, free, public, interactive **RRG-style sector rotation dashboard**. The chart shows 11 US SPDR sector ETFs relative to a chosen benchmark (SPY, RSP, or QQQ) with selectable 8–20-week historical trails, a ticker/full-name label selector, distinct sector colors, quadrant counts, recent crossings, and a sortable strength table.
 
 **Free architecture:** static HTML/CSS/JS + Plotly.js CDN, Yahoo Finance historical data accessed by Python/yfinance, and GitHub Pages + scheduled GitHub Actions. No paid account, API key, app server, or database.
 
