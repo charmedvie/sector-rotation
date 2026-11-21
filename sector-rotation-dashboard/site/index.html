@@ -7,9 +7,9 @@
   <meta name="theme-color" content="#0b101a" />
   <title>Sector Rotation Lab — Relative Strength</title>
   <meta name="description" content="Interactive sector Relative Rotation Graph with historical trails, sector strength rankings, and automatically refreshed data." />
-  <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="stylesheet" href="styles.css?v=3" />
   <script src="https://cdn.plot.ly/plotly-3.3.1.min.js" defer></script>
-  <script src="app.js?v=6" defer></script>
+  <script src="app.js?v=7" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -122,20 +122,16 @@
             <thead><tr>
               <th><button type="button" data-sort="ticker">SECTOR <span class="sort-hint">↕</span></button></th>
               <th><button type="button" data-sort="quadrant">QUADRANT <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="ratio">RS RATIO <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="momentum">RS MOMENTUM <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="change">1W Δ RATIO <span class="sort-hint">↕</span></button></th>
-              <th class=""><button type="button" data-sort="direction" title="Latest weekly direction of RS ratio and momentum">DIRECTION <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="speed" title="Distance moved in RS metric points over one weekly observation; compare within a sensitivity setting">SPEED <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="return_1w" title="Adjusted-close absolute return">1W RETURN <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="return_4w" title="Adjusted-close absolute return">4W RETURN <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="return_12w" title="Adjusted-close absolute return">12W RETURN <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="ema_50d_pct" title="Adjusted close percentage above or below daily EMA">50D EMA Δ% <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="ema_200d_pct" title="Adjusted close percentage above or below daily EMA">200D EMA Δ% <span class="sort-hint">↕</span></button></th>
-              <th class="right"><button type="button" data-sort="agreement" title="Number of presets matching the selected preset's quadrant">AGREEMENT <span class="sort-hint">↕</span></button></th>
-              <th class="right">TREND</th>
+              <th class=""><button type="button" data-sort="direction" title="Latest weekly direction of RS ratio and momentum">DIR. <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="speed" title="Crawl / Walk / Run: lower, middle and upper thirds of historical weekly rotation speed for this benchmark and sensitivity">SPEED <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="return_1w" title="Adjusted-close absolute return">1W <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="return_4w" title="Adjusted-close absolute return">4W <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="return_12w" title="Adjusted-close absolute return">12W <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="ema_50d_pct" title="Adjusted close percentage above or below daily EMA">EMA50 <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="ema_200d_pct" title="Adjusted close percentage above or below daily EMA">EMA200 <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="agreement" title="Number of presets matching the selected preset's quadrant">AGREE <span class="sort-hint">↕</span></button></th>
             </tr></thead>
-            <tbody id="standings-body"><tr><td colspan="14" class="loading-table">Loading weekly observations…</td></tr></tbody>
+            <tbody id="standings-body"><tr><td colspan="10" class="loading-table">Loading weekly observations…</td></tr></tbody>
           </table>
         </div>
       </section>

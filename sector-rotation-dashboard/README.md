@@ -59,7 +59,7 @@ Trend and momentum use two different normalizations so scales differ between axe
 
 ## Trading context in the standings
 
-- Direction and speed describe the latest weekly displacement in RS-ratio and RS-momentum coordinates; speed is Euclidean distance in raw metric points and is best compared within the same sensitivity setting.
+- Direction and speed describe the latest weekly displacement in RS-ratio and RS-momentum coordinates. Speed is Euclidean distance in raw metric points, classified as Crawl (at or below the 33rd percentile), Walk (above the 33rd and at or below the 67th percentile), or Run (above the 67th percentile) against the preceding 52 weekly movements pooled across the full sector universe, separately for the active benchmark and sensitivity. The latest move is excluded from calibration; filtering visible sectors does not change the thresholds. Hover for raw speed. A Run is neither inherently bullish nor bearish. Hover on the quadrant for RS ratio, RS momentum and weekly ratio change.
 - Absolute returns (1/4/12 weeks) use adjusted closes, not the selected benchmark.
 - Daily 50/200 EMA distance is the percentage above or below the respective EMA, using daily adjusted closing prices through the displayed observation date. Unavailable data is shown as a dash.
 - Agreement counts how many of the three sensitivity presets share the selected preset's quadrant. Hover to see each preset's quadrant. Agreement is not a probability or a trade signal.

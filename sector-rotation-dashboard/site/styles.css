@@ -23,3 +23,16 @@ button,select,input{font:inherit}button{cursor:pointer}button:focus-visible,sele
 .sector-name-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 
 .sector-filters.full-names{grid-template-columns:1fr}.sector-filters.full-names .sector-ticker{overflow-wrap:anywhere}.sector-dot{width:9px;height:9px}.sector-filter[aria-pressed="false"] .sector-dot{opacity:.45}
+
+/* Compact standings: keep all ten trading-context columns visible on desktop. */
+#standings-table th,#standings-table td{padding:10px clamp(5px,0.7vw,12px);letter-spacing:0}
+#standings-table th{font-size:10px}
+#standings-table td{font-size:11px}
+#standings-table .ticker-cell{gap:6px}
+#standings-table .ticker-main{max-width:118px;white-space:normal;line-height:1.25;font-size:11px}
+#standings-table .ticker-avatar{flex-shrink:0}
+#standings-table .q-pill{padding:4px 6px;font-size:9px;gap:4px}
+#standings-table .sort-hint{margin-left:2px;font-size:9px}
+#standings-table .direction-cell{text-align:center;font-size:19px;line-height:1;color:#cbdcf0}
+.pace{display:inline-block;font-size:11px;font-weight:750}
+.pace-crawl{color:#9aa8bc}.pace-walk{color:#8ec9f5}.pace-run{color:#ffd28a}

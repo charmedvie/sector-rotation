@@ -23,7 +23,7 @@ const state = {
   week: 0,
   trail: 8,
   fullNames: false,
-  sort: 'ratio',
+  sort: 'return_4w',
   desc: true,
   chartReady: false,
 };
@@ -58,12 +58,37 @@ function heading(dx, dy) {
     south ? (east ? '↘ SE' : west ? '↙ SW' : '↓ S') :
     east ? '→ E' : west ? '← W' : '— Flat';
 }
+// Compare latest displacement with the pooled prior 52 weekly movements
+// of the full sector universe, for the active benchmark and sensitivity.
+function speedThresholds() {
+  const history = [];
+  for (const sector of state.data.sectors) {
+    const s = seriesFor(sector.ticker);
+    for (let j = Math.max(1, state.week - 52); j < state.week; j++) {
+      const d = Math.hypot(s.ratio[j] - s.ratio[j-1], s.momentum[j] - s.momentum[j-1]);
+      if (Number.isFinite(d)) history.push(d);
+    }
+  }
+  history.sort((a,b) => a-b);
+  if (history.length < 12) return null;
+  const quantile = q => {
+    const p = (history.length - 1) * q, i = Math.floor(p), f = p - i;
+    return history[i] * (1-f) + history[Math.min(i+1, history.length-1)] * f;
+  };
+  return [quantile(1/3), quantile(2/3)];
+}
+function speedLabel(speed, thresholds) {
+  if (!Number.isFinite(speed) || !thresholds) return '—';
+  if (speed <= thresholds[0]) return 'Crawl';
+  if (speed <= thresholds[1]) return 'Walk';
+  return 'Run';
+}
 function pctCell(n) {
   return Number.isFinite(n)
     ? `<td class="right number-cell ${n>0?'pos':n<0?'neg':''}">${n>0?'+':''}${fmt(n,1)}%</td>`
     : '<td class="right">—</td>';
 }
-function observationFor(sector) {
+function observationFor(sector, thresholds) {
   const s = seriesFor(sector.ticker);
   const i = state.week;
   const ratio = s.ratio[i], momentum = s.momentum[i];
@@ -71,6 +96,7 @@ function observationFor(sector) {
   const dx = i > 0 ? ratio - s.ratio[i - 1] : 0;
   const dy = i > 0 ? momentum - s.momentum[i - 1] : 0;
   const q = quadrant(ratio, momentum);
+  const speed = Math.hypot(dx,dy);
   const modes = ['low','medium','high'].map(mode => {
     const series = state.data.sensitivities?.[mode]?.[state.benchmark]?.[sector.ticker];
     return series ? quadrant(series.ratio[i], series.momentum[i]) : null;
@@ -78,10 +104,13 @@ function observationFor(sector) {
   const agreement = modes.every(Boolean) ? modes.filter(m => m === q).length : null;
   const absolute = state.data.absolute?.[sector.ticker] ?? {};
   return { ticker: sector.ticker, name: sector.name, ratio, momentum,
-    change: dx, direction: heading(dx,dy), speed: Math.hypot(dx,dy),
+    change: dx, direction: heading(dx,dy), speed, pace: speedLabel(speed, thresholds),
     quadrant: q, previous, agreement, modes, ...absolute };
 }
-function observations() { return state.data.sectors.map(observationFor); }
+function observations() {
+  const thresholds = speedThresholds();
+  return state.data.sectors.map(sector => observationFor(sector, thresholds));
+}
 
 function showError(message) {
   const banner = $('error-banner');
@@ -239,19 +268,15 @@ function renderTable(existing = null) {
     const c = sectorColor(s.ticker);
     return `<tr tabindex="0" data-row="${s.ticker}" class="${selected && state.selected.size === 1 ? 'spotlight' : ''}" aria-label="Spotlight ${s.name}">
        <td><div class="ticker-cell"><div class="ticker-avatar" style="color:${c}">${s.ticker}</div>${state.fullNames ? `<div class="ticker-main">${s.name}</div>` : ''}</div></td>
-       <td><span class="q-pill ${s.quadrant.toLowerCase()}">${s.quadrant.toUpperCase()}</span></td>
-       <td class="right number-cell">${fmt(s.ratio)}</td>
-       <td class="right number-cell">${fmt(s.momentum)}</td>
-       <td class="right number-cell ${s.change >= 0 ? 'pos' : 'neg'}">${s.change >= 0 ? '+' : ''}${fmt(s.change)}</td>
-       <td title="Direction of the latest weekly move">${s.direction}</td>
-       <td class="right number-cell">${fmt(s.speed)}</td>
+       <td title="RS ratio: ${fmt(s.ratio)}; RS momentum: ${fmt(s.momentum)}; weekly ratio change: ${fmt(s.change)}"><span class="q-pill ${s.quadrant.toLowerCase()}">${s.quadrant.toUpperCase()}</span></td>
+       <td class="direction-cell" title="Latest weekly direction: ${s.direction}">${s.direction.split(' ')[0]}</td>
+       <td class="pace-cell" title="Weekly displacement: ${fmt(s.speed)} RS points; compared with the preceding 52 weeks across all sectors"><span class="pace pace-${s.pace.toLowerCase()}">${s.pace}</span></td>
        ${pctCell(s.return_1w)}
        ${pctCell(s.return_4w)}
        ${pctCell(s.return_12w)}
        ${pctCell(s.ema_50d_pct)}
        ${pctCell(s.ema_200d_pct)}
        <td class="right" title="Low: ${s.modes[0]??'—'} · Medium: ${s.modes[1]??'—'} · High: ${s.modes[2]??'—'}">${s.agreement===null?'—':s.agreement+'/3'}</td>
-       <td class="right">${sparkline(s.ticker, c)}</td>
      </tr>`;
   }).join('');
   document.querySelectorAll('[data-row]').forEach(row => {
