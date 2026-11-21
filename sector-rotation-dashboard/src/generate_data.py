@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.rrg_math import absolute_snapshot, build_dataset, week_closes
+from src.rrg_math import absolute_snapshot, build_dataset, build_stock_rotation, week_closes
 
 SECTORS = {
     'XLK': 'Technology',
@@ -28,10 +28,11 @@ SECTORS = {
 BENCHMARKS = ['SPY', 'RSP', 'QQQ']
 
 
-def fetch_daily() -> pd.DataFrame:
+def fetch_daily(tickers=None, strict=True) -> pd.DataFrame:
     import yfinance as yf
 
-    tickers = list(SECTORS) + BENCHMARKS
+    if tickers is None:
+        tickers = list(SECTORS) + BENCHMARKS
     prices = yf.download(
         tickers=tickers,
         period='5y',
@@ -53,6 +54,8 @@ def fetch_daily() -> pd.DataFrame:
     else:
         raise RuntimeError('Expected multiple ticker columns from yfinance')
     closes.index = pd.to_datetime(closes.index).tz_localize(None)
+    if not strict:
+        return closes.reindex(columns=tickers)
     missing = [ticker for ticker in tickers if ticker not in closes.columns]
     if missing:
         raise RuntimeError(f'Data fetch missing ETF(s): {missing}')
@@ -74,6 +77,21 @@ def main() -> None:
     weekly = week_closes(daily)
     payload = build_dataset(weekly, SECTORS, BENCHMARKS, history_weeks=130)
     payload['absolute'] = absolute_snapshot(weekly, daily, list(SECTORS) + BENCHMARKS, payload['as_of'])
+    config = json.loads(Path(__file__).with_name('watchlists.json').read_text(encoding='utf-8'))
+    # An optional stock-data outage must not prevent the core sector deployment.
+    stock_daily = pd.DataFrame(index=daily.index)
+    stock_tickers = list(config['stocks'])
+    for start in range(0, len(stock_tickers), 8):
+        batch = stock_tickers[start:start+8]
+        try:
+            stock_daily = stock_daily.join(fetch_daily(batch, strict=False), how='outer')
+        except Exception as exc:
+            print(f'Optional stock batch unavailable: {batch}: {exc}')
+    payload['watchlists'] = config['watchlists']
+    payload['stocks'] = config['stocks']
+    payload['stock_rotation'], stock_absolute = build_stock_rotation(
+        daily, stock_daily, config['stocks'], BENCHMARKS, payload['dates'])
+    payload['absolute'].update(stock_absolute)
     target = Path(args.output)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(payload, separators=(',', ':')), encoding='utf-8')

@@ -1,0 +1,175 @@
+{
+  "watchlists": {
+    "Defensive": [
+      "JNJ",
+      "KO",
+      "PG",
+      "WMT"
+    ],
+    "Invest": [
+      "AFRM",
+      "AMZN",
+      "HOOD",
+      "MSFT",
+      "NVDA",
+      "RTX"
+    ],
+    "Stablish": [
+      "AAPL",
+      "AMD",
+      "AMZN",
+      "GOOG",
+      "IBKR",
+      "META",
+      "MSFT",
+      "NVDA",
+      "PLTR",
+      "TSM"
+    ],
+    "Volatile": [
+      "AFRM",
+      "ANT",
+      "ASTS",
+      "HIMS",
+      "HOOD",
+      "KTOS",
+      "NBIS",
+      "RKLB",
+      "SKHY",
+      "SPCX",
+      "TSLA"
+    ]
+  },
+  "stocks": {
+    "JNJ": {
+      "name": "Johnson & Johnson",
+      "sector": "XLV",
+      "symbol": "NYSE:JNJ"
+    },
+    "KO": {
+      "name": "Coca-Cola Company",
+      "sector": "XLP",
+      "symbol": "NYSE:KO"
+    },
+    "PG": {
+      "name": "Procter & Gamble Company",
+      "sector": "XLP",
+      "symbol": "NYSE:PG"
+    },
+    "WMT": {
+      "name": "Walmart Inc.",
+      "sector": "XLP",
+      "symbol": "NASDAQ:WMT"
+    },
+    "AFRM": {
+      "name": "Affirm Holdings, Inc. Class A",
+      "sector": "XLF",
+      "symbol": "NASDAQ:AFRM"
+    },
+    "AMZN": {
+      "name": "Amazon.com, Inc.",
+      "sector": "XLY",
+      "symbol": "NASDAQ:AMZN"
+    },
+    "HOOD": {
+      "name": "Robinhood Markets, Inc. Class A",
+      "sector": "XLF",
+      "symbol": "NASDAQ:HOOD"
+    },
+    "MSFT": {
+      "name": "Microsoft Corporation",
+      "sector": "XLK",
+      "symbol": "NASDAQ:MSFT"
+    },
+    "NVDA": {
+      "name": "NVIDIA Corporation",
+      "sector": "XLK",
+      "symbol": "NASDAQ:NVDA"
+    },
+    "RTX": {
+      "name": "RTX Corporation",
+      "sector": "XLI",
+      "symbol": "NYSE:RTX"
+    },
+    "AAPL": {
+      "name": "Apple Inc.",
+      "sector": "XLK",
+      "symbol": "NASDAQ:AAPL"
+    },
+    "AMD": {
+      "name": "Advanced Micro Devices, Inc.",
+      "sector": "XLK",
+      "symbol": "NASDAQ:AMD"
+    },
+    "GOOG": {
+      "name": "Alphabet Inc. Class C",
+      "sector": "XLC",
+      "symbol": "NASDAQ:GOOG"
+    },
+    "IBKR": {
+      "name": "Interactive Brokers Group, Inc. Class A",
+      "sector": "XLF",
+      "symbol": "NASDAQ:IBKR"
+    },
+    "META": {
+      "name": "Meta Platforms Inc Class A",
+      "sector": "XLC",
+      "symbol": "NASDAQ:META"
+    },
+    "PLTR": {
+      "name": "Palantir Technologies Inc. Class A",
+      "sector": "XLK",
+      "symbol": "NASDAQ:PLTR"
+    },
+    "TSM": {
+      "name": "Taiwan Semiconductor Manufacturing Co., Ltd. Sponsored ADR",
+      "sector": "XLK",
+      "symbol": "NYSE:TSM"
+    },
+    "ANT": {
+      "name": "Anthropic, PBC Class A",
+      "sector": "XLK",
+      "symbol": "NASDAQ:ANT"
+    },
+    "ASTS": {
+      "name": "AST SpaceMobile, Inc. Class A",
+      "sector": "XLC",
+      "symbol": "NASDAQ:ASTS"
+    },
+    "HIMS": {
+      "name": "Hims & Hers Health, Inc. Class A",
+      "sector": "XLV",
+      "symbol": "NYSE:HIMS"
+    },
+    "KTOS": {
+      "name": "Kratos Defense & Security Solutions, Inc.",
+      "sector": "XLI",
+      "symbol": "NASDAQ:KTOS"
+    },
+    "NBIS": {
+      "name": "Nebius Group N.V. Class A",
+      "sector": "XLK",
+      "symbol": "NASDAQ:NBIS"
+    },
+    "RKLB": {
+      "name": "Rocket Lab Corporation",
+      "sector": "XLI",
+      "symbol": "NASDAQ:RKLB"
+    },
+    "SKHY": {
+      "name": "SK hynix Inc. Sponsored ADR",
+      "sector": "XLK",
+      "symbol": "NASDAQ:SKHY"
+    },
+    "SPCX": {
+      "name": "Space Exploration Technologies Corp",
+      "sector": "XLI",
+      "symbol": "NASDAQ:SPCX"
+    },
+    "TSLA": {
+      "name": "Tesla, Inc.",
+      "sector": "XLY",
+      "symbol": "NASDAQ:TSLA"
+    }
+  }
+}

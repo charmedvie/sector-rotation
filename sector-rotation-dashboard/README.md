@@ -64,6 +64,10 @@ Trend and momentum use two different normalizations so scales differ between axe
 - Daily 50/200 EMA distance is the percentage above or below the respective EMA, using daily adjusted closing prices through the displayed observation date. Unavailable data is shown as a dash.
 - Agreement counts how many of the three sensitivity presets share the selected preset's quadrant. Hover to see each preset's quadrant. Agreement is not a probability or a trade signal.
 
+## Stock watchlists
+
+The universe selector includes an imported snapshot of four TradingView watchlists in src/watchlists.json. It is public, not a live connection to TradingView. Update this configuration to resync the lists. Stock data is refreshed with the same daily workflow. Own sector ETF uses individually assigned US sector proxies (not official GICS classifications, especially for foreign ADRs and diversified businesses). Hover on a stock for its benchmark. Unavailable symbols and insufficient preset warm-up history are listed separately; no stock data is fabricated. The sector view remains independent of optional stock fetch failures.
+
 ## Local preview
 
 ```bash

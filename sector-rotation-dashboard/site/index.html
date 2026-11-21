@@ -9,7 +9,7 @@
   <meta name="description" content="Interactive sector Relative Rotation Graph with historical trails, sector strength rankings, and automatically refreshed data." />
   <link rel="stylesheet" href="styles.css?v=3" />
   <script src="https://cdn.plot.ly/plotly-3.3.1.min.js" defer></script>
-  <script src="app.js?v=7" defer></script>
+  <script src="app.js?v=8" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -60,11 +60,17 @@
             <div><div class="section-kicker">01 / ROTATION MAP</div><h2>Relative Rotation Graph <span class="title-suffix">RRG-STYLE</span></h2></div>
           </div>
           <div class="controls-row">
+            <label class="control-group">UNIVERSE
+              <select id="universe-select" aria-label="Universe">
+                <option value="sectors">US Sectors</option>
+              </select>
+            </label>
             <label class="control-group">BENCHMARK
               <select id="benchmark-select" aria-label="Benchmark">
                 <option value="SPY">SPY · S&P 500</option>
                 <option value="RSP">RSP · Equal-weight S&P</option>
                 <option value="QQQ">QQQ · Nasdaq 100</option>
+                <option value="sector" id="sector-benchmark-option" disabled>Own sector ETF</option>
               </select>
             </label>
             <label class="control-group">SENSITIVITY
@@ -80,10 +86,10 @@
                 <option value="12">12 weeks</option><option value="20">20 weeks</option>
               </select>
             </label>
-            <label class="control-group">SECTOR LABELS
-              <select id="label-select" aria-label="Sector labels">
-                <option value="ticker" selected>Ticker (XLK)</option>
-                <option value="name">Full name (Technology)</option>
+            <label class="control-group">SYMBOL LABELS
+              <select id="label-select" aria-label="Symbol labels">
+                <option value="ticker" selected>Ticker</option>
+                <option value="name">Full name</option>
               </select>
             </label>
             <div class="panel-help"><span class="help-icon">i</span> Relative to benchmark · 100 = neutral</div>
@@ -98,10 +104,11 @@
         <aside class="side-column">
           <section class="side-card">
             <div class="section-kicker">02 / FILTERS</div>
-            <div class="side-title-row"><h2>Sector universe</h2><button id="select-all" class="text-button" type="button">Select all</button></div>
-            <p class="side-description"><span id="selected-count">11</span> of 11 sectors visible</p>
+            <div class="side-title-row"><h2 id="universe-title">Sector universe</h2><button id="select-all" class="text-button" type="button">Select all</button></div>
+            <p class="side-description"><span id="selected-count">11</span> of <span id="universe-total">11</span> symbols visible</p>
             <div class="sector-filters" id="sector-filters" aria-label="Choose sectors"></div>
-            <div class="filter-footer"><button id="select-none" class="text-button" type="button">Clear selection</button><span>Click a sector to show/hide</span></div>
+            <p id="unavailable-assets" class="small-note" aria-live="polite"></p>
+            <div class="filter-footer"><button id="select-none" class="text-button" type="button">Clear selection</button><span>Click a symbol to show/hide</span></div>
           </section>
           <section class="side-card movers-card">
             <div class="section-kicker">03 / SIGNAL WATCH</div>
@@ -114,7 +121,7 @@
 
       <section class="ranking-card">
         <div class="panel-heading ranking-heading">
-          <div><div class="section-kicker">04 / STRENGTH MATRIX</div><h2>Sector standings</h2></div>
+          <div><div class="section-kicker">04 / STRENGTH MATRIX</div><h2 id="standings-title">Sector standings</h2></div>
           <div class="rank-caption">CLICK A COLUMN TO SORT · CLICK ROW TO SPOTLIGHT</div>
         </div>
         <div class="table-scroll">

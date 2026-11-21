@@ -11,13 +11,16 @@ const SECTOR_COLORS = {
   XLI: '#a7e34b', XLV: '#ff5656', XLP: '#19d5a1', XLE: '#f9e64f',
   XLB: '#9faab6', XLU: '#689bff', XLRE: '#e4eaf4',
 };
-const sectorColor = ticker => SECTOR_COLORS[ticker] || '#ddd';
+const STOCK_PALETTE = Object.values(SECTOR_COLORS);
+const sectorColor = ticker => state.universe === 'sectors' ? (SECTOR_COLORS[ticker] || '#ddd') :
+  STOCK_PALETTE[Math.max(0, universeTickers().indexOf(ticker)) % STOCK_PALETTE.length];
 const sectorLabel = sector => state.fullNames ? sector.name : sector.ticker;
 const QUADRANT_ORDER = { Leading: 0, Improving: 1, Weakening: 2, Lagging: 3 };
 const $ = id => document.getElementById(id);
 const state = {
   data: null,
   benchmark: 'SPY',
+  universe: 'sectors',
   sensitivity: 'medium',
   selected: new Set(),
   week: 0,
@@ -42,8 +45,31 @@ function dateLabel(iso, compact = false) {
     ? { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }
     : { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
-function seriesFor(ticker) {
-  return (state.data.sensitivities?.[state.sensitivity] ?? state.data.benchmarks)[state.benchmark][ticker];
+function universeTickers() {
+  return state.universe === 'sectors' ? state.data.sectors.map(s=>s.ticker) : (state.data.watchlists?.[state.universe] ?? []);
+}
+function seriesFor(ticker, mode=state.sensitivity) {
+  if (state.universe === 'sectors') return (state.data.sensitivities?.[mode] ?? state.data.benchmarks)?.[state.benchmark]?.[ticker];
+  return state.data.stock_rotation?.[mode]?.[state.benchmark]?.[ticker];
+}
+function validPoint(s,i) {
+  return !!s && Number.isFinite(s.ratio[i]) && Number.isFinite(s.momentum[i]);
+}
+function activeAssets() {
+  if (state.universe === 'sectors') return state.data.sectors;
+  return universeTickers().filter(t=>validPoint(seriesFor(t),state.week)&&validPoint(seriesFor(t),state.week-1))
+    .map(t=>({ticker:t,...state.data.stocks[t]}));
+}
+function updateUniverse(reset=false) {
+  const assets = activeAssets();
+  const available = new Set(assets.map(s=>s.ticker));
+  state.selected = reset ? available : new Set([...state.selected].filter(t=>available.has(t)));
+  const missing = universeTickers().filter(t=>!available.has(t));
+  $('unavailable-assets').textContent = missing.length ? 'Unavailable or insufficient history for this setting: '+missing.join(', ') : '';
+  $('universe-title').textContent = state.universe === 'sectors' ? 'Sector universe' : state.universe+' watchlist';
+  $('universe-total').textContent = universeTickers().length;
+  $('standings-title').textContent = state.universe === 'sectors' ? 'Sector standings' : 'Stock standings';
+  initFilters(); render();
 }
 function updateSensitivityHint() {
   const p = state.data.preset_parameters?.[state.sensitivity];
@@ -62,9 +88,10 @@ function heading(dx, dy) {
 // of the full sector universe, for the active benchmark and sensitivity.
 function speedThresholds() {
   const history = [];
-  for (const sector of state.data.sectors) {
+  for (const sector of activeAssets()) {
     const s = seriesFor(sector.ticker);
     for (let j = Math.max(1, state.week - 52); j < state.week; j++) {
+      if (!validPoint(s,j) || !validPoint(s,j-1)) continue;
       const d = Math.hypot(s.ratio[j] - s.ratio[j-1], s.momentum[j] - s.momentum[j-1]);
       if (Number.isFinite(d)) history.push(d);
     }
@@ -98,8 +125,8 @@ function observationFor(sector, thresholds) {
   const q = quadrant(ratio, momentum);
   const speed = Math.hypot(dx,dy);
   const modes = ['low','medium','high'].map(mode => {
-    const series = state.data.sensitivities?.[mode]?.[state.benchmark]?.[sector.ticker];
-    return series ? quadrant(series.ratio[i], series.momentum[i]) : null;
+    const series = seriesFor(sector.ticker, mode);
+    return validPoint(series,i) && (state.data.sensitivities || state.universe !== 'sectors') ? quadrant(series.ratio[i], series.momentum[i]) : null;
   });
   const agreement = modes.every(Boolean) ? modes.filter(m => m === q).length : null;
   const absolute = state.data.absolute?.[sector.ticker] ?? {};
@@ -109,7 +136,7 @@ function observationFor(sector, thresholds) {
 }
 function observations() {
   const thresholds = speedThresholds();
-  return state.data.sectors.map(sector => observationFor(sector, thresholds));
+  return activeAssets().map(sector => observationFor(sector, thresholds));
 }
 
 function showError(message) {
@@ -143,9 +170,14 @@ async function loadData() {
     $('latest-date').textContent = dateLabel(data.as_of);
     $('observation-status').textContent = data.is_demo ? 'SIMULATION · NOT LIVE PRICES' : 'WEEKLY ADJUSTED CLOSE';
     $('source-label').textContent = data.is_demo ? 'Synthetic demo' : 'yfinance / Yahoo Finance';
-    initFilters();
+    const universe = $('universe-select');
+    for (const key of ['Volatile','Stablish','Invest','Defensive']) {
+      if (!data.watchlists?.[key]) continue;
+      const option = document.createElement('option');
+      option.value=key; option.textContent=key; universe.appendChild(option);
+    }
     initEvents();
-    render();
+    updateUniverse(true);
   } catch (e) {
     showError(`Unable to load rotation data: ${e.message}. When using the download locally, serve the site with python -m http.server --directory site 8000. For GitHub Pages, run the deployment workflow.`);
     $('data-indicator').textContent = 'DATA UNAVAILABLE';
@@ -155,7 +187,7 @@ async function loadData() {
 
 function initFilters() {
   $('sector-filters').innerHTML = '';
-  for (const sector of state.data.sectors) {
+  for (const sector of activeAssets()) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'sector-filter';
@@ -172,20 +204,27 @@ function initFilters() {
 }
 
 function initEvents() {
+  $('universe-select').addEventListener('change', event => {
+    state.universe=event.target.value;
+    $('sector-benchmark-option').disabled=state.universe==='sectors';
+    if (state.universe==='sectors' && state.benchmark==='sector') state.benchmark='SPY';
+    $('benchmark-select').value=state.benchmark;
+    updateUniverse(true);
+  });
   $('benchmark-select').addEventListener('change', event => {
     state.benchmark = event.target.value;
-    render();
+    updateUniverse(true);
   });
   $('sensitivity-select').addEventListener('change', event => {
     state.sensitivity = event.target.value;
     updateSensitivityHint();
-    render();
+    updateUniverse(true);
   });
   $('trail-select').addEventListener('change', event => {
     state.trail = Number(event.target.value); render();
   });
   $('select-all').addEventListener('click', () => {
-    state.selected = new Set(state.data.sectors.map(s => s.ticker)); render();
+    state.selected = new Set(activeAssets().map(s => s.ticker)); render();
   });
   $('select-none').addEventListener('click', () => {
     state.selected.clear(); render();
@@ -207,8 +246,8 @@ function render() {
   const obs = observations();
   const count = q => obs.filter(s => s.quadrant === q).length;
   const transitions = obs.filter(s => s.previous !== null && s.previous !== s.quadrant);
-  $('stat-benchmark').textContent = state.benchmark;
-  $('stat-benchmark-description').textContent = state.data.benchmark_names?.[state.benchmark] ?? state.benchmark;
+  $('stat-benchmark').textContent = state.benchmark === 'sector' ? 'Sector ETF' : state.benchmark;
+  $('stat-benchmark-description').textContent = state.benchmark === 'sector' ? 'Individual sector proxies' : (state.data.benchmark_names?.[state.benchmark] ?? state.benchmark);
   $('stat-leading').textContent = String(count('Leading')).padStart(2, '0');
   $('stat-improving').textContent = String(count('Improving')).padStart(2, '0');
   $('stat-crossings').textContent = String(transitions.length).padStart(2, '0');
@@ -263,7 +302,7 @@ function renderTable(existing = null) {
   document.querySelectorAll('th button[data-sort]').forEach(b => {
     b.classList.toggle('active-sort', b.dataset.sort === state.sort);
   });
-  $('standings-body').innerHTML = obs.map(s => {
+  $('standings-body').innerHTML = obs.length ? obs.map(s => {
     const selected = state.selected.has(s.ticker);
     const c = sectorColor(s.ticker);
     return `<tr tabindex="0" data-row="${s.ticker}" class="${selected && state.selected.size === 1 ? 'spotlight' : ''}" aria-label="Spotlight ${s.name}">
@@ -278,12 +317,12 @@ function renderTable(existing = null) {
        ${pctCell(s.ema_200d_pct)}
        <td class="right" title="Low: ${s.modes[0]??'—'} · Medium: ${s.modes[1]??'—'} · High: ${s.modes[2]??'—'}">${s.agreement===null?'—':s.agreement+'/3'}</td>
      </tr>`;
-  }).join('');
+  }).join('') : '<tr><td colspan="10" class="loading-table">No symbols with sufficient current history for this view.</td></tr>';
   document.querySelectorAll('[data-row]').forEach(row => {
     function spotlight() {
       const ticker = row.dataset.row;
       if (state.selected.size === 1 && state.selected.has(ticker)) {
-        state.selected = new Set(state.data.sectors.map(s => s.ticker));
+        state.selected = new Set(activeAssets().map(s => s.ticker));
       } else state.selected = new Set([ticker]);
       render();
       if (window.innerWidth < 750) $('rrg-chart').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -295,11 +334,12 @@ function renderTable(existing = null) {
 
 function calculateBounds() {
   let maxX = 0.5, maxY = 0.20;
-  for (const sector of state.data.sectors) {
+  for (const sector of activeAssets()) {
     if (!state.selected.has(sector.ticker)) continue;
     const { ratio, momentum } = seriesFor(sector.ticker);
     const start = Math.max(0, state.week - state.trail + 1);
     for (let i = start; i <= state.week; i++) {
+      if (!Number.isFinite(ratio[i]) || !Number.isFinite(momentum[i])) continue;
       maxX = Math.max(maxX, Math.abs(ratio[i] - 100));
       maxY = Math.max(maxY, Math.abs(momentum[i] - 100));
     }
@@ -346,11 +386,13 @@ function renderChart() {
   }
   const b = calculateBounds();
   const traces = [];
-  for (const sector of state.data.sectors) {
+  for (const sector of activeAssets()) {
     const ticker = sector.ticker;
     if (!state.selected.has(ticker)) continue;
     const s = seriesFor(ticker);
-    const start = Math.max(0, state.week - state.trail + 1);
+    let start = state.week;
+    const limit = Math.max(0,state.week-state.trail+1);
+    while(start>limit && validPoint(s,start-1)) start--;
     const x = s.ratio.slice(start, state.week + 1);
     const y = s.momentum.slice(start, state.week + 1);
     const q = quadrant(x.at(-1), y.at(-1));
@@ -371,8 +413,8 @@ function renderChart() {
       type: 'scatter', mode: 'markers+text', x: [x.at(-1)], y: [y.at(-1)], text: [sectorLabel(sector)],
       textposition: 'top center', textfont: { color, size: 12, family: 'Arial, sans-serif' },
       marker: { color, size: 13, line: { color: '#0c1420', width: 2 } },
-      customdata: [[sector.name, q, dates.at(-1), ticker]],
-      hovertemplate: `<b>${ticker} · %{customdata[0]}</b><br>%{customdata[1]}<br>RS Ratio: %{x:.3f}<br>RS Momentum: %{y:.3f}<br>%{customdata[2]}<extra></extra>`,
+      customdata: [[sector.name, q, dates.at(-1), ticker, state.benchmark==='sector' ? sector.sector : state.benchmark]],
+      hovertemplate: `<b>${ticker} · %{customdata[0]}</b><br>%{customdata[1]} · vs %{customdata[4]}<br>RS Ratio: %{x:.3f}<br>RS Momentum: %{y:.3f}<br>%{customdata[2]}<extra></extra>`,
       showlegend: false, cliponaxis: false,
     });
   }
@@ -415,7 +457,7 @@ function renderChart() {
       quadrantLabel('Lagging', 0.03, 0.045, 'left', 'bottom', '#bd6a87'),
       quadrantLabel('Weakening', 0.97, 0.045, 'right', 'bottom', '#c59662'),
       ...(!state.selected.size ? [{ x: 0.5, y: 0.5, xref: 'paper', yref: 'paper', showarrow: false,
-        text: 'Select one or more sectors in the right-hand panel', font: { color: '#c4d3e5', size: 15 } }] : []),
+        text: 'Select one or more available symbols', font: { color: '#c4d3e5', size: 15 } }] : []),
     ],
     font: { family: 'Arial, sans-serif', color: '#a9bcd3' },
   };
@@ -432,7 +474,7 @@ function renderChart() {
         const symbol = point.customdata[3];
         if (!symbol || !seriesFor(symbol)) return;
         state.selected = state.selected.size === 1 && state.selected.has(symbol)
-          ? new Set(state.data.sectors.map(s => s.ticker)) : new Set([symbol]);
+          ? new Set(activeAssets().map(s => s.ticker)) : new Set([symbol]);
         render();
       });
     }

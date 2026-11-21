@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.rrg_math import PRESETS, absolute_snapshot, build_dataset, relative_rotation, week_closes
+from src.rrg_math import PRESETS, absolute_snapshot, build_dataset, build_stock_rotation, relative_rotation, week_closes
 
 
 def test_constant_relative_price_is_centered():
@@ -92,3 +92,20 @@ def test_absolute_snapshot_uses_adjusted_returns_and_daily_emas():
         expected = 100*(d.iloc[-1]/d.ewm(span=n, adjust=False).mean().iloc[-1]-1)
         assert out[f'ema_{n}d_pct'] == pytest.approx(expected, abs=5.1e-6)
     assert absolute_snapshot(weekly, None, ['XLK'], str(date.date()))['XLK']['ema_50d_pct'] is None
+
+
+def test_stock_rotation_keeps_short_history_and_stale_quotes_separate():
+    ix = pd.bdate_range('2023-01-02', periods=600)
+    core = pd.DataFrame({'SPY': np.linspace(100,150,len(ix)), 'XLK': np.linspace(100,180,len(ix))}, index=ix)
+    stock = pd.DataFrame({'OLD': np.linspace(100,200,len(ix)), 'NEW': np.nan, 'STALE': np.nan}, index=ix)
+    stock.loc[ix[-150:], 'NEW'] = np.linspace(10,20,150)
+    stock.loc[ix[:-5], 'STALE'] = 100.
+    dates = [d.strftime('%Y-%m-%d') for d in week_closes(core).index[-80:]]
+    info = {t: {'sector': 'XLK'} for t in stock.columns}
+    rotation, absolute = build_stock_rotation(core, stock, info, ['SPY'], dates)
+    assert rotation['high']['SPY']['OLD']['ratio'][-1] is not None
+    assert rotation['high']['sector']['NEW']['ratio'][-1] is not None
+    assert rotation['low']['SPY']['NEW']['ratio'][-1] is None
+    assert 'STALE' not in rotation['high']['SPY']
+    assert rotation['high']['SPY']['NEW']['ratio'][0] is None
+    assert absolute['NEW']['ema_200d_pct'] is None

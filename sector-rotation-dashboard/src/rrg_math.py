@@ -155,3 +155,39 @@ def absolute_snapshot(weekly_prices: pd.DataFrame, daily_prices: pd.DataFrame | 
                         row[f'ema_{n}d_pct'] = finite(100 * (daily.iloc[-1] / avg - 1))
         result[ticker] = row
     return result
+
+
+def build_stock_rotation(core_daily, stock_daily, stocks, benchmarks, dates):
+    """Compute optional stocks on the sector date grid with nulls before warm-up.
+    Stale or absent quotes are never filled with synthetic prices.
+    """
+    grid = pd.DatetimeIndex(pd.to_datetime(dates))
+    as_of = grid[-1]
+    core = week_closes(core_daily)
+    output = {p: {b: {} for b in [*benchmarks, 'sector']} for p in PRESETS}
+    absolute = {}
+    for ticker, info in stocks.items():
+        if ticker not in stock_daily:
+            continue
+        daily = stock_daily[ticker].dropna().sort_index()
+        daily = daily.loc[:as_of]
+        daily = daily[daily > 0]
+        if daily.empty or daily.index[-1].normalize() != as_of:
+            continue
+        # Map observations to actual benchmark trading dates. Missing weeks stay missing.
+        last = daily.groupby(daily.index.to_period('W-FRI')).last()
+        w = pd.Series(last.reindex(core.index.to_period('W-FRI')).to_numpy(), index=core.index)
+        # Do not allow EMA forward-fill behavior to produce values before IPO or during gaps.
+        valid = w.notna()
+        absolute.update(absolute_snapshot(w.to_frame(ticker), daily.to_frame(ticker), [ticker], dates[-1]))
+        for mode, (smooth, trend, momentum) in PRESETS.items():
+            for key in [*benchmarks, 'sector']:
+                bench = info.get('sector') if key == 'sector' else key
+                if bench not in core.columns:
+                    continue
+                frame = relative_rotation(w, core[bench], trend, momentum, smooth)
+                frame = frame.where(valid, axis=0).reindex(grid)
+                def encode(series):
+                    return [round(float(v),5) if pd.notna(v) else None for v in series]
+                output[mode][key][ticker] = {'ratio': encode(frame.ratio), 'momentum': encode(frame.momentum)}
+    return output, absolute
