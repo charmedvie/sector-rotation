@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#0b101a" />
   <title>Sector Rotation Lab — Relative Strength</title>
-  <meta name="description" content="Interactive sector Relative Rotation Graph with historical playback, sector strength rankings, and automatically refreshed data." />
+  <meta name="description" content="Interactive sector Relative Rotation Graph with historical trails, sector strength rankings, and automatically refreshed data." />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.plot.ly/plotly-3.3.1.min.js" defer></script>
   <script src="app.js" defer></script>
@@ -74,12 +74,18 @@
                 <option value="12">12 weeks</option><option value="20">20 weeks</option>
               </select>
             </label>
+            <label class="control-group">SECTOR LABELS
+              <select id="label-select" aria-label="Sector labels">
+                <option value="ticker" selected>Ticker (XLK)</option>
+                <option value="name">Full name (Technology)</option>
+              </select>
+            </label>
             <div class="panel-help"><span class="help-icon">i</span> Relative to benchmark · 100 = neutral</div>
           </div>
           <div id="rrg-chart" class="chart" aria-label="Interactive relative rotation graph"></div>
           <div class="chart-foot">
             <div class="chart-scale"><span class="axis-x">●</span> X: RS RATIO <span class="axis-divider">/</span><span class="axis-y">●</span> Y: RS MOMENTUM</div>
-            <div class="chart-scale">TRAILS = WEEKLY OBSERVATIONS <span class="arrow-icon">→</span> LARGER DOT = CURRENT</div>
+            <div class="chart-scale">DOTS = WEEKLY OBSERVATIONS <span class="arrow-icon">→</span> LARGER DOT = CURRENT</div>
           </div>
         </div>
 
@@ -100,24 +106,9 @@
         </aside>
       </section>
 
-      <section class="timeline-card" aria-label="Historical playback">
-        <div class="timeline-head">
-          <div><div class="section-kicker">04 / TIME MACHINE</div><h2>Playback market rotation</h2></div>
-          <div class="timeline-date" id="playhead-date">—</div>
-        </div>
-        <div class="timeline-controls">
-          <button id="play-pause" class="play-button" type="button" aria-label="Play timeline">▶ <span>Play</span></button>
-          <button id="step-back" class="step-button" type="button" aria-label="Previous week">‹</button>
-          <input id="timeline-range" type="range" min="0" max="100" value="100" step="1" aria-label="Historical week" />
-          <button id="step-next" class="step-button" type="button" aria-label="Next week">›</button>
-          <button id="jump-latest" class="latest-button" type="button">Jump to latest ↗</button>
-        </div>
-        <div class="timeline-range-labels"><span id="range-start">—</span><span>DRAG TO EXPLORE HISTORY</span><span id="range-end">—</span></div>
-      </section>
-
       <section class="ranking-card">
         <div class="panel-heading ranking-heading">
-          <div><div class="section-kicker">05 / STRENGTH MATRIX</div><h2>Sector standings</h2></div>
+          <div><div class="section-kicker">04 / STRENGTH MATRIX</div><h2>Sector standings</h2></div>
           <div class="rank-caption">CLICK A COLUMN TO SORT · CLICK ROW TO SPOTLIGHT</div>
         </div>
         <div class="table-scroll">

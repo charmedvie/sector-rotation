@@ -6,6 +6,13 @@ const COLORS = {
   Lagging: '#f2809b',
   Improving: '#63bdf8',
 };
+const SECTOR_COLORS = {
+  XLK: '#00caff', XLF: '#ff9f1c', XLY: '#f56bd8', XLC: '#aa8bfa',
+  XLI: '#a7e34b', XLV: '#ff5656', XLP: '#19d5a1', XLE: '#f9e64f',
+  XLB: '#f59775', XLU: '#689bff', XLRE: '#e4eaf4',
+};
+const sectorColor = ticker => SECTOR_COLORS[ticker] || '#ddd';
+const sectorLabel = sector => state.fullNames ? sector.name : sector.ticker;
 const QUADRANT_ORDER = { Leading: 0, Improving: 1, Weakening: 2, Lagging: 3 };
 const $ = id => document.getElementById(id);
 const state = {
@@ -14,7 +21,7 @@ const state = {
   selected: new Set(),
   week: 0,
   trail: 8,
-  playing: null,
+  fullNames: false,
   sort: 'ratio',
   desc: true,
   chartReady: false,
@@ -68,11 +75,6 @@ async function loadData() {
     $('latest-date').textContent = dateLabel(data.as_of);
     $('observation-status').textContent = data.is_demo ? 'SIMULATION · NOT LIVE PRICES' : 'WEEKLY ADJUSTED CLOSE';
     $('source-label').textContent = data.is_demo ? 'Synthetic demo' : 'yfinance / Yahoo Finance';
-    $('range-start').textContent = dateLabel(data.dates[0], true);
-    $('range-end').textContent = dateLabel(data.dates.at(-1), true);
-    const range = $('timeline-range');
-    range.max = String(data.dates.length - 1);
-    range.value = String(state.week);
     initFilters();
     initEvents();
     render();
@@ -91,11 +93,10 @@ function initFilters() {
     button.className = 'sector-filter';
     button.title = sector.name;
     button.dataset.sector = sector.ticker;
-    button.innerHTML = `<span class="sector-dot"></span><span class="sector-ticker">${sector.ticker}</span><span class="sector-name-sr"></span>`;
+    button.innerHTML = `<span class="sector-dot"></span><span class="sector-ticker">${sectorLabel(sector)}</span>`;
     button.addEventListener('click', () => {
       if (state.selected.has(sector.ticker)) state.selected.delete(sector.ticker);
       else state.selected.add(sector.ticker);
-      pause();
       render();
     });
     $('sector-filters').appendChild(button);
@@ -105,7 +106,7 @@ function initFilters() {
 function initEvents() {
   $('benchmark-select').addEventListener('change', event => {
     state.benchmark = event.target.value;
-    pause(); render();
+    render();
   });
   $('trail-select').addEventListener('change', event => {
     state.trail = Number(event.target.value); render();
@@ -114,18 +115,12 @@ function initEvents() {
     state.selected = new Set(state.data.sectors.map(s => s.ticker)); render();
   });
   $('select-none').addEventListener('click', () => {
-    state.selected.clear(); pause(); render();
+    state.selected.clear(); render();
+  });
+  $('label-select')?.addEventListener('change', event => {
+    state.fullNames = event.target.value === 'name'; render();
   });
   $('reset-zoom').addEventListener('click', () => renderChart(true));
-  $('timeline-range').addEventListener('input', event => {
-    pause(); state.week = Number(event.target.value); render();
-  });
-  $('step-back').addEventListener('click', () => moveWeek(-1));
-  $('step-next').addEventListener('click', () => moveWeek(1));
-  $('jump-latest').addEventListener('click', () => {
-    pause(); state.week = state.data.dates.length - 1; render();
-  });
-  $('play-pause').addEventListener('click', togglePlay);
   document.querySelectorAll('th button[data-sort]').forEach(button => {
     button.addEventListener('click', () => {
       const key = button.dataset.sort;
@@ -134,34 +129,6 @@ function initEvents() {
       renderTable();
     });
   });
-  document.addEventListener('keydown', event => {
-    if (/INPUT|SELECT|TEXTAREA|BUTTON/.test(document.activeElement?.tagName || '')) return;
-    if (event.key === 'ArrowLeft') moveWeek(-1);
-    if (event.key === 'ArrowRight') moveWeek(1);
-    if (event.key === ' ') { event.preventDefault(); togglePlay(); }
-  });
-}
-function pause() {
-  if (state.playing !== null) { window.clearInterval(state.playing); state.playing = null; }
-  $('play-pause').innerHTML = '▶ <span>Play</span>';
-  $('play-pause').setAttribute('aria-label', 'Play timeline');
-}
-function togglePlay() {
-  if (state.playing !== null) { pause(); return; }
-  if (state.week >= state.data.dates.length - 1) state.week = Math.min(20, state.data.dates.length - 2);
-  $('play-pause').innerHTML = 'Ⅱ <span>Pause</span>';
-  $('play-pause').setAttribute('aria-label', 'Pause timeline');
-  state.playing = window.setInterval(() => {
-    if (state.week >= state.data.dates.length - 1) { pause(); return; }
-    state.week++;
-    render();
-  }, 650);
-  render();
-}
-function moveWeek(amount) {
-  pause();
-  state.week = Math.max(0, Math.min(state.week + amount, state.data.dates.length - 1));
-  render();
 }
 function render() {
   if (!state.data) return;
@@ -173,14 +140,14 @@ function render() {
   $('stat-leading').textContent = String(count('Leading')).padStart(2, '0');
   $('stat-improving').textContent = String(count('Improving')).padStart(2, '0');
   $('stat-crossings').textContent = String(transitions.length).padStart(2, '0');
-  $('playhead-date').textContent = dateLabel(state.data.dates[state.week]);
-  $('timeline-range').value = String(state.week);
   $('selected-count').textContent = state.selected.size;
+  $('sector-filters').classList.toggle('full-names', state.fullNames);
   document.querySelectorAll('.sector-filter').forEach(button => {
     const isSelected = state.selected.has(button.dataset.sector);
     button.setAttribute('aria-pressed', String(isSelected));
     const record = obs.find(s => s.ticker === button.dataset.sector);
-    button.querySelector('.sector-dot').style.background = isSelected ? COLORS[record.quadrant] : '#637286';
+    button.querySelector('.sector-dot').style.background = sectorColor(record.ticker);
+    button.querySelector('.sector-ticker').textContent = sectorLabel(record);
   });
   renderMoves(transitions);
   renderTable(obs);
@@ -194,7 +161,7 @@ function renderMoves(changes) {
     return;
   }
   container.innerHTML = changes.slice(0, 6).map(s => `
-    <div class="move-row"><div class="move-top"><span class="move-sym">${s.ticker}</span><span class="move-now" style="color:${COLORS[s.quadrant]}">${s.quadrant.toUpperCase()}</span></div>
+    <div class="move-row"><div class="move-top"><span class="move-sym">${sectorLabel(s)}</span><span class="move-now" style="color:${COLORS[s.quadrant]}">${s.quadrant.toUpperCase()}</span></div>
     <div class="move-desc">${s.previous}<span class="move-arrow">→</span>${s.quadrant}</div></div>`).join('');
 }
 function sparkline(ticker, color) {
@@ -220,9 +187,9 @@ function renderTable(existing = null) {
   });
   $('standings-body').innerHTML = obs.map(s => {
     const selected = state.selected.has(s.ticker);
-    const c = COLORS[s.quadrant];
+    const c = sectorColor(s.ticker);
     return `<tr tabindex="0" data-row="${s.ticker}" class="${selected && state.selected.size === 1 ? 'spotlight' : ''}" aria-label="Spotlight ${s.name}">
-       <td><div class="ticker-cell"><div class="ticker-avatar">${s.ticker}</div><div><div class="ticker-main">${s.name}</div><div class="ticker-secondary">${s.ticker}</div></div></div></td>
+       <td><div class="ticker-cell"><div class="ticker-avatar" style="color:${c}">${s.ticker}</div>${state.fullNames ? `<div class="ticker-main">${s.name}</div>` : ''}</div></td>
        <td><span class="q-pill ${s.quadrant.toLowerCase()}">${s.quadrant.toUpperCase()}</span></td>
        <td class="right number-cell">${fmt(s.ratio)}</td>
        <td class="right number-cell">${fmt(s.momentum)}</td>
@@ -236,7 +203,7 @@ function renderTable(existing = null) {
       if (state.selected.size === 1 && state.selected.has(ticker)) {
         state.selected = new Set(state.data.sectors.map(s => s.ticker));
       } else state.selected = new Set([ticker]);
-      pause(); render();
+      render();
       if (window.innerWidth < 750) $('rrg-chart').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     row.addEventListener('click', spotlight);
@@ -272,19 +239,19 @@ function renderChart(resetZoom = false) {
     const x = s.ratio.slice(start, state.week + 1);
     const y = s.momentum.slice(start, state.week + 1);
     const q = quadrant(x.at(-1), y.at(-1));
-    const color = COLORS[q];
+    const color = sectorColor(ticker);
     const dates = state.data.dates.slice(start, state.week + 1);
     traces.push({
       type: 'scatter', mode: 'lines+markers', x, y,
-      line: { color, width: 2.4, shape: 'linear' },
+      line: { color, width: 2.8, shape: 'spline', smoothing: 0.65 },
       marker: { color, size: x.map((_, i) => i === x.length - 1 ? 1 : 4.5), opacity: 0.55 },
-      opacity: 0.64, hoverinfo: 'skip', showlegend: false, cliponaxis: false,
+      opacity: 0.90, hoverinfo: 'skip', showlegend: false, cliponaxis: false,
     });
     traces.push({
-      type: 'scatter', mode: 'markers+text', x: [x.at(-1)], y: [y.at(-1)], text: [ticker],
-      textposition: 'top center', textfont: { color: '#e6f3ff', size: 12, family: 'Arial, sans-serif' },
+      type: 'scatter', mode: 'markers+text', x: [x.at(-1)], y: [y.at(-1)], text: [sectorLabel(sector)],
+      textposition: 'top center', textfont: { color, size: 12, family: 'Arial, sans-serif' },
       marker: { color, size: 13, line: { color: '#0c1420', width: 2 } },
-      customdata: [[sector.name, q, dates.at(-1)]],
+      customdata: [[sector.name, q, dates.at(-1), ticker]],
       hovertemplate: `<b>${ticker} · %{customdata[0]}</b><br>%{customdata[1]}<br>RS Ratio: %{x:.3f}<br>RS Momentum: %{y:.3f}<br>%{customdata[2]}<extra></extra>`,
       showlegend: false, cliponaxis: false,
     });
@@ -343,11 +310,11 @@ function renderChart(resetZoom = false) {
       $('rrg-chart').on('plotly_click', event => {
         const point = event.points?.[0];
         if (!point || !point.customdata || !point.data?.text) return;
-        const symbol = point.data.text[0];
+        const symbol = point.customdata[3];
         if (!symbol || !seriesFor(symbol)) return;
         state.selected = state.selected.size === 1 && state.selected.has(symbol)
           ? new Set(state.data.sectors.map(s => s.ticker)) : new Set([symbol]);
-        pause(); render();
+        render();
       });
     }
   }).catch(err => { console.error(err); showError(`Chart error: ${err.message}`); });
