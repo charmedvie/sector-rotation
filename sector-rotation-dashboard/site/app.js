@@ -120,7 +120,6 @@ function initEvents() {
   $('label-select')?.addEventListener('change', event => {
     state.fullNames = event.target.value === 'name'; render();
   });
-  $('reset-zoom').addEventListener('click', () => renderChart(true));
   document.querySelectorAll('th button[data-sort]').forEach(button => {
     button.addEventListener('click', () => {
       const key = button.dataset.sort;
@@ -225,11 +224,44 @@ function calculateBounds() {
   maxX *= 1.38; maxY *= 1.50;
   return { xmin: 100 - maxX, xmax: 100 + maxX, ymin: 100 - maxY, ymax: 100 + maxY };
 }
-function renderChart(resetZoom = false) {
+// Centripetal Catmull–Rom spline, evaluated densely in two dimensions.
+ // Normalize axes for tangent calculation; preserve the original observation coordinates.
+function smoothTrail(x, y, bounds) {
+  if (x.length < 2) return { x: x.slice(), y: y.slice() };
+  const sx = bounds.xmax - bounds.xmin || 1;
+  const sy = bounds.ymax - bounds.ymin || 1;
+  const p = x.map((v, i) => [v, y[i]]);
+  const spacing = (a, b) => Math.max(1e-6, Math.sqrt(Math.hypot((b[0]-a[0])/sx, (b[1]-a[1])/sy)));
+  const t = [0];
+  for (let i=1; i<p.length; i++) t.push(t[i-1] + spacing(p[i-1], p[i]));
+  const tangent = (i, axis) => {
+    if (i === 0) return (p[1][axis]-p[0][axis])/(t[1]-t[0]);
+    if (i === p.length-1) return (p[i][axis]-p[i-1][axis])/(t[i]-t[i-1]);
+    const a=t[i]-t[i-1], b=t[i+1]-t[i];
+    return (b*(p[i][axis]-p[i-1][axis])/a + a*(p[i+1][axis]-p[i][axis])/b)/(a+b);
+  };
+  const out = { x: [], y: [] };
+  for (let i=0; i<p.length-1; i++) {
+    const dt=t[i+1]-t[i];
+    for (let j=0; j<32; j++) {
+      const u=j/32, u2=u*u, u3=u2*u;
+      for (let axis=0; axis<2; axis++) {
+        const v=(2*u3-3*u2+1)*p[i][axis]+(u3-2*u2+u)*dt*tangent(i,axis)
+          +(-2*u3+3*u2)*p[i+1][axis]+(u3-u2)*dt*tangent(i+1,axis);
+        out[axis===0?'x':'y'].push(v);
+      }
+    }
+  }
+  out.x.push(x.at(-1)); out.y.push(y.at(-1));
+  return out;
+}
+
+function renderChart() {
   if (typeof Plotly === 'undefined') {
     $('rrg-chart').innerHTML = '<div class="loading-table">Chart library could not load. Check your internet connection.</div>';
     return;
   }
+  const b = calculateBounds();
   const traces = [];
   for (const sector of state.data.sectors) {
     const ticker = sector.ticker;
@@ -241,11 +273,16 @@ function renderChart(resetZoom = false) {
     const q = quadrant(x.at(-1), y.at(-1));
     const color = sectorColor(ticker);
     const dates = state.data.dates.slice(start, state.week + 1);
+    const curve = smoothTrail(x, y, b);
     traces.push({
-      type: 'scatter', mode: 'lines+markers', x, y,
-      line: { color, width: 2.8, shape: 'spline', smoothing: 0.65 },
-      marker: { color, size: x.map((_, i) => i === x.length - 1 ? 1 : 4.5), opacity: 0.55 },
-      opacity: 0.90, hoverinfo: 'skip', showlegend: false, cliponaxis: false,
+      type: 'scatter', mode: 'lines', x: curve.x, y: curve.y,
+      line: { color, width: 2.8, shape: 'linear', simplify: false },
+      opacity: 0.95, hoverinfo: 'skip', showlegend: false, cliponaxis: false,
+    });
+    traces.push({
+      type: 'scatter', mode: 'markers', x: x.slice(0,-1), y: y.slice(0,-1),
+      marker: { color, size: 4.5, opacity: 0.75 },
+      hoverinfo: 'skip', showlegend: false, cliponaxis: false,
     });
     traces.push({
       type: 'scatter', mode: 'markers+text', x: [x.at(-1)], y: [y.at(-1)], text: [sectorLabel(sector)],
@@ -256,7 +293,6 @@ function renderChart(resetZoom = false) {
       showlegend: false, cliponaxis: false,
     });
   }
-  const b = calculateBounds();
   const margin = window.innerWidth < 660 ? { l: 55, r: 19, t: 24, b: 45 } : { l: 70, r: 35, t: 28, b: 55 };
   const boxStyle = (x0, x1, y0, y1, fillcolor) => ({
     type: 'rect', xref: 'x', yref: 'y', x0, x1, y0, y1,
@@ -269,18 +305,18 @@ function renderChart(resetZoom = false) {
   });
   const layout = {
     paper_bgcolor: '#101724', plot_bgcolor: '#101724',
-    margin, showlegend: false, hovermode: 'closest', dragmode: 'pan',
+    margin, showlegend: false, hovermode: 'closest', dragmode: false,
     xaxis: {
       range: [b.xmin, b.xmax], color: '#8193ac', tickfont: { size: 10 },
       gridcolor: '#273344', gridwidth: 1, zeroline: false,
       linecolor: '#33435a', mirror: false, title: { text: 'RS RATIO →', font: { color: '#9aaec6', size: 11 }, standoff: 12 },
-      tickformat: '.1f', fixedrange: false,
+      tickformat: '.1f', fixedrange: true,
     },
     yaxis: {
       range: [b.ymin, b.ymax], color: '#8193ac', tickfont: { size: 10 },
       gridcolor: '#273344', gridwidth: 1, zeroline: false,
       linecolor: '#33435a', title: { text: 'RS MOMENTUM →', font: { color: '#9aaec6', size: 11 }, standoff: 12 },
-      tickformat: '.1f', fixedrange: false,
+      tickformat: '.1f', fixedrange: true,
     },
     shapes: [
       boxStyle(b.xmin, 100, 100, b.ymax, '#122333'),
@@ -301,7 +337,7 @@ function renderChart(resetZoom = false) {
     font: { family: 'Arial, sans-serif', color: '#a9bcd3' },
   };
   Plotly.react('rrg-chart', traces, layout, {
-    responsive: true, displaylogo: false, scrollZoom: true,
+    responsive: true, displaylogo: false, scrollZoom: false, doubleClick: false, displayModeBar: false,
     modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian'],
     toImageButtonOptions: { format: 'png', filename: 'sector-rotation', scale: 2 },
   }).then(() => {
