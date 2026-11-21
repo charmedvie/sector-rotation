@@ -1,0 +1,52 @@
+import numpy as np
+import pandas as pd
+import pytest
+
+from src.rrg_math import build_dataset, relative_rotation, week_closes
+
+
+def test_constant_relative_price_is_centered():
+    ix = pd.date_range('2020-01-03', periods=70, freq='W-FRI')
+    base = pd.Series(np.linspace(100, 210, 70), index=ix)
+    values = relative_rotation(base * 1.5, base)
+    assert values.iloc[-1]['ratio'] == pytest.approx(100.0)
+    assert values.iloc[-1]['momentum'] == pytest.approx(100.0)
+
+
+def test_rising_relative_price_is_leading():
+    ix = pd.date_range('2020-01-03', periods=80, freq='W-FRI')
+    base = pd.Series(100.0, index=ix)
+    rising = pd.Series(100.0 * np.exp(np.arange(80) * 0.01), index=ix)
+    values = relative_rotation(rising, base)
+    assert values.iloc[-1]['ratio'] > 100.0
+    assert values.iloc[-1]['momentum'] > 100.0
+
+
+def test_weekly_close_uses_actual_last_trading_date():
+    ix = pd.to_datetime(['2026-11-16', '2026-11-17', '2026-11-18'])
+    prices = pd.DataFrame({'XLK': [100, 101, 102]}, index=ix)
+    weekly = week_closes(prices)
+    assert weekly.index[-1] == pd.Timestamp('2026-11-18')
+    assert weekly.iloc[-1]['XLK'] == 102
+
+
+def test_complete_dataset_has_common_dates():
+    ix = pd.date_range('2020-01-03', periods=78, freq='W-FRI')
+    wave = np.arange(len(ix))
+    prices = pd.DataFrame({
+        'XLK': 100.0 * np.exp(0.003 * wave + np.sin(wave / 9.0) * 0.06),
+        'SPY': 100.0 * np.exp(0.002 * wave),
+        'RSP': 100.0 * np.exp(0.001 * wave),
+        'QQQ': 100.0 * np.exp(0.004 * wave),
+    }, index=ix)
+    data = build_dataset(prices, {'XLK': 'Technology'}, ['SPY', 'RSP', 'QQQ'])
+    assert len(data['dates']) > 24
+    assert len(data['dates']) == len(data['benchmarks']['SPY']['XLK']['ratio'])
+    assert data['as_of'] == data['dates'][-1]
+    assert all(90 < r < 110 for r in data['benchmarks']['SPY']['XLK']['ratio'])
+
+
+def test_rejects_missing_symbols():
+    ix = pd.date_range('2020-01-03', periods=60, freq='W-FRI')
+    with pytest.raises(ValueError, match='Missing symbols'):
+        build_dataset(pd.DataFrame({'XLK': 1.0}, index=ix), {'XLK': 'Technology'}, ['SPY'])

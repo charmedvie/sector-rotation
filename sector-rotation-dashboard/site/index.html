@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#0b101a" />
+  <title>Sector Rotation Lab — Relative Strength</title>
+  <meta name="description" content="Interactive sector Relative Rotation Graph with historical playback, sector strength rankings, and automatically refreshed data." />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.plot.ly/plotly-3.3.1.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand-wrap">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div>
+          <div class="brand-name">SECTOR <span>ROTATION</span> LAB</div>
+          <div class="brand-caption">RELATIVE STRENGTH INTELLIGENCE</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="signal-indicator"><span class="signal-dot"></span><span id="data-indicator">Loading data</span></div>
+        <span class="header-divider"></span>
+        <span class="header-hint">US EQUITIES <span> / </span> WEEKLY</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro-row">
+        <div>
+          <div class="eyebrow">MARKET STRUCTURE <span class="eyebrow-line"></span> SECTOR MONITOR</div>
+          <h1>Where is strength <em>rotating?</em></h1>
+          <p class="intro-sub">Track relative leadership, momentum shifts, and sector rotation through time.</p>
+        </div>
+        <div class="asof-card">
+          <div class="asof-label">LATEST OBSERVATION</div>
+          <div id="latest-date" class="asof-date">—</div>
+          <div id="observation-status" class="asof-foot">Awaiting data</div>
+        </div>
+      </section>
+
+      <div id="demo-banner" class="demo-banner" hidden>
+        <strong>DEMO DATA ONLY</strong><span>These are simulated values, not actual market prices. The GitHub deployment workflow replaces them with current prices.</span>
+      </div>
+      <div id="error-banner" class="error-banner" hidden role="alert"></div>
+
+      <section class="summary-grid" aria-label="Snapshot">
+        <div class="stat-card"><div class="stat-top">BENCHMARK <span class="stat-deco">↗</span></div><div class="stat-number" id="stat-benchmark">SPY</div><div class="stat-desc" id="stat-benchmark-description">S&P 500</div></div>
+        <div class="stat-card"><div class="stat-top">LEADING <span class="key-dot leading"></span></div><div class="stat-number" id="stat-leading">—</div><div class="stat-desc">Relative strength accelerating</div></div>
+        <div class="stat-card"><div class="stat-top">IMPROVING <span class="key-dot improving"></span></div><div class="stat-number" id="stat-improving">—</div><div class="stat-desc">Momentum turning positive</div></div>
+        <div class="stat-card"><div class="stat-top">FRESH QUADRANT CHANGES <span class="stat-deco">↻</span></div><div class="stat-number" id="stat-crossings">—</div><div class="stat-desc">Versus preceding week</div></div>
+      </section>
+
+      <section class="content-grid">
+        <div class="visual-card">
+          <div class="panel-heading">
+            <div><div class="section-kicker">01 / ROTATION MAP</div><h2>Relative Rotation Graph <span class="title-suffix">RRG-STYLE</span></h2></div>
+            <button type="button" id="reset-zoom" class="icon-button" title="Reset plot zoom">↗ <span>Reset view</span></button>
+          </div>
+          <div class="controls-row">
+            <label class="control-group">BENCHMARK
+              <select id="benchmark-select" aria-label="Benchmark">
+                <option value="SPY">SPY · S&P 500</option>
+                <option value="RSP">RSP · Equal-weight S&P</option>
+                <option value="QQQ">QQQ · Nasdaq 100</option>
+              </select>
+            </label>
+            <label class="control-group">TRAIL LENGTH
+              <select id="trail-select" aria-label="Historical trail length">
+                <option value="4">4 weeks</option><option selected value="8">8 weeks</option>
+                <option value="12">12 weeks</option><option value="20">20 weeks</option>
+              </select>
+            </label>
+            <div class="panel-help"><span class="help-icon">i</span> Relative to benchmark · 100 = neutral</div>
+          </div>
+          <div id="rrg-chart" class="chart" aria-label="Interactive relative rotation graph"></div>
+          <div class="chart-foot">
+            <div class="chart-scale"><span class="axis-x">●</span> X: RS RATIO <span class="axis-divider">/</span><span class="axis-y">●</span> Y: RS MOMENTUM</div>
+            <div class="chart-scale">TRAILS = WEEKLY OBSERVATIONS <span class="arrow-icon">→</span> LARGER DOT = CURRENT</div>
+          </div>
+        </div>
+
+        <aside class="side-column">
+          <section class="side-card">
+            <div class="section-kicker">02 / FILTERS</div>
+            <div class="side-title-row"><h2>Sector universe</h2><button id="select-all" class="text-button" type="button">Select all</button></div>
+            <p class="side-description"><span id="selected-count">11</span> of 11 sectors visible</p>
+            <div class="sector-filters" id="sector-filters" aria-label="Choose sectors"></div>
+            <div class="filter-footer"><button id="select-none" class="text-button" type="button">Clear selection</button><span>Click a sector to show/hide</span></div>
+          </section>
+          <section class="side-card movers-card">
+            <div class="section-kicker">03 / SIGNAL WATCH</div>
+            <h2>New quadrant moves</h2>
+            <div class="moves-list" id="moves-list"><div class="empty-moves">Loading…</div></div>
+            <p class="small-note">Crossings are descriptive and not entry/exit signals.</p>
+          </section>
+        </aside>
+      </section>
+
+      <section class="timeline-card" aria-label="Historical playback">
+        <div class="timeline-head">
+          <div><div class="section-kicker">04 / TIME MACHINE</div><h2>Playback market rotation</h2></div>
+          <div class="timeline-date" id="playhead-date">—</div>
+        </div>
+        <div class="timeline-controls">
+          <button id="play-pause" class="play-button" type="button" aria-label="Play timeline">▶ <span>Play</span></button>
+          <button id="step-back" class="step-button" type="button" aria-label="Previous week">‹</button>
+          <input id="timeline-range" type="range" min="0" max="100" value="100" step="1" aria-label="Historical week" />
+          <button id="step-next" class="step-button" type="button" aria-label="Next week">›</button>
+          <button id="jump-latest" class="latest-button" type="button">Jump to latest ↗</button>
+        </div>
+        <div class="timeline-range-labels"><span id="range-start">—</span><span>DRAG TO EXPLORE HISTORY</span><span id="range-end">—</span></div>
+      </section>
+
+      <section class="ranking-card">
+        <div class="panel-heading ranking-heading">
+          <div><div class="section-kicker">05 / STRENGTH MATRIX</div><h2>Sector standings</h2></div>
+          <div class="rank-caption">CLICK A COLUMN TO SORT · CLICK ROW TO SPOTLIGHT</div>
+        </div>
+        <div class="table-scroll">
+          <table id="standings-table">
+            <thead><tr>
+              <th><button type="button" data-sort="ticker">SECTOR <span class="sort-hint">↕</span></button></th>
+              <th><button type="button" data-sort="quadrant">QUADRANT <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="ratio">RS RATIO <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="momentum">RS MOMENTUM <span class="sort-hint">↕</span></button></th>
+              <th class="right"><button type="button" data-sort="change">1W Δ RATIO <span class="sort-hint">↕</span></button></th>
+              <th class="right">TREND</th>
+            </tr></thead>
+            <tbody id="standings-body"><tr><td colspan="6" class="loading-table">Loading weekly observations…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div><strong>SECTOR ROTATION LAB</strong><span class="footer-dot">·</span> A free, personal research tool</div>
+        <div>Custom EMA-based RRG-style approximation, not proprietary JdK <span class="footer-dot">·</span> Data: <span id="source-label">—</span></div>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
