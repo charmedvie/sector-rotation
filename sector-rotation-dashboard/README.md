@@ -57,6 +57,13 @@ Quadrants:
 
 Trend and momentum use two different normalizations so scales differ between axes. Unlike total-return sector ranking, these metrics describe *relative* trend and its momentum against the selected benchmark.
 
+## Trading context in the standings
+
+- Direction and speed describe the latest weekly displacement in RS-ratio and RS-momentum coordinates; speed is Euclidean distance in raw metric points and is best compared within the same sensitivity setting.
+- Absolute returns (1/4/12 weeks) use adjusted closes, not the selected benchmark.
+- Daily 50/200 EMA distance is the percentage above or below the respective EMA, using daily adjusted closing prices through the displayed observation date. Unavailable data is shown as a dash.
+- Agreement counts how many of the three sensitivity presets share the selected preset's quadrant. Hover to see each preset's quadrant. Agreement is not a probability or a trade signal.
+
 ## Local preview
 
 ```bash

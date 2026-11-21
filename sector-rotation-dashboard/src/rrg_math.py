@@ -128,3 +128,30 @@ def build_dataset(
         'benchmark_names': {'SPY': 'S&P 500', 'RSP': 'Equal-weight S&P 500', 'QQQ': 'Nasdaq-100'},
     })
     return data
+
+
+def absolute_snapshot(weekly_prices: pd.DataFrame, daily_prices: pd.DataFrame | None,
+                      tickers: list[str], as_of: str) -> dict:
+    """Adjusted-close returns and daily EMA distances at the displayed observation."""
+    date = pd.Timestamp(as_of)
+    weekly = weekly_prices.loc[:date]
+    result = {}
+    def finite(value):
+        return round(float(value), 5) if pd.notna(value) and abs(value) != float('inf') else None
+
+    for ticker in tickers:
+        w = weekly[ticker]
+        row = {}
+        for n in (1, 4, 12):
+            row[f'return_{n}w'] = finite(100 * (w.iloc[-1] / w.iloc[-1-n] - 1)) if len(w) > n and w.iloc[-1-n] > 0 else None
+        for n in (50, 200):
+            row[f'ema_{n}d_pct'] = None
+        if daily_prices is not None:
+            daily = daily_prices[ticker].sort_index().loc[:date].dropna()
+            if len(daily) and daily.index[-1].normalize() == date:
+                for n in (50, 200):
+                    avg = daily.ewm(span=n, adjust=False, min_periods=n).mean().iloc[-1]
+                    if pd.notna(avg) and avg > 0:
+                        row[f'ema_{n}d_pct'] = finite(100 * (daily.iloc[-1] / avg - 1))
+        result[ticker] = row
+    return result

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.rrg_math import PRESETS, build_dataset, relative_rotation, week_closes
+from src.rrg_math import PRESETS, absolute_snapshot, build_dataset, relative_rotation, week_closes
 
 
 def test_constant_relative_price_is_centered():
@@ -76,3 +76,19 @@ def test_all_presets_center_constant_relative_prices():
         result = relative_rotation(base*1.5, base, trend, momentum, smoothing).dropna()
         assert len(result) > 0
         assert np.allclose(result.to_numpy(), 100.0)
+
+
+def test_absolute_snapshot_uses_adjusted_returns_and_daily_emas():
+    ix = pd.bdate_range('2024-01-01', periods=300)
+    daily = pd.DataFrame({'XLK': np.arange(300, dtype=float)+100}, index=ix)
+    date = ix[-2]  # Ensure future observations are excluded.
+    weekly = week_closes(daily.loc[:date])
+    out = absolute_snapshot(weekly, daily, ['XLK'], str(date.date()))['XLK']
+    for n in (1,4,12):
+        w = weekly['XLK']
+        assert out[f'return_{n}w'] == pytest.approx(100*(w.iloc[-1]/w.iloc[-1-n]-1), abs=5.1e-6)
+    for n in (50,200):
+        d = daily['XLK'].loc[:date]
+        expected = 100*(d.iloc[-1]/d.ewm(span=n, adjust=False).mean().iloc[-1]-1)
+        assert out[f'ema_{n}d_pct'] == pytest.approx(expected, abs=5.1e-6)
+    assert absolute_snapshot(weekly, None, ['XLK'], str(date.date()))['XLK']['ema_50d_pct'] is None

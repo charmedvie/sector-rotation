@@ -51,14 +51,35 @@ function updateSensitivityHint() {
     ? `RS smoothing: ${p.smoothing === 1 ? 'None' : p.smoothing + ' weeks'}; trend EMA: ${p.trend} weeks; momentum EMA: ${p.momentum} weeks`
     : 'Original High calculation; refresh data to enable all presets';
 }
+function heading(dx, dy) {
+  const east = dx > 0.00001, west = dx < -0.00001;
+  const north = dy > 0.00001, south = dy < -0.00001;
+  return north ? (east ? '↗ NE' : west ? '↖ NW' : '↑ N') :
+    south ? (east ? '↘ SE' : west ? '↙ SW' : '↓ S') :
+    east ? '→ E' : west ? '← W' : '— Flat';
+}
+function pctCell(n) {
+  return Number.isFinite(n)
+    ? `<td class="right number-cell ${n>0?'pos':n<0?'neg':''}">${n>0?'+':''}${fmt(n,1)}%</td>`
+    : '<td class="right">—</td>';
+}
 function observationFor(sector) {
   const s = seriesFor(sector.ticker);
   const i = state.week;
   const ratio = s.ratio[i], momentum = s.momentum[i];
   const previous = i > 0 ? quadrant(s.ratio[i - 1], s.momentum[i - 1]) : null;
+  const dx = i > 0 ? ratio - s.ratio[i - 1] : 0;
+  const dy = i > 0 ? momentum - s.momentum[i - 1] : 0;
+  const q = quadrant(ratio, momentum);
+  const modes = ['low','medium','high'].map(mode => {
+    const series = state.data.sensitivities?.[mode]?.[state.benchmark]?.[sector.ticker];
+    return series ? quadrant(series.ratio[i], series.momentum[i]) : null;
+  });
+  const agreement = modes.every(Boolean) ? modes.filter(m => m === q).length : null;
+  const absolute = state.data.absolute?.[sector.ticker] ?? {};
   return { ticker: sector.ticker, name: sector.name, ratio, momentum,
-    change: i > 0 ? ratio - s.ratio[i - 1] : 0,
-    quadrant: quadrant(ratio, momentum), previous };
+    change: dx, direction: heading(dx,dy), speed: Math.hypot(dx,dy),
+    quadrant: q, previous, agreement, modes, ...absolute };
 }
 function observations() { return state.data.sectors.map(observationFor); }
 
@@ -201,7 +222,13 @@ function renderTable(existing = null) {
     let comparison;
     if (state.sort === 'ticker') comparison = a.ticker.localeCompare(b.ticker);
     else if (state.sort === 'quadrant') comparison = QUADRANT_ORDER[a.quadrant] - QUADRANT_ORDER[b.quadrant];
-    else comparison = a[state.sort] - b[state.sort];
+    else if (state.sort === 'direction') comparison = a.direction.localeCompare(b.direction);
+    else {
+      const av = a[state.sort], bv = b[state.sort];
+      if (!Number.isFinite(av)) return Number.isFinite(bv) ? 1 : 0;
+      if (!Number.isFinite(bv)) return -1;
+      comparison = av - bv;
+    }
     return comparison * mult;
   });
   document.querySelectorAll('th button[data-sort]').forEach(b => {
@@ -216,6 +243,14 @@ function renderTable(existing = null) {
        <td class="right number-cell">${fmt(s.ratio)}</td>
        <td class="right number-cell">${fmt(s.momentum)}</td>
        <td class="right number-cell ${s.change >= 0 ? 'pos' : 'neg'}">${s.change >= 0 ? '+' : ''}${fmt(s.change)}</td>
+       <td title="Direction of the latest weekly move">${s.direction}</td>
+       <td class="right number-cell">${fmt(s.speed)}</td>
+       ${pctCell(s.return_1w)}
+       ${pctCell(s.return_4w)}
+       ${pctCell(s.return_12w)}
+       ${pctCell(s.ema_50d_pct)}
+       ${pctCell(s.ema_200d_pct)}
+       <td class="right" title="Low: ${s.modes[0]??'—'} · Medium: ${s.modes[1]??'—'} · High: ${s.modes[2]??'—'}">${s.agreement===null?'—':s.agreement+'/3'}</td>
        <td class="right">${sparkline(s.ticker, c)}</td>
      </tr>`;
   }).join('');

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.rrg_math import build_dataset, week_closes
+from src.rrg_math import absolute_snapshot, build_dataset, week_closes
 
 SECTORS = {
     'XLK': 'Technology',
@@ -70,8 +70,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', default='site/data/rotation.json')
     args = parser.parse_args()
-    weekly = week_closes(fetch_daily())
+    daily = fetch_daily()
+    weekly = week_closes(daily)
     payload = build_dataset(weekly, SECTORS, BENCHMARKS, history_weeks=130)
+    payload['absolute'] = absolute_snapshot(weekly, daily, list(SECTORS) + BENCHMARKS, payload['as_of'])
     target = Path(args.output)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(payload, separators=(',', ':')), encoding='utf-8')
