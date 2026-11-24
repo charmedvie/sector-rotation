@@ -95,6 +95,11 @@ def main() -> None:
     target = Path(args.output)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(payload, separators=(',', ':')), encoding='utf-8')
+    try:
+        from src.stock_data import generate
+        generate(target.parent / 'stocks.json')
+    except Exception as exc:
+        print(f'Optional stock intelligence refresh failed: {exc}')
     print(f'Wrote {len(payload["dates"])} weekly observations to {target}; as of {payload["as_of"]}')
 
 
