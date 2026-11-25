@@ -67,3 +67,6 @@ a{color:#a9c9ff}.stock-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0
 .amzn-peer-nav{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px}.amzn-peer-nav button{padding:8px 15px;border:1px solid #3b4b64;background:#172436;color:#aebfd4;border-radius:6px;font-size:13px;cursor:pointer}.amzn-peer-nav button[aria-pressed="true"]{background:#203b43;border-color:#70d5bd;color:#a5e6d5;font-weight:650}
 
 .peer-table td a{font-size:10px;color:#8baed0;text-decoration:none;margin-left:3px}.peer-table td a:hover{text-decoration:underline}
+
+/* v28: compact disclosure details */
+.risk-filing-detail{border-top:1px solid #35475e;padding:10px 0;font-size:12px}.risk-filing-detail p{margin:5px 0;line-height:1.45}.risk-filing-detail small{color:#9fb2c9}.risk-map-item details{margin-top:9px}.risk-section>summary,.thesis-section details>summary{cursor:pointer}.valuation-brief{margin:10px 0 14px}.stock-head #question:empty{display:none}.thesis-evidence summary{font-size:11px;color:#8ea8c3}.risk-section.risk-method{padding:12px 0}.risk-section.risk-method>summary{font-weight:600;color:#dbe6f6}

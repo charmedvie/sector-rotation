@@ -65,48 +65,47 @@ function valuationContext(m,p,pre){
  const pe=p.trailingPE>0?p.trailingPE:null,peerValues=m.peers.map(s=>get(s).quote.trailingPE).filter(v=>v>0),med=peerValues.length>=2?median(peerValues):null;
  if(pre||pe==null)return '<div class="valuation-visual"><div class="tile-kicker">VALUATION CONTEXT</div><strong>'+ (pre?'Milestone-based valuation':'P/E not meaningful or unavailable')+'</strong><p>EV / sales '+(p.enterpriseToRevenue>0?fmt(p.enterpriseToRevenue)+'x':'—')+' · P/B '+(p.priceToBook>0?fmt(p.priceToBook)+'x':'—')+'</p><button class="stock-action" data-target="Valuation">Explore valuation ↗</button></div>';
  const delta=med?100*(pe/med-1):null;
- if(!med)return '<div class="valuation-visual"><div class="tile-kicker">VALUATION CONTEXT</div><strong>'+fmt(pe)+'x trailing P/E</strong><p>Not enough profitable peers for a comparison. Historical P/E range not available.</p><button class="stock-action" data-target="Valuation">Explore valuation ↗</button></div>';
+ if(!med)return '<div class="valuation-visual"><div class="tile-kicker">VALUATION CONTEXT</div><strong>'+fmt(pe)+'x trailing P/E</strong><p>Not enough profitable peers for a comparison. Historical context is in Valuation.</p><button class="stock-action" data-target="Valuation">Explore valuation ↗</button></div>';
  const max=Math.max(pe,med,...peerValues)*1.12,x=v=>20+v/max*260,mid=x(med),cur=x(pe);
- return '<div class="valuation-visual"><div class="tile-kicker">VALUATION CONTEXT <span>PEER BENCHMARK</span></div><strong>'+fmt(pe)+'x <span class="valuation-sub">vs '+fmt(med)+'x peer median</span></strong><svg viewBox="0 0 300 76" role="img" aria-label="Trailing P/E compared with peer median"><rect x="20" y="25" width="260" height="7" rx="3" fill="#344259"/><line x1="'+mid+'" x2="'+mid+'" y1="15" y2="41" stroke="#aabbd0" stroke-width="1.5"/><circle cx="'+cur+'" cy="28.5" r="5.5" fill="#e8b365"/><text x="'+mid+'" y="11" text-anchor="middle" font-size="9" fill="#aabbd0">Peer median</text><text x="'+cur+'" y="54" text-anchor="middle" font-size="10" fill="#e8b365">Current</text><text x="20" y="44" font-size="9" fill="#91a4bf">0x</text><text x="280" y="44" font-size="9" text-anchor="end" fill="#91a4bf">'+fmt(max,0)+'x</text></svg><p>'+fmt(Math.abs(delta))+'% '+(delta>=0?'above':'below')+' peer median · '+peerValues.length+' profitable peers. Not fair value; historical P/E pending.</p><button class="stock-action" data-target="Valuation">Explore valuation ↗</button></div>';
+ return '<div class="valuation-visual"><div class="tile-kicker">VALUATION CONTEXT <span>PEER BENCHMARK</span></div><strong>'+fmt(pe)+'x <span class="valuation-sub">vs '+fmt(med)+'x peer median</span></strong><svg viewBox="0 0 300 76" role="img" aria-label="Trailing P/E compared with peer median"><rect x="20" y="25" width="260" height="7" rx="3" fill="#344259"/><line x1="'+mid+'" x2="'+mid+'" y1="15" y2="41" stroke="#aabbd0" stroke-width="1.5"/><circle cx="'+cur+'" cy="28.5" r="5.5" fill="#e8b365"/><text x="'+mid+'" y="11" text-anchor="middle" font-size="9" fill="#aabbd0">Peer median</text><text x="'+cur+'" y="54" text-anchor="middle" font-size="10" fill="#e8b365">Current</text><text x="20" y="44" font-size="9" fill="#91a4bf">0x</text><text x="280" y="44" font-size="9" text-anchor="end" fill="#91a4bf">'+fmt(max,0)+'x</text></svg><p>'+fmt(Math.abs(delta))+'% '+(delta>=0?'above':'below')+' peer median · '+peerValues.length+' profitable peers. Historical context is in Valuation.</p><button class="stock-action" data-target="Valuation">Explore valuation ↗</button></div>';
 }
 function finding(title,detail,target,tone='neutral'){return {title,detail,target,tone};}
+
+function overviewInsights(s,d,q){
+ const f=qualitySection(deriveRows(d.quarterly||[]),true),risk=riskOverviewData(s,d,q),cfg=kpiData[s],drivers=driverBriefs[s],items=[];
+ for(const r of f)items.push({...finding(r.title,r.metric+' '+r.metricLabel+' · '+r.conclusion,'Fundamentals',r.evidence.tone),rank:r.priority,source:'financial',evidence:r.evidence.label});
+ for(const r of risk.map.filter(r=>['watch','high'].includes(r.status)))items.push({...finding(r.title,r.metric+' · '+r.conclusion,'Financial risk','caution'),rank:r.status==='high'?120:99,source:'risk'});
+ for(const r of risk.extra.filter(r=>r.status==='Monitor'))items.push({...finding(r.title,r.metric+' · '+r.impact,'Financial risk','caution'),rank:99,source:'risk'});
+ if(q.period===cfg.period){for(let i=0;i<drivers.length;i++){const b=drivers[i],h=driverHorizon(s,i,cfg,false);if(h.tone==='unknown')continue;items.push({...finding(b.headline,b.points[0]||driverGroups[s][i].watch,'Business Drivers',h.tone==='positive'?'positive':'neutral'),rank:h.tone==='positive'?95:86,source:'driver',evidence:h.label});}}
+ const val=valuationSignal(s,d,5);if(val?.st)items.push({...finding(val.title,val.detail,'Valuation',val.tone),rank:83,source:'valuation'});
+ const checks=thesisConfig[s].checks.map(c=>thesisCheck(s,d,c)).filter(c=>c.status==='pressure');
+ const independent=checks.filter(c=>!items.some(i=>i.title.toLowerCase().includes(c.name.toLowerCase())||i.detail.toLowerCase().includes(c.name.toLowerCase())));
+ if(independent.length){const c=independent[0];items.push({...finding(c.name+' · thesis pressure',c.value+' · '+c.condition,'Thesis & catalysts','caution'),rank:97,source:'thesis'});}
+ items.sort((a,b)=>b.rank-a.rank);
+ const selected=[],seen=new Set();for(const i of items){if(!seen.has(i.source)){selected.push(i);seen.add(i.source);}if(selected.length===4)break;}
+ for(const i of items){if(selected.length>=4)break;if(!selected.includes(i))selected.push(i);}
+ return {priority:selected,risk,checks,val};
+}
 function overviewPanel(panel,m,d,q,p,source){
- const all=d.quarterly,prev=previous(all,q);
- const rg=quarterGrowth(all,q,'revenue'),og=quarterGrowth(all,q,'operating_profit'),eg=quarterGrowth(all,q,'eps');
- const last=all[1]||{},prg=quarterGrowth(all,last,'revenue'),diff=rg!=null&&prg!=null?rg-prg:null;
- const margin=q.operating_margin??null,marginChange=margin!=null&&prev.operating_margin!=null?margin-prev.operating_margin:null;
- const rr=riskFlags(symbol);
- const pre=symbol==='OKLO',pe=p.trailingPE>0?p.trailingPE:null;
- const peerPE=m.peers.map(s=>get(s).quote.trailingPE).filter(v=>v>0),med=peerPE.length>=2?median(peerPE):null;
- const mom=diff==null?'Not assessed':diff>2?'Accelerating':diff<-2?'Slowing':'Broadly stable';
- const growthLabel=pre?'Pre-commercial':assessmentLabel(rg,'Growing','Contracting');
- const profitLabel=q.operating_profit==null?'Not assessed':q.operating_profit>0?'Profitable':q.operating_profit<0?'Loss-making':'Break-even';
- const headline=pre?'Commercial execution is the central question.':rg==null&&q.operating_profit==null?'Financial assessment not yet available.':growthLabel+' revenue · '+profitLabel.toLowerCase()+' operations.';
- const findings=[];
- if(rg!=null&&og!=null&&Math.abs(rg-og)>8)findings.push(finding('Operating leverage', 'Operating profit '+signed(og)+' vs revenue '+signed(rg)+' YoY. '+(og<rg?'Profit growth trails sales; review costs and mix.':'Profit growth exceeds sales; review margin drivers.'),'Fundamentals',og<rg?'caution':'positive'));
- if(eg!=null&&og!=null&&Math.abs(eg-og)>15)findings.push(finding('Earnings quality divergence','Reported EPS '+signed(eg)+' vs operating profit '+signed(og)+' YoY. Review taxes and non-operating items.','Financial risk','caution'));
- for(const flag of rr.out){if(flag.startsWith('EPS vs')&&findings.some(f=>f.title==='Earnings quality divergence'))continue;findings.push(finding('Financial anomaly',flag,'Financial risk','caution'));}
- if(diff!=null)findings.push(finding('Revenue momentum',signed(rg)+' YoY vs '+signed(prg)+' in previous quarter ('+(diff>0?'+':'')+fmt(diff)+'pp).','Fundamentals',diff<-2?'caution':diff>2?'positive':'neutral'));
- if(marginChange!=null)findings.push(finding('Operating margin',pct(margin)+' · '+(marginChange>0?'+':'')+fmt(marginChange)+'pp YoY.','Fundamentals',marginChange< -1?'caution':marginChange>1?'positive':'neutral'));
- if(q.fcf!=null&&!['IBKR','HOOD'].includes(symbol))findings.push(finding('Free cash flow',money(q.fcf)+' this quarter. '+(q.fcf<0?'Review cash burn and capital spending.':'Positive cash generation after capex.'),'Fundamentals',q.fcf<0?'caution':'positive'));
- const priority=findings.sort((a,b)=>Number(b.tone==='caution')-Number(a.tone==='caution')).slice(0,4);
+ const s=symbol,all=d.quarterly||[],pre=s==='OKLO',rg=quarterGrowth(all,q,'revenue'),margin=q.operating_margin,core=broker(s)?q.pretax:q.operating_profit,ev=financialEvidence(d,all,'revenue'),analysis=overviewInsights(s,d,q),priority=analysis.priority;
+ const growthLabel=pre?'Pre-commercial':assessmentLabel(rg,'Growing','Contracting'),profitLabel=num(core)?core>0?'Profitable':core<0?'Loss-making':'Break-even':'Not assessed';
+ const riskHigh=analysis.risk.map.find(r=>r.status==='high'),riskWatch=analysis.risk.map.find(r=>r.status==='watch')||analysis.risk.extra.find(r=>r.status==='Monitor'),riskKnown=analysis.risk.map.some(r=>r.status!=='unknown')||analysis.risk.extra.length;
+ const riskLabel=riskHigh?'Elevated':riskWatch?'Monitor':riskKnown?'Reviewed':'Not assessed',riskDetail=riskHigh?.title||riskWatch?.title||(riskKnown?'No elevated reviewed exposure':'Evidence unavailable');
+ const val=analysis.val,pe=val?.st?valHistory(d).at(-1)?.pe:p.trailingPE;
+ const headline=priority[0]?.title||(pre?'Commercial execution is the central question.':num(rg)?growthLabel+' revenue · '+profitLabel.toLowerCase()+' operations.':'Financial assessment not yet available.');
  panel.classList.add('overview-panel');
  panel.innerHTML='<div class="overview-caption"><h2>Investment overview</h2><span>'+esc(q.period?'Quarter ended '+q.period:'Financial period unavailable')+'</span></div>'+
- '<div class="assessment-banner"><div class="tile-kicker">BUSINESS ASSESSMENT <span>RULE-BASED SNAPSHOT</span></div><h3>'+esc(headline)+'</h3><p class="assessment-question">'+esc(m.question)+'</p></div>'+
+ '<div class="assessment-banner"><div class="tile-kicker">BUSINESS ASSESSMENT</div><h3>'+esc(headline)+'</h3>'+(priority[0]?'<p class="assessment-question">'+esc(priority[0].detail)+'</p>':'')+'</div>'+
  '<div class="summary-strip">'+
- summaryTile('Growth',growthLabel,rg==null?'Revenue YoY unavailable':'Revenue '+signed(rg)+' YoY','Fundamentals',pre?'neutral':tone(rg))+
- summaryTile('Profitability',profitLabel,margin==null?'Margin unavailable':'Operating margin '+pct(margin),'Fundamentals',tone(q.operating_profit))+
- summaryTile('Momentum',mom,diff==null?'Prior YoY unavailable':(diff>0?'+':'')+fmt(diff)+'pp revenue growth change','Fundamentals',diff==null?'neutral':diff<-2?'caution':diff>2?'positive':'neutral')+
- summaryTile('Financial risk',rr.tested?(rr.out.length?rr.out.length+' flags':'No screen flags'):'Not assessed',rr.tested?rr.tested+' comparable checks · not a risk rating':'Financial footnotes pending','Financial risk',rr.out.length?'caution':'neutral')+
- summaryTile('Valuation',pre?'Milestones':pe==null?'N/A':med?(pe>med?'Above peers':'At/below peers'):'Current P/E',pe?fmt(pe)+'x trailing P/E':'P/E unavailable / not relevant','Valuation',med&&pe&&pe>med?'caution':'neutral')+'</div>'+
- '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><div class="section-kicker">RESEARCH PRIORITIES</div><h2 id="attention-title">What deserves your attention</h2></div><span class="attention-count">'+esc(priority.length?priority.length+' calculated findings':'No comparable findings')+'</span></div>'+
- '<div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+(f.tone==='caution'?'NEEDS ATTENTION':f.tone==='positive'?'POSITIVE CHANGE':'OBSERVATION')+'</span><strong>'+esc(f.title)+'</strong><small>'+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">Insufficient comparable information for automated findings.</p>')+'</div>'+
- '<aside class="diligence"><div class="tile-kicker">COMPANY-SPECIFIC RISKS TO INVESTIGATE</div>'+list(m.risks)+'<button class="stock-action" data-target="Business Drivers">Business Drivers ↗</button></aside></div></section>'+
- '<div class="valuation-section">'+valuationContext(m,p,pre)+'</div>'+
- '<p class="stock-note">Growth uses positive comparable prior-year values only. Financial figures: standardized Yahoo Finance; compatible prior-year comparatives may use SEC companyfacts. Assessments are mechanical, not investment recommendations or verified filing interpretations.</p>'+source;
+ summaryTile('Growth',growthLabel,num(rg)?'Revenue '+signed(rg)+' YoY':'Revenue YoY unavailable','Fundamentals',pre?'neutral':tone(rg))+
+ summaryTile('Profitability',profitLabel,broker(s)&&num(q.pretax_margin)?'Pretax margin '+pct(q.pretax_margin):num(margin)?'Operating margin '+pct(margin):'Margin unavailable','Fundamentals',tone(core))+
+ summaryTile('Momentum',evidenceClass(ev),ev.count?ev.count+' comparable YoY periods':'History unavailable','Fundamentals',ev.kind==='sustained'||ev.kind==='structural'?ev.direction<0?'caution':ev.direction>0||ev.persistence>0?'positive':'neutral':'neutral')+
+ summaryTile('Financial risk',riskLabel,riskDetail,'Financial risk',riskHigh||riskWatch?'caution':'neutral')+
+ summaryTile('Valuation',pre?'Milestones':val?.st?val.st.premium>10?'Above history':val.st.premium< -10?'Below history':'Near history':pe>0?'Current P/E':'N/A',pe>0?fmt(pe)+'x trailing P/E':'P/E unavailable / not relevant','Valuation',val?.tone||'neutral')+'</div>'+
+ '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><h2 id="attention-title">What deserves your attention</h2></div></div><div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+esc(f.target)+(f.evidence?' · '+esc(f.evidence):'')+'</span><strong>'+esc(f.title)+'</strong><small>'+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">No current material findings.</p>')+'</div><aside class="diligence"><div class="tile-kicker">THESIS PRESSURE / WATCH</div>'+list(analysis.checks.length?analysis.checks.slice(0,3).map(c=>c.name+' · '+c.value):m.risks.slice(0,3))+'<button class="stock-action" data-target="Thesis & catalysts">Review thesis ↗</button></aside></div></section>'+
+ '<div class="valuation-section">'+valuationContext(m,p,pre)+'</div>';
  panel.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{tab=b.dataset.target;render();el('panel').scrollIntoView({block:'nearest'});});
 }
-
 
 const broker=s=>['IBKR','HOOD'].includes(s);
 const isRate=k=>['gross_margin','operating_margin','pretax_margin','roe','roic','tax_rate'].includes(k);
@@ -1504,7 +1503,7 @@ function thesisPanel(panel,m,d,source){
 }
 
 function render(){controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
-el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent((symbol==='OKLO'?'NYSE':'NASDAQ')+':'+symbol);el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry;el('question').textContent=m.question;el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
+el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent((symbol==='OKLO'?'NYSE':'NASDAQ')+':'+symbol);el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry;el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
 el('overview').querySelectorAll('tr').forEach(r=>{r.onclick=()=>select(r.dataset.symbol);r.onkeydown=e=>{if(e.key==='Enter')select(r.dataset.symbol);};});
 el('cards').innerHTML=[['REVENUE YoY',pct(yoy(symbol,'revenue'))],['OPERATING MARGIN',pct(q.operating_margin)],['EPS YoY',pct(yoy(symbol,'eps'))],['TRAILING P/E',fmt(p.trailingPE)]].map(a=>'<div class="stat-card"><div class="stat-top">'+a[0]+'</div><div class="stat-number">'+a[1]+'</div><div class="stat-desc">'+esc(q.period||'No statement data')+'</div></div>').join('');
