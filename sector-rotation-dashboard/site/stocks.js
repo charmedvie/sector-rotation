@@ -646,17 +646,102 @@ function renderRiskEvolution(s,d,q){
  return '<div class="risk-evolution-grid">'+rows.map(r=>{
  const last=r.obs.at(-1),prev=r.obs.at(-2),delta=last.value-prev.value,change=r.unit==='rate'?(delta>=0?'+':'')+fmt(delta,1)+'pp':r.unit==='multiple'?(delta>=0?'+':'')+fmt(delta,2)+'x':prev.value>0&&last.value>=0?signed(100*delta/prev.value):(delta>=0?'+':'−')+money(Math.abs(delta));
  const color=r.prefer==='context'||delta===0?'neutral':(r.prefer==='up'?delta>0:delta<0)?'positive':'caution',max=Math.max(1,...r.obs.map(o=>Math.abs(o.value)));
- return '<article class="risk-evolution-card"><div class="risk-evo-head"><div><h4>'+esc(r.title)+'</h4><div class="risk-metric">'+esc(show(last.value,r.unit))+'</div><small>'+esc(last.period)+'</small></div><div class="risk-change '+color+'"><strong>'+esc(change)+'</strong><small>vs '+esc(prev.period)+'</small></div></div><div class="risk-evo-series">'+r.obs.map(o=>'<div class="risk-evo-point"><span>'+esc(o.period)+'</span><div class="risk-evo-track"><i style="width:'+Math.abs(o.value)/max*100+'%;'+(o.value<0?'background:#e88c92':'')+'"></i></div><strong>'+esc(show(o.value,r.unit))+'</strong>'+(o.url?'<a href="'+esc(o.url)+'" target="_blank" rel="noopener" title="Source disclosure" aria-label="Source disclosure">↗</a>':'<span></span>')+'</div>').join('')+'</div><p>'+esc(r.desc)+'</p><small>'+r.obs.length+' dated observations · '+(r.obs.length===2?'change, not a sustained trend':'different reporting dates; no automatic trend conclusion')+'</small></article>';
+ return '<article class="risk-evolution-card"><div class="risk-evo-head"><div><h4>'+esc(r.title)+'</h4><div class="risk-metric">'+esc(show(last.value,r.unit))+'</div><small>'+esc(last.period)+'</small></div><div class="risk-change '+color+'"><strong>'+esc(change)+'</strong><small>vs '+esc(prev.period)+'</small></div></div><div class="risk-evo-series">'+r.obs.map(o=>'<div class="risk-evo-point"><span>'+esc(o.period)+'</span><div class="risk-evo-track"><i style="width:'+Math.abs(o.value)/max*100+'%;'+(o.value<0?'background:#e88c92':'')+'"></i></div><strong>'+esc(show(o.value,r.unit))+'</strong>'+(o.url?'<a href="'+esc(o.url)+'" target="_blank" rel="noopener" title="Source disclosure" aria-label="Source disclosure">↗</a>':'<span></span>')+'</div>').join('')+'</div><p>'+esc(riskEvolutionInsight(r))+'</p></article>';
  }).join('')+'</div>';
+}
+
+
+function riskMapInsight(s,d,q,id,r){
+ const rows=d.quarterly||[],i=rows.indexOf(q),t=k=>i>=0?ttmAt(rows,i,k):null,matched=exposureFilings[s]?.period===q.period,f=filingRisk[s],same=f?.date===q.period,disc=s==='AMZN'&&qualityDisclosures.AMZN.period===q.period?qualityDisclosures.AMZN.ttm:null,ocf=disc?.ocf??t('ocf'),fcf=disc?.fcf??t('fcf'),op=t('operating_profit'),interest=t('interest_expense'),cov=ratio(op,interest);
+ const hist=(title,format=money)=>{const x=riskHistory(s,d,q).find(h=>h.title===title);if(!x||x.obs.length<2)return null;const a=x.obs[0],b=x.obs.at(-1);return title+': '+format(a.value)+' ('+a.period.slice(0,7)+') → '+format(b.value)+' ('+b.period.slice(0,7)+')';};
+ const out=(metric,bullets,conclusion,status=r.status,title='')=>({metric,bullets:bullets.filter(Boolean).slice(0,3),conclusion,status,title,method:r.why+' '+r.next});
+ const unknown=(gap,impact)=>out('Unquantified',[gap],impact,'unknown'),cashDetail=num(ocf)?'TTM operating cash flow '+money(ocf)+(num(fcf)?' · FCF '+money(fcf):''):num(cov)?'TTM interest coverage '+fmt(cov,1)+'x':null;
+ if(id==='liquidity'&&!broker(s)){
+  if(!num(q.cash)||!num(q.debt))return unknown('Cash or debt unavailable.','Financing exposure cannot be quantified without balances and the maturity schedule.');
+  const debt=q.debt-q.cash,positive=debt>0,metric=money(Math.abs(debt))+(positive?' net debt':' net cash'),bullets=['Cash '+money(q.cash)+' vs debt '+money(q.debt)+(ocf>0&&positive?' · net debt / TTM OCF '+fmt(debt/ocf,1)+'x':''),s==='AMZN'&&matched?hist('Long-term debt face value'):hist('Net cash / (debt)'),cashDetail];
+  if(s==='AMZN'&&matched)return out(metric,bullets,'Increasing financing dependency and '+money(883.6e9)+' of multi-year commitments are the principal concern. '+(num(cov)?'Interest coverage is '+fmt(cov,1)+'x; maturities and investment funding still matter.':'Immediate solvency distress is not established; debt-service capacity remains unquantified.'),num(cov)&&cov<1?'high':'watch','Debt and financing exposure');
+  if(s==='GOOGL'&&matched)return out(metric,bullets,money(213.4e9)+' of purchase commitments fall due within 12 months; financing flexibility matters more than recorded net debt alone.',num(cov)&&cov<1?'high':'watch','Debt and financing exposure');
+  if(num(cov)&&cov<1)return out(metric,bullets,'Operating profit does not cover reported interest; cash reserves and refinancing are material risks.','high','Debt and financing exposure');
+  if(positive&&num(fcf)&&fcf<0)return out(metric,bullets,'Debt plus negative trailing FCF increases reliance on reserves or external financing. Maturity timing determines urgency.','watch','Debt and financing exposure');
+  if(positive)return out(metric,bullets,num(cov)&&cov>=3?'Operating profit provides an interest-service buffer; net debt alone does not establish distress.':'Debt exceeds cash, but serviceability cannot be inferred from this balance alone.',num(cov)&&cov<3?'watch':'disclosed','Debt and financing exposure');
+  return out(metric,bullets,'Cash exceeds recorded debt, providing a cushion. '+(s==='NVDA'?'Cloud and customer-credit commitments can still absorb liquidity.':s==='KTOS'?'Contract billing and production can still absorb cash.':'Unrecorded commitments may reduce available funding.'),'disclosed','Debt and financing exposure');
+ }
+ if(id==='coverage'){
+  if(!num(cov))return unknown('Four comparable quarters of operating profit and interest expense required.','Debt-service headroom is not established.');
+  const old=ratio(matchedTtmPrior(d,rows,'operating_profit',i),matchedTtmPrior(d,rows,'interest_expense',i));
+  return out(fmt(cov,1)+'x coverage',['TTM operating profit '+money(op)+' vs interest '+money(interest),num(old)?'Prior-year coverage '+fmt(old,1)+'x → '+fmt(cov,1)+'x':null,num(fcf)?'TTM FCF '+money(fcf):null],cov<1?'Profit is insufficient to cover interest; reserves or financing are needed.':cov<3?'The earnings buffer is thin; weaker operations or refinancing costs could reduce coverage.':'Current operating profit comfortably covers interest; principal maturities and leases still determine funding needs.',cov<1?'high':cov<3?'watch':'clear');
+ }
+ if(id==='shortterm'){
+  if(!num(q.cash)||!(q.current_liabilities>0))return unknown('Cash or current liabilities unavailable.','Near-term funding headroom cannot be quantified.');
+  const x=q.cash/q.current_liabilities;
+  return out(fmt(x,2)+'x cash coverage',['Cash '+money(q.cash)+' vs current liabilities '+money(q.current_liabilities),hist('Cash / current liabilities',v=>fmt(v,2)+'x'),cashDetail],x>=1?'Cash covers current liabilities on paper; restrictions and unrecorded commitments determine usable headroom.':num(ocf)&&ocf>0?'Cash alone does not cover current liabilities; operating inflows matter. '+(num(fcf)&&fcf<0?'Negative FCF increases funding dependency.':'This alone does not establish distress.'):'Cash alone does not cover current liabilities; ability to fund the gap is unquantified.',x<.5?'watch':'disclosed');
+ }
+ if(id==='inventory'||id==='receivables'){
+  const level=q[id],prior=comparablePrior(d,rows,q,id),a=comparableChange(d,rows,q,id),b=comparableChange(d,rows,q,'revenue'),bullets=[num(level)?id[0].toUpperCase()+id.slice(1)+' '+money(level)+(num(prior)?' vs '+money(prior)+' a year earlier':''):null,num(a)&&num(b)?'Asset balance '+signed(a)+' vs sales '+signed(b)+' YoY':null];
+  if(s==='NVDA'&&matched&&id==='inventory')return out(num(level)?money(level):'Inventory provisions',[...bullets,'Quarterly provisions '+money(680e6)+' vs '+money(378e6)],'Quarterly provisions rose, but nine-month provisions fell from '+money(3.6e9)+' to '+money(2.3e9)+'. Evidence is mixed; product transitions and obsolescence remain the exposures.',r.status==='watch'?'watch':'disclosed');
+  if(s==='NVDA'&&matched&&id==='receivables')return out(num(level)?money(level):'35% concentration',[...bullets,'Two direct customers account for 35% of receivables'],'Concentrated credit exposure matters even when receivables track sales; collection terms determine risk.','watch');
+  if(s==='KTOS'&&matched&&id==='receivables')return out(num(level)?money(level):money(359.6e6)+' contract assets',[...bullets,'Net contract assets '+money(219e6)+' → '+money(359.6e6)+' since FY-end'],'Contract assets can absorb funding until milestones are billed and collected.','watch');
+  if(!num(level))return unknown('Asset balance unavailable.','Impairment or collection exposure cannot be quantified.');
+  const persistent=riskEvidence(s,d,q,id,r).label==='Persistent risk flag';
+  return out(money(level),bullets,persistent?'Asset balances outgrew sales across three comparable YoY periods; funding and realization deserve scrutiny.':num(a)&&num(b)&&a>b+10?'Asset balances outgrew sales in the latest comparison: emerging exposure, not proof of impairment.':'Persistent deterioration is not established; asset aging and collection remain decisive.',persistent||r.status==='watch'?'watch':'disclosed');
+ }
+ if(id==='capital'){
+  if(s==='IBKR'&&same)return out(fmt(f.capital/f.required,2)+'x coverage',['Capital '+money(f.capital)+' vs required '+money(f.required),hist('Excess regulatory capital'),'A 0.5% unrecovered margin-loan loss would consume '+pct(100*.005*f.marginLoans/(f.capital-f.required))+' of aggregate surplus'],'Aggregate capital is substantial, but not necessarily transferable between regulated subsidiaries.','clear');
+  return unknown('Subsidiary capital and required buffers unavailable.','Corporate cash cannot substitute for regulatory capital; loss absorption remains unassessed.');
+ }
+ if(id==='liquidity'&&broker(s)){
+  if(s==='IBKR'&&same)return out(pct(f.liquid)+' liquid assets',['Government securities pledged to clearing organizations','Aggregate capital surplus '+money(f.capital-f.required)+'; not available cash'],'Encumbrance and clearing calls limit deployable cash despite high reported asset liquidity.','disclosed');
+  if(s==='HOOD'&&matched)return out(money(839e6)+' card financing',['Card financing '+money(602e6)+' → '+money(839e6)+' since FY-end','Gross card portfolio '+money(f.loans)],'Warehouse financing supports credit growth but may need replacement under stress; unrestricted cash remains unquantified.','watch');
+  return unknown('Segregated assets and corporate cash not reconciled.','Customer assets are not shareholder funding.');
+ }
+ if(id==='credit'&&s==='IBKR'&&same)return out(money(f.marginLoans),['Average margin loans '+money(f.oldMarginLoans)+' → '+money(f.marginLoans)+' YoY','Nine-month customer bad debt '+money(f.badDebt9m),'Regulatory capital surplus '+money(f.capital-f.required)],'Exposure expanded while reported realized losses remain low; the vulnerability is discontinuous collateral losses rather than evidence of broad defaults.','watch');
+ if(id==='tail'&&s==='IBKR'&&same)return out('Collateral gap risk',['Average margin loans '+money(f.marginLoans),'A 0.5% unrecovered loss equals '+money(f.marginLoans*.005),'Government securities pledged to clearing organizations'],'Clearing calls can coincide with collateral losses; capital does not eliminate liquidity timing risk.','structural');
+ if(id==='cards'&&s==='HOOD'&&same)return out(pct(100*f.pastDue/f.loans)+' past due',['Past-due share '+pct(100*f.oldPastDue/f.oldLoans)+' → '+pct(100*f.pastDue/f.loans)+' since FY-end','Quarterly provisions '+money(f.oldCardProvision)+' → '+money(f.cardProvision)+' YoY','Gross portfolio '+money(f.oldLoans)+' → '+money(f.loans)+' since FY-end'],'Rising delinquency and provisions are an emerging warning; vintage, seasoning and loss allocation determine the economic impact.','watch');
+ if(id==='runway'){
+  const cash=matched&&s==='OKLO'?3.1308e9:q.cash,burn=t('fcf');
+  if(!num(cash))return unknown('Cash and securities unavailable.','Financing gap cannot be quantified.');
+  return out(num(burn)&&burn<0?fmt(12*cash/-burn,0)+' months historical runway':money(cash)+' liquidity',['Cash and investments '+money(cash),num(burn)?'TTM FCF '+money(burn):null,matched?'Management reports one-year operating funding sufficiency; deployment funding is not established':null],'Historical burn does not capture accelerated construction costs. Project budgets and committed funding determine the true gap.',num(burn)&&burn<0&&12*cash/-burn<12?'high':num(burn)&&burn<0&&12*cash/-burn<24?'watch':'disclosed');
+ }
+ return unknown('Period-matched disclosure unavailable.','Exposure cannot be quantified from the available filing data.');
+}
+function riskEvolutionInsight(r){
+ const a=r.obs[0],b=r.obs.at(-1),trend=b.value>a.value?'increased':b.value<a.value?'declined':'was unchanged';
+ const context={
+ 'Excess regulatory capital':'Aggregate surplus provides a loss buffer, but is not freely transferable.',
+ 'Average margin loans':'Compare gross exposure with realized bad debt, collateral and regulatory surplus.',
+ 'Net interest margin':'Yield changes affect interest income; balances and funding mix determine the earnings impact.',
+ 'Credit card financing':'Financing growth can increase refinancing exposure if credit losses also rise.',
+ 'Gross card portfolio':'Larger loan balances increase gross loss exposure; vintage performance determines credit quality.',
+ 'Past-due share':'Delinquency adjusts for portfolio growth; an increase indicates emerging credit pressure.',
+ 'Quarterly card provision':'Compare provisioning with balances, charge-offs and loss-sharing terms.',
+ 'Total contractual commitments':'Expanding obligations reduce flexibility if demand slows; recorded and unrecorded obligations overlap.',
+ 'Leases not yet commenced':'Future leases create fixed-payment exposure; utilization and timing determine pressure.',
+ 'Long-term debt face value':'Compare future principal obligations with interest coverage and free cash flow.',
+ 'AWS segment assets':'Incremental cloud profit and cash generation must justify infrastructure expansion.',
+ 'Uncommenced future leases':'Future fixed payments extend beyond recognized lease liabilities.',
+ 'Material purchase commitments':'Procurement dependency and payment terms determine exposure.',
+ 'Short-term purchase commitments':'Procurement competes with other uses of cash; avoid deducting commitments twice from OCF.',
+ 'Net receivables':'Larger balances raise counterparty exposure; compare with sales, aging and collections.',
+ 'Cloud and data center commitments':'Contracted capacity may require payments even if demand weakens.',
+ 'Quarterly inventory provisions':'Cross-check nine-month provisions; product transitions can drive quarterly volatility.',
+ 'Nine-month inventory provisions':'Nine-month comparisons reduce quarterly noise but do not establish future obsolescence risk.',
+ 'Net contract assets':'Unbilled assets can absorb funding until milestones are billed and collected.',
+ 'Government revenue concentration (annual)':'Dependence on a common government budget and procurement cycle is structural.',
+ 'Government revenue concentration (Q3)':'A higher share increases common-customer dependency; compare annual concentration.',
+ 'Cash and equivalents (excludes marketable securities)':'Cash reflects financing capacity, not proof of fully funded reactor construction.',
+ 'Cash / current liabilities':'Restrictions, scheduled payments and cash conversion determine usable liquidity.',
+ 'Net cash / (debt)':'Recorded net financing excludes future commitments; maturities and cash generation determine resilience.'
+ }[r.title]||r.desc;
+ return 'Across '+r.obs.length+' dated observations, the measure '+trend+'. '+context+(r.obs.length===2?' Two dates do not establish persistence.':'');
 }
 
 function riskPanel(panel,m,d,q,note,source){
  const s=symbol,config=exposureDimensions[s],f=exposureFilings[s],filing=filingRisk[s],recent=(d.quarterly||[]).slice(0,4).reverse(),stress=renderStress(s,d,q),exposures=exposureCards(s,q);
- const rs=config.map(([id,title])=>{const r=resilienceAt(s,d,q,id),e=riskEvidence(s,d,q,id,r);return {id,title,...r,evidence:e};});
+ const rs=config.map(([id,title])=>{const r=resilienceAt(s,d,q,id),a=riskMapInsight(s,d,q,id,r);return {id,...r,...a,title:a.title||title};});
  const label=r=>riskLabels[r.status]||'Not assessed';
- const scope='Current exposure is not a probability of loss. A single balance-sheet or filing observation is not a sustained trend.';
+ const scope='Risk judgments combine current levels, comparable history and filing evidence; missing inputs remain unquantified.';
  panel.innerHTML='<h2>Financial risk</h2><p class="risk-intro">Solvency · funding flexibility · hidden commitments · counterparty and contingent risks · '+esc(q.period||'Reporting period unavailable')+'</p>'+
- '<section class="risk-section"><div class="section-kicker">01 / FINANCIAL RESILIENCE</div><h3>Risk map</h3><div class="risk-map">'+rs.map(r=>'<article class="risk-map-item risk-'+r.status+'"><div class="risk-map-top"><strong>'+esc(r.title)+'</strong><span>'+esc(label(r))+'</span></div><div class="risk-metric">'+esc(r.metric)+'</div><small>'+esc(r.why)+'</small><div class="evidence-detail">'+esc(r.evidence.label)+' · '+esc(r.evidence.detail)+'</div></article>').join('')+'</div><p class="stock-note">'+esc(scope)+' No flag does not establish low overall risk.</p></section>'+
+ '<section class="risk-section"><div class="section-kicker">01 / FINANCIAL RESILIENCE</div><h3>Risk map</h3><div class="risk-map">'+rs.map(r=>'<article class="risk-map-item risk-'+r.status+'"><div class="risk-map-top"><strong title="'+esc(r.method)+'">'+esc(r.title)+'</strong><span>'+esc(label(r))+'</span></div><div class="risk-metric">'+esc(r.metric)+'</div><ul class="exposure-bullets">'+r.bullets.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul><div class="risk-map-conclusion">'+esc(r.conclusion)+'</div></article>').join('')+'</div><p class="stock-note">'+esc(scope)+' No flag does not establish low overall risk.</p></section>'+
  '<section class="risk-section risk-focus"><div class="section-kicker">02 / FILING-LEVEL EXPOSURES</div><h3>Risks beneath the surface</h3><div class="risk-priority-grid">'+(exposures.length?exposures.map(r=>'<article class="risk-priority exposure-card risk-'+exposureTone[r.status]+'"><div class="risk-map-top"><span>'+esc(r.status==='Structural'?'Structural exposure':r.status==='Monitor'?'Material exposure':'Dated disclosure')+'</span></div><h4>'+esc(r.title)+'</h4><div class="risk-metric">'+esc(r.metric)+'</div><ul class="exposure-bullets"><li>'+esc(r.observation)+'</li><li>'+esc(r.impact)+'</li></ul><div class="risk-next"><strong>WHAT COULD CHANGE THE RISK</strong><p>'+esc(r.next)+'</p></div><a class="risk-cite" href="'+esc(r.url)+'" target="_blank" rel="noopener">Filing / disclosure · '+esc(r.period)+' ↗</a></article>').join(''):'<p class="stock-note">No period-matched filing-level exposure snapshot. '+(f?'Most recent reviewed snapshot: '+esc(f.period)+'.':'')+' No current conclusion inferred.</p>')+'</div>'+
  (s==='AMZN'&&exposures.length?'<div class="risk-method"><h4>Scheduled contractual payments</h4>'+table(['Period','Principal commitments'],[['Remaining 2026','$31.6B'],['2027','$124.3B'],['2028','$85.6B'],['2029','$103.0B'],['2030','$76.4B'],['Thereafter','$462.7B']])+'<p class="stock-note">Includes debt principal and interest, leases, purchases and other commitments. These amounts are not additional to recorded debt and do not represent annual capex alone.</p></div>':'')+
  '<p class="stock-note">Issuer disclosures are date-matched. Amounts may overlap, have different maturity profiles or reflect contingent obligations. Do not sum the cards as a total exposure.</p></section>'+
