@@ -931,22 +931,83 @@ function driverContribution(cfg,ids,title,unit='$B'){
  const vals=rows.map(r=>({label:r.label,now:r.values[3],old:r.values[4],change:r.values[3]-r.values[4]})),total=vals.reduce((a,x)=>a+x.change,0),max=Math.max(1,...vals.map(x=>Math.abs(x.change)));
  return '<div class="driver-contribution"><h4>'+esc(title)+'</h4><div class="driver-contrib-list">'+vals.map(x=>'<div><div class="risk-bar-label"><span>'+esc(x.label)+'</span><strong>'+esc((x.change>=0?'+':'−')+kpiFmt({unit},Math.abs(x.change)))+(total>0?' · '+esc(pct(100*x.change/total)):'')+'</strong></div><div class="kpi-signed-track"><i></i><span class="'+(x.change<0?'negative':'positive')+'" style="width:'+Math.abs(x.change)/max*50+'%"></span></div></div>').join('')+'</div><p class="stock-note">Contribution to total change across these non-overlapping categories; negative contributions may offset growth. Rounded display, full-precision calculations.</p></div>';
 }
+
+// Reading layer only: retain the full disclosed metric catalogue and detailed assessment.
+const driverBriefs={
+ AMZN:[
+ {ids:['paidUnits','onlineGrowth','naTtmMargin'],headline:'Retail growth cooled in the latest quarter',points:['Paid-unit growth eased from 17% to 12%; online store growth ex-FX fell to 2%.','Shipping cost growth was below unit growth; regional margins provide a broader profitability cross-check.']},
+ {ids:['sellerMix','sellerGrowth'],headline:'Stable seller mix, stronger services growth',points:['Seller unit share stayed near 60–61% across four quarters.','Seller services grew faster than online store sales; a higher take rate is not established.']},
+ {ids:['adsGrowth','subsGrowth'],headline:'Advertising slowed; subscriptions held steady',points:['Advertising growth ex-FX eased from 26% to 12%.','Subscription growth held near 12% across four quarters; one ad slowdown does not establish a trend.']},
+ {ids:['awsGrowth','rpo','awsTtmMargin'],headline:'Cloud demand is expanding',points:['AWS growth ex-FX increased from 24% to 39% across four quarters.','Contract conversion and returns on the expanding asset base matter for durability.']}
+ ],
+ IBKR:[
+ {ids:['accounts','equity'],headline:'Customer base is expanding',points:['Accounts grew faster than commissions in the latest YoY comparison.','Client equity includes market appreciation; organic inflows need separate evidence.']},
+ {ids:['darts','perOrder'],headline:'More activity, lower yield per order',points:['Trading activity rose YoY, while commission per cleared order fell.','Monitor engagement per account and product mix.']},
+ {ids:['loans','nim'],headline:'Lending expansion alongside yield pressure',points:['Margin balances rose and net interest margin fell in the latest YoY comparison.','Durability depends on balances, funding mix and interest rates.']}
+ ],
+ HOOD:[
+ {ids:['customers','deposits','depositRate'],headline:'Asset gathering eased recently',points:['Customers and platform assets expanded; net deposits fell sequentially.','Acquisition and definition changes limit organic comparisons.']},
+ {ids:['gold','arpu'],headline:'Paid adoption and monetisation increased',points:['Gold subscribers and ARPU rose YoY.','Product-level returns and customer acquisition costs remain important.']},
+ {ids:['trans','nii'],headline:'Trading and interest income diverged',points:['Transaction revenue rose YoY while interest revenue fell.','The mix is more activity-sensitive; sustained change needs more history.']}
+ ],
+ GOOGL:[
+ {ids:['search','tac'],headline:'Search remains the core revenue engine',points:['Search grew YoY; traffic costs offer a distribution-cost cross-check.','AI search unit economics cannot be isolated from reported Services margins.']},
+ {ids:['youtube','subs'],headline:'Video advertising and broader subscriptions grew',points:['Both categories increased YoY.','Engagement, subscriber mix and ad yield are needed to explain the change.']},
+ {ids:['cloud','cloudMargin','backlog'],headline:'Cloud growth and profitability increased',points:['Cloud revenue more than doubled YoY and segment margin improved.','Backlog conversion and capacity determine durability.']}
+ ],
+ NVDA:[
+ {ids:['dc','compute'],headline:'Data Center demand has expanded',points:['Data Center revenue increased across four reported quarters.','Separate compute and networking data are needed to isolate architecture demand.']},
+ {ids:['dcShare','graphics'],headline:'Growth is concentrated in Data Center',points:['Data Center accounts for most sales.','Graphics and Data Center use different reporting dimensions; do not add them.']},
+ {ids:[],headline:'Customer mix and execution remain unquantified',points:['Comparable end-customer mix and inventory turnover are not populated.','Receivable concentration is not the same as revenue concentration.']}
+ ],
+ KTOS:[
+ {ids:['bookTTM','backlog'],headline:'Bookings are ahead of sales',points:['TTM book-to-bill exceeds one; backlog rose sequentially.','Order timing is lumpy; follow funded orders and conversion.']},
+ {ids:['fundedShare','organic'],headline:'Funded backlog supports demand visibility',points:['Funded orders are more actionable than total backlog, but not recognized revenue.','Delivery schedules and production throughput determine conversion.']},
+ {ids:['kgs','kus'],headline:'Segment demand is diverging',points:['Government Solutions backlog rose; Unmanned Systems backlog fell sequentially.','A single comparison does not establish a segment trend.']}
+ ],
+ OKLO:[
+ {milestones:[3,4],headline:'Design and safety milestones are progressing',points:['Specific design and safety approvals have been reported.','Commercial operating authorization remains a distinct gate.']},
+ {milestones:[0,5],headline:'Site and fuel readiness are progressing',points:['Site progress and fuel allocation support development.','Fuel fabrication, construction and authorized operation remain separate.']},
+ {milestones:[6,7],headline:'Pipeline is not yet executable capacity',points:['Announced commercial interest is not binding contracted capacity.','Track funded projects, binding PPAs and customer commitments.']}
+ ]
+};
+function driverSummaryMetric(r){
+ const v=r.values[3],old=r.values[4],rateSeries=['awsGrowth','organic','paidUnits','onlineGrowth','sellerGrowth','adsGrowth','subsGrowth','shippingGrowth'].includes(r.id);
+ const change=!rateSeries&&num(old)?'YoY '+kpiDeltaText(r,v,old):'';
+ return '<div class="driver-key-metric" title="'+esc(r.why)+'"><span>'+esc(r.label)+'</span><strong>'+esc(kpiFmt(r,v))+'</strong>'+(change?'<small>'+esc(change)+'</small>':'')+'</div>';
+}
+function driverDetailTable(rs,cfg){
+ const labels=cfg.periods||['Q4 2025','Q1 2026','Q2 2026','Q3 2026'];
+ return '<div class="driver-detail-list">'+rs.map(r=>{
+ const values=r.values.slice(0,4).map((v,i)=>num(v)?'<span>'+esc(labels[i])+' <b>'+esc(kpiFmt(r,v))+'</b></span>':'').filter(Boolean);
+ const old=num(r.values[4])?'<span>Prior-year comparable <b>'+esc(kpiFmt(r,r.values[4]))+'</b></span>':'';
+ const ev=kpiEvidence(r),rateSeries=['awsGrowth','organic','paidUnits','onlineGrowth','sellerGrowth','adsGrowth','subsGrowth','shippingGrowth'].includes(r.id);
+ return '<div class="driver-detail-row"><div><strong title="'+esc(r.why)+'">'+esc(r.label)+' <sup>['+(r.src+1)+']</sup></strong><small>'+esc(r.why)+'</small></div><div><div class="driver-detail-values">'+values.join('')+old+'</div>'+(rateSeries&&ev.count>=3?'<small class="evidence-detail">'+esc(evidenceClass(ev))+' · '+esc(ev.summary)+'</small>':'')+'</div></div>';
+ }).join('')+'</div>';
+}
+
 function kpiPanel(panel,m,d,source){
- const s=symbol,cfg=kpiData[s],groups=driverGroups[s],rows=cfg.rows,by=id=>rows.find(r=>r.id===id),latestPeriod=d.quarterly?.[0]?.period,stale=latestPeriod&&latestPeriod>cfg.period,foot=cfg.sources.map(([n,url],i)=>'<a href="'+esc(url)+'" target="_blank" rel="noopener">['+(i+1)+'] '+esc(n)+' ↗</a>').join(' · ');
+ const s=symbol,cfg=kpiData[s],groups=driverGroups[s],briefs=driverBriefs[s],rows=cfg.rows,by=id=>rows.find(r=>r.id===id),latestPeriod=d.quarterly?.[0]?.period,stale=latestPeriod&&latestPeriod>cfg.period,foot=cfg.sources.map(([n,url],i)=>'<a href="'+esc(url)+'" target="_blank" rel="noopener">['+(i+1)+'] '+esc(n)+' ↗</a>').join(' · ');
  const groupHtml=groups.map((g,i)=>{
- const rs=(g.ids||[]).map(by).filter(Boolean),available=rs.filter(r=>num(r.values[3])),missing=rs.filter(r=>!num(r.values[3])).map(r=>r.label);
- const milestones=(g.milestones||[]).map(i=>cfg.milestones[i]).filter(Boolean);
- return '<section class="driver-group"><div class="driver-group-head"><div><div class="section-kicker">'+String(i+1).padStart(2,'0')+' / '+esc(g.kind)+'</div><h3>'+esc(g.name)+'</h3></div></div>'+
- (available.length?'<div class="driver-metrics">'+available.map(r=>driverMetric(r,cfg)).join('')+'</div>':'')+
- (milestones.length?'<div class="driver-metrics">'+milestones.map(x=>'<article class="driver-metric"><div class="driver-metric-label">'+esc(x[0])+'</div><strong class="driver-milestone">'+esc(x[1])+'</strong><small>'+esc(x[3])+' · '+esc(x[2])+'</small><p>'+esc(x[4])+'</p></article>').join('')+'</div>':'')+
+ const brief=briefs[i],rs=(g.ids||[]).map(by).filter(Boolean),available=rs.filter(r=>num(r.values[3])),missing=rs.filter(r=>!num(r.values[3])).map(r=>r.label);
+ const key=(brief.ids||[]).map(by).filter(r=>r&&num(r.values[3])),milestones=(g.milestones||[]).map(i=>cfg.milestones[i]).filter(Boolean),keyMilestones=(brief.milestones||[]).map(i=>cfg.milestones[i]).filter(Boolean);
+ const keyHTML=key.map(driverSummaryMetric).join('')+keyMilestones.map(x=>'<div class="driver-key-metric"><span>'+esc(x[0])+'</span><strong class="driver-milestone-brief">'+esc(x[1])+'</strong><small>'+esc(x[2])+'</small></div>').join('');
+ return '<section class="driver-group driver-compact"><div class="driver-group-head"><div class="section-kicker">'+esc(g.kind)+'</div><h3>'+esc(g.name)+'</h3></div><h4 class="driver-brief-headline">'+esc(brief.headline)+'</h4>'+
+ (keyHTML?'<div class="driver-key-grid">'+keyHTML+'</div>':'')+
+ '<ul class="driver-brief-points">'+brief.points.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul>'+
+ '<details class="driver-expand"><summary>Metrics &amp; history'+(available.length?' · '+available.length+' metrics':milestones.length?' · '+milestones.length+' milestones':'')+'</summary><div class="driver-expand-body">'+
+ (available.length?driverDetailTable(available,cfg):'')+
+ (milestones.length?'<div class="driver-detail-list">'+milestones.map(x=>'<div class="driver-detail-row"><div><strong>'+esc(x[0])+'</strong><small>'+esc(x[3])+' · '+esc(x[2])+'</small></div><div><strong>'+esc(x[1])+'</strong><small>'+esc(x[4])+'</small></div></div>').join('')+'</div>':'')+
  '<div class="driver-assessment"><strong>What the drivers are telling us</strong><p>'+esc(g.take)+'</p></div><div class="driver-watch"><strong>Watch next</strong><p>'+esc(g.watch)+'</p></div>'+
- (missing.length?'<div class="driver-gap">Evidence missing: '+esc(missing.join(' · '))+'</div>':'')+'</section>';
+ (missing.length?'<div class="driver-gap">Evidence missing: '+esc(missing.join(' · '))+'</div>':'')+'</div></details></section>';
  }).join('');
  const mix=cfg.mix?'<section class="kpi-section"><div class="section-kicker">BUSINESS ENGINE MIX</div><h3>'+esc(cfg.mix.title||'Revenue composition')+'</h3><div class="driver-mix-grid">'+kpiMix(cfg.mix)+(s==='AMZN'?driverContribution(cfg,['online','physical','seller','ads','subs','aws','other'],'Incremental revenue by business category'):s==='GOOGL'?driverContribution(cfg,['search','youtube','cloud','subs'],'Incremental revenue from selected categories'):s==='IBKR'||s==='HOOD'||s==='NVDA'?'<div><h4>Growth comparison · latest YoY</h4>'+kpiGrowthBars(cfg.compare.map(by).filter(Boolean))+'</div>':'')+'</div>'+(s==='AMZN'?driverContribution(cfg,['naProfit','intlProfit','awsProfit'],'Incremental operating profit by reported segment')+'<p class="stock-note">Advertising, seller services and subscriptions are already included in geographic segment results. Separate operating profit for these businesses is not disclosed.</p>':'')+'</section>':'';
+
  const used=new Set(groups.flatMap(g=>g.ids||[])),remaining=rows.filter(r=>!used.has(r.id)&&num(r.values[3]));
- panel.innerHTML='<h2>Business Drivers</h2><p class="stock-note">Demand, monetisation, mix and scalability · disclosure period '+esc(cfg.period)+(stale?' · historical snapshot; newer financial results exist':'')+'</p><div class="driver-intro">Focus on the inputs to financial performance. The latest observation identifies changes; only comparable multi-period evidence supports a durable trend.</div>'+groupHtml+mix+
- (remaining.length?'<details class="risk-method"><summary>Other disclosed metrics</summary><div class="driver-metrics">'+remaining.map(r=>driverMetric(r,cfg)).join('')+'</div></details>':'')+
- '<details class="risk-method"><summary>Sources & methodology</summary><div class="section-kicker">OPERATIONAL MOMENTUM</div><p>'+foot+'</p><p>Reported quarter values are shown without empty placeholders. Sequential levels may be seasonal. Year-over-year rate series are labelled explicitly; single-year comparisons do not establish sustained growth. Snapshot data requires filing refresh; no missing indicators are estimated. NVIDIA uses fiscal quarter labels.</p>'+source+'</details>';
+ panel.innerHTML='<h2>Business Drivers</h2><p class="stock-note">Growth engines · disclosure period '+esc(cfg.period)+(stale?' · historical snapshot; newer financial results exist':'')+'</p><div class="driver-summary-grid">'+groupHtml+'</div>'+
+ (mix?'<details class="driver-expand driver-wide"><summary>Business mix &amp; growth contribution</summary><div class="driver-expand-body">'+mix+'</div></details>':'')+
+ (remaining.length?'<details class="driver-expand driver-wide"><summary>Other disclosed metrics · '+remaining.length+'</summary><div class="driver-expand-body">'+driverDetailTable(remaining,cfg)+'</div></details>':'')+
+ '<details class="risk-method"><summary>Sources & methodology</summary><div class="section-kicker">OPERATIONAL MOMENTUM</div><p>'+foot+'</p><p>Only comparable multi-period evidence supports a durable trend. Reported quarter values are shown without empty placeholders. Sequential levels may be seasonal. Year-over-year rate series are labelled explicitly. Snapshot data requires filing refresh; no missing indicators are estimated. NVIDIA uses fiscal quarter labels.</p>'+source+'</details>';
 }
 
 let valuationYears=5,valuationMetric='pe';
