@@ -971,6 +971,25 @@ const driverBriefs={
  {milestones:[6,7],headline:'Pipeline is not yet executable capacity',points:['Announced commercial interest is not binding contracted capacity.','Track funded projects, binding PPAs and customer commitments.']}
  ]
 };
+
+// Assessment colours reflect the reviewed disclosure, not a stock recommendation.
+// Mixed or emerging changes stay amber; missing evidence stays neutral.
+const driverTones={
+ AMZN:['mixed','mixed','mixed','positive'],
+ IBKR:['positive','mixed','mixed'],
+ HOOD:['mixed','positive','mixed'],
+ GOOGL:['positive','positive','positive'],
+ NVDA:['positive','mixed','unknown'],
+ KTOS:['positive','positive','mixed'],
+ OKLO:['positive','positive','mixed']
+};
+const driverToneLabels={positive:'Positive development',mixed:'Mixed / monitor',unknown:'Not assessed'};
+function driverSourceLinks(cfg,rs){
+ const indices=[...new Set(rs.map(r=>r.src||0))];
+ if(!indices.length)indices.push(0);
+ return indices.map(i=>cfg.sources[i]).filter(Boolean).map(([n,url])=>'<a class="driver-source-link" href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(n)+' ↗</a>').join(' · ');
+}
+
 function driverSummaryMetric(r){
  const v=r.values[3],old=r.values[4],rateSeries=['awsGrowth','organic','paidUnits','onlineGrowth','sellerGrowth','adsGrowth','subsGrowth','shippingGrowth'].includes(r.id);
  const change=!rateSeries&&num(old)?'YoY '+kpiDeltaText(r,v,old):'';
@@ -989,25 +1008,24 @@ function driverDetailTable(rs,cfg){
 function kpiPanel(panel,m,d,source){
  const s=symbol,cfg=kpiData[s],groups=driverGroups[s],briefs=driverBriefs[s],rows=cfg.rows,by=id=>rows.find(r=>r.id===id),latestPeriod=d.quarterly?.[0]?.period,stale=latestPeriod&&latestPeriod>cfg.period,foot=cfg.sources.map(([n,url],i)=>'<a href="'+esc(url)+'" target="_blank" rel="noopener">['+(i+1)+'] '+esc(n)+' ↗</a>').join(' · ');
  const groupHtml=groups.map((g,i)=>{
- const brief=briefs[i],rs=(g.ids||[]).map(by).filter(Boolean),available=rs.filter(r=>num(r.values[3])),missing=rs.filter(r=>!num(r.values[3])).map(r=>r.label);
+ const brief=briefs[i],tone=stale?'unknown':driverTones[s][i],rs=(g.ids||[]).map(by).filter(Boolean),available=rs.filter(r=>num(r.values[3])),missing=rs.filter(r=>!num(r.values[3])).map(r=>r.label);
  const key=(brief.ids||[]).map(by).filter(r=>r&&num(r.values[3])),milestones=(g.milestones||[]).map(i=>cfg.milestones[i]).filter(Boolean),keyMilestones=(brief.milestones||[]).map(i=>cfg.milestones[i]).filter(Boolean);
  const keyHTML=key.map(driverSummaryMetric).join('')+keyMilestones.map(x=>'<div class="driver-key-metric"><span>'+esc(x[0])+'</span><strong class="driver-milestone-brief">'+esc(x[1])+'</strong><small>'+esc(x[2])+'</small></div>').join('');
- return '<section class="driver-group driver-compact"><div class="driver-group-head"><div class="section-kicker">'+esc(g.kind)+'</div><h3>'+esc(g.name)+'</h3></div><h4 class="driver-brief-headline">'+esc(brief.headline)+'</h4>'+
+ return '<section class="driver-group driver-compact driver-tone-'+tone+'"><div class="driver-group-head"><div class="driver-status-row"><div class="section-kicker">'+esc(g.kind)+'</div><span class="driver-assessment-status">'+esc(stale?'Historical snapshot':driverToneLabels[tone])+'</span></div><h3>'+esc(g.name)+'</h3></div><h4 class="driver-brief-headline">'+esc(brief.headline)+'</h4>'+
  (keyHTML?'<div class="driver-key-grid">'+keyHTML+'</div>':'')+
  '<ul class="driver-brief-points">'+brief.points.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul>'+
  '<details class="driver-expand"><summary>Metrics &amp; history'+(available.length?' · '+available.length+' metrics':milestones.length?' · '+milestones.length+' milestones':'')+'</summary><div class="driver-expand-body">'+
  (available.length?driverDetailTable(available,cfg):'')+
  (milestones.length?'<div class="driver-detail-list">'+milestones.map(x=>'<div class="driver-detail-row"><div><strong>'+esc(x[0])+'</strong><small>'+esc(x[3])+' · '+esc(x[2])+'</small></div><div><strong>'+esc(x[1])+'</strong><small>'+esc(x[4])+'</small></div></div>').join('')+'</div>':'')+
  '<div class="driver-assessment"><strong>What the drivers are telling us</strong><p>'+esc(g.take)+'</p></div><div class="driver-watch"><strong>Watch next</strong><p>'+esc(g.watch)+'</p></div>'+
- (missing.length?'<div class="driver-gap">Evidence missing: '+esc(missing.join(' · '))+'</div>':'')+'</div></details></section>';
+ (missing.length?'<div class="driver-gap">Evidence missing: '+esc(missing.join(' · '))+'</div>':'')+'<div class="driver-inline-source">'+driverSourceLinks(cfg,rs)+'</div></div></details></section>';
  }).join('');
  const mix=cfg.mix?'<section class="kpi-section"><div class="section-kicker">BUSINESS ENGINE MIX</div><h3>'+esc(cfg.mix.title||'Revenue composition')+'</h3><div class="driver-mix-grid">'+kpiMix(cfg.mix)+(s==='AMZN'?driverContribution(cfg,['online','physical','seller','ads','subs','aws','other'],'Incremental revenue by business category'):s==='GOOGL'?driverContribution(cfg,['search','youtube','cloud','subs'],'Incremental revenue from selected categories'):s==='IBKR'||s==='HOOD'||s==='NVDA'?'<div><h4>Growth comparison · latest YoY</h4>'+kpiGrowthBars(cfg.compare.map(by).filter(Boolean))+'</div>':'')+'</div>'+(s==='AMZN'?driverContribution(cfg,['naProfit','intlProfit','awsProfit'],'Incremental operating profit by reported segment')+'<p class="stock-note">Advertising, seller services and subscriptions are already included in geographic segment results. Separate operating profit for these businesses is not disclosed.</p>':'')+'</section>':'';
 
  const used=new Set(groups.flatMap(g=>g.ids||[])),remaining=rows.filter(r=>!used.has(r.id)&&num(r.values[3]));
  panel.innerHTML='<h2>Business Drivers</h2><p class="stock-note">Growth engines · disclosure period '+esc(cfg.period)+(stale?' · historical snapshot; newer financial results exist':'')+'</p><div class="driver-summary-grid">'+groupHtml+'</div>'+
  (mix?'<details class="driver-expand driver-wide"><summary>Business mix &amp; growth contribution</summary><div class="driver-expand-body">'+mix+'</div></details>':'')+
- (remaining.length?'<details class="driver-expand driver-wide"><summary>Other disclosed metrics · '+remaining.length+'</summary><div class="driver-expand-body">'+driverDetailTable(remaining,cfg)+'</div></details>':'')+
- '<details class="risk-method"><summary>Sources & methodology</summary><div class="section-kicker">OPERATIONAL MOMENTUM</div><p>'+foot+'</p><p>Only comparable multi-period evidence supports a durable trend. Reported quarter values are shown without empty placeholders. Sequential levels may be seasonal. Year-over-year rate series are labelled explicitly. Snapshot data requires filing refresh; no missing indicators are estimated. NVIDIA uses fiscal quarter labels.</p>'+source+'</details>';
+ (remaining.length?'<details class="driver-expand driver-wide"><summary>Other disclosed metrics · '+remaining.length+'</summary><div class="driver-expand-body">'+driverDetailTable(remaining,cfg)+'<div class="driver-inline-source">'+driverSourceLinks(cfg,remaining)+'</div></div></details>':'');
 }
 
 let valuationYears=5,valuationMetric='pe';
