@@ -8,6 +8,60 @@ NVDA:{name:'NVIDIA',industry:'AI semiconductor infrastructure',question:'Can acc
 KTOS:{name:'Kratos Defense',industry:'Defence technology',question:'Can funded backlog turn into profitable production and cash flow?',peers:['AVAV','LHX'],kpis:['Organic and segment revenue growth','Funded versus unfunded backlog','Book-to-bill and contract awards','Segment margins and production ramp','Contract assets and working capital','Capex, SBC and capital raising'],risks:['Fixed-price contract overruns','Unfunded backlog and delayed awards','Cash conversion and financing'],sec:'1069258'},
 OKLO:{name:'Oklo',industry:'Advanced nuclear development',question:'Can licensing, deployment and financing converge before material dilution?',peers:['SMR','NNE'],kpis:['NRC licensing milestones','First deployment and construction readiness','Binding contracts versus nonbinding agreements','Contracted MW and fuel procurement','Capital cost per MW and funding commitments','Unrestricted cash, burn and runway'],risks:['Licensing and deployment delays','Nonbinding pipeline not converting','Funding gaps and equity dilution'],sec:'1849056'}};
 const tabs=['Overview','Fundamentals','Financial risk','Business Drivers','Peers','Thesis & catalysts'];
+
+const screeningProfiles={
+ operating:['Operating business',['liquidity','coverage','shortterm','receivables'],['Segment growth and margins','Pricing and customer mix','Capital returns']],
+ semiconductor:['Semiconductors',['liquidity','coverage','inventory','receivables'],['Product and end-market mix','Customer concentration','Supply commitments']],
+ software:['Software',['liquidity','coverage','receivables','shares'],['Recurring revenue and retention','Bookings and backlog','Sales efficiency']],
+ retail:['Retail',['liquidity','coverage','inventory','shortterm'],['Comparable sales','Inventory turns','Store or marketplace economics']],
+ biotech:['Biotechnology',['liquidity','runway','shares'],['Pipeline and clinical milestones','Commercial sales','R&D and financing']],
+ precommercial:['Pre-commercial',['runway','shortterm','shares'],['Commercial milestones','Binding contracts','Cash burn and dilution']],
+ capital_intensive:['Capital-intensive',['liquidity','coverage','shortterm','capex'],['Capacity and utilization','Capital commitments','Incremental returns']],
+ financial:['Financial services',['capital','liquidity'],['Client assets and monetisation','Credit and capital','Ownership and fee economics']],
+ bank:['Bank',['capital','liquidity'],['Net interest margin and deposits','Loan quality','Regulatory capital']],
+ insurance:['Insurance',['capital','liquidity'],['Combined ratio','Reserves and investments','Reinsurance']],
+ real_estate:['Real estate / REIT',['liquidity','shortterm'],['FFO/AFFO and property NOI','Occupancy','Debt maturities']],
+ unclassified:['Unclassified business',[],['Business model and relevant metrics','Operating drivers and risk disclosures']]
+};
+const screeningTickers=new Set(),profileOf=s=>get(s).metadata?.profile||'unclassified',isScreening=s=>screeningTickers.has(s);
+const restrictedProfile=s=>isScreening(s)&&['financial','bank','insurance','real_estate','unclassified'].includes(profileOf(s));
+const precommercial=s=>s==='OKLO'||isScreening(s)&&profileOf(s)==='precommercial';
+function screeningTabs(s){return !isScreening(s)?tabs:['Overview','Fundamentals','Financial risk',...(peerGroups[s]?.length>=2?['Peers']:[])];}
+function registerScreeningStocks(){
+ for(const [s,d] of Object.entries(data.stocks||{})){
+  if(!d.screening||data.screening_requests?.[s]!=='available'||Object.prototype.hasOwnProperty.call(M,s)||!/^[A-Z][A-Z0-9.-]{0,9}$/.test(s))continue;
+  const meta=d.metadata||{},profile=screeningProfiles[meta.profile]||screeningProfiles.unclassified;
+  screeningTickers.add(s);M[s]={name:meta.name||s,industry:meta.industry||profile[0],question:'',peers:[],risks:[],sec:meta.cik||'',kpis:profile[2]};
+  const names={liquidity:'Debt and financing exposure',coverage:'Interest service coverage',shortterm:'Short-term obligation coverage',inventory:'Inventory exposure',receivables:'Receivables exposure',shares:'Share dilution',capex:'Capital spending',runway:'Historical cash runway proxy',capital:'Regulatory capital'};
+  exposureDimensions[s]=profile[1].map(id=>[id,names[id]]);
+  riskConfig[s]=profile[1].map(id=>[id,names[id],names[id]]);
+  if(restrictedProfile(s))peerFinance.add(s);
+  valTableKeys[s]=precommercial(s)?['pb','cap','ev','cashadj']:restrictedProfile(s)?['pe','pb','cap']:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'];
+ }
+ for(const s of screeningTickers){
+  const meta=get(s).metadata||{},group=[];
+  if(meta.industry&&meta.currency==='USD'&&!['unclassified','precommercial','real_estate'].includes(meta.profile)){
+   for(const [id,p] of Object.entries(data.stocks||{})){
+    const pm=p.metadata||{};
+    if(id===s||!p.quarterly?.length||pm.currency!=='USD'||pm.industry!==meta.industry||pm.profile!==meta.profile)continue;
+    group.push([id,pm.name||id,'Industry match','Provider industry match; business comparability not independently reviewed.']);
+    if(restrictedProfile(s))peerFinance.add(id);
+   }
+  }
+  peerGroups[s]=group.slice(0,6);M[s].peers=peerGroups[s].map(r=>r[0]);
+  if(peerState[s])peerState[s].enabled=peerState[s].enabled.filter(id=>M[s].peers.includes(id));
+ }
+}
+function tickerRequestUrl(s){return 'https://github.com/charmedvie/sector-rotation/issues/new?title='+encodeURIComponent('Stock screening: '+s)+'&body='+encodeURIComponent('Add public company data to the automatic stock screening universe.');}
+function tickerSearch(){
+ const s=el('ticker-search').value.trim().toUpperCase(),feedback=el('ticker-feedback');
+ if(!/^[A-Z][A-Z0-9.-]{0,9}$/.test(s)){feedback.textContent='Enter a US-listed stock ticker.';return;}
+ if(Object.prototype.hasOwnProperty.call(M,s)){feedback.textContent='';select(s);return;}
+ const status=data.screening_requests?.[s];
+ if(status){feedback.textContent=({requested:'Requested; data has not been published yet.',data_unavailable:'Requested; provider data is currently incomplete.',not_in_sec_directory:'Ticker not found in the SEC company directory.',unsupported_or_unverified_currency:'USD equity and statement currency could not be verified.',request_limit:'Screening limit reached. Close an older ticker request before adding another.'})[status]||'Request registered.';return;}
+ feedback.innerHTML='Not loaded yet. <a href="'+esc(tickerRequestUrl(s))+'" target="_blank" rel="noopener">Request '+esc(s)+' on GitHub ↗</a><small> Submit the prefilled public issue while signed in as the repository owner. Reload after deployment.</small>';
+}
+
 let data={stocks:{}},symbol='IBKR',tab=tabs[0],frequency='quarterly';
 const el=id=>document.getElementById(id);
 const fmt=(v,d=1)=>v==null||!Number.isFinite(v)?'—':v.toLocaleString('en-US',{maximumFractionDigits:d});
@@ -27,8 +81,8 @@ function table(headers,rows){return '<div class="table-scroll"><table><thead><tr
 function box(title,body){return '<div class="stock-item"><h3>'+esc(title)+'</h3>'+body+'</div>';}
 function list(arr){return '<ul>'+arr.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';}
 function chart(id,traces,ytitle){if(!window.Plotly)return;Plotly.react(id,traces,{paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#b7c6db'},margin:{l:64,r:18,t:18,b:45},legend:{orientation:'h'},xaxis:{gridcolor:'#28364a'},yaxis:{title:ytitle,gridcolor:'#28364a'},hovermode:'x unified'},{responsive:true,displayModeBar:false});}
-function controls(){el('watchlist').innerHTML=Object.keys(M).map(s=>'<button aria-pressed="'+(s===symbol)+'" data-symbol="'+s+'">'+s+'</button>').join('');el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=tabs.map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}
-function select(s){symbol=s;tab='Overview';location.hash=s;render();}
+function controls(){el('watchlist').innerHTML=Object.keys(M).map(s=>'<button aria-pressed="'+(s===symbol)+'" data-symbol="'+s+'">'+s+'</button>').join('');el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=screeningTabs(symbol).map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}
+function select(s){if(!Object.prototype.hasOwnProperty.call(M,s))return;symbol=s;tab='Overview';location.hash=s;render();}
 function spark(values,color='#8caee1'){
  const valid=values.filter(Number.isFinite);if(valid.length<2)return '<div class="spark-empty">Insufficient history</div>';
  const lo=Math.min(...valid),hi=Math.max(...valid),span=hi-lo||1;
@@ -78,9 +132,9 @@ function overviewInsights(s,d,q){
  for(const r of f)items.push({...finding(r.title,r.metric+' '+r.metricLabel+' · '+r.conclusion,'Fundamentals',r.evidence.tone),rank:r.priority,source:'financial',evidence:r.evidence.label});
  for(const r of risk.map.filter(r=>['watch','high'].includes(r.status)))items.push({...finding(r.title,r.metric+' · '+r.conclusion,'Financial risk','caution'),rank:r.status==='high'?120:99,source:'risk'});
  for(const r of risk.extra.filter(r=>r.status==='Monitor'))items.push({...finding(r.title,r.metric+' · '+r.impact,'Financial risk','caution'),rank:99,source:'risk'});
- if(q.period===cfg.period){for(let i=0;i<drivers.length;i++){const b=drivers[i],h=driverHorizon(s,i,cfg,false);if(h.tone==='unknown')continue;items.push({...finding(b.headline,b.points[0]||driverGroups[s][i].watch,'Business Drivers',h.tone==='positive'?'positive':'neutral'),rank:h.tone==='positive'?95:86,source:'driver',evidence:h.label});}}
+ if(cfg&&drivers&&q.period===cfg.period){for(let i=0;i<drivers.length;i++){const b=drivers[i],h=driverHorizon(s,i,cfg,false);if(h.tone==='unknown')continue;items.push({...finding(b.headline,b.points[0]||driverGroups[s][i].watch,'Business Drivers',h.tone==='positive'?'positive':'neutral'),rank:h.tone==='positive'?95:86,source:'driver',evidence:h.label});}}
  const val=valuationSignal(s,d,5);if(val?.st)items.push({...finding(val.title,val.detail,'Fundamentals',val.tone),rank:83,source:'valuation'});
- const checks=thesisConfig[s].checks.map(c=>thesisCheck(s,d,c)).filter(c=>c.status==='pressure');
+ const checks=(thesisConfig[s]?.checks||[]).map(c=>thesisCheck(s,d,c)).filter(c=>c.status==='pressure');
  const independent=checks.filter(c=>!items.some(i=>i.title.toLowerCase().includes(c.name.toLowerCase())||i.detail.toLowerCase().includes(c.name.toLowerCase())));
  if(independent.length){const c=independent[0];items.push({...finding(c.name+' · thesis pressure',c.value+' · '+c.condition,'Thesis & catalysts','caution'),rank:97,source:'thesis'});}
  items.sort((a,b)=>b.rank-a.rank);
@@ -89,7 +143,7 @@ function overviewInsights(s,d,q){
  return {priority:selected,risk,checks,val};
 }
 function overviewPanel(panel,m,d,q,p,source){
- const s=symbol,all=d.quarterly||[],pre=s==='OKLO',rg=quarterGrowth(all,q,'revenue'),margin=q.operating_margin,core=broker(s)?q.pretax:q.operating_profit,ev=financialEvidence(d,all,'revenue'),analysis=overviewInsights(s,d,q),priority=analysis.priority;
+ const s=symbol,all=d.quarterly||[],pre=precommercial(s),rg=quarterGrowth(all,q,'revenue'),margin=q.operating_margin,core=broker(s)?q.pretax:q.operating_profit,ev=financialEvidence(d,all,'revenue'),analysis=overviewInsights(s,d,q),priority=analysis.priority;
  const growthLabel=pre?'Pre-commercial':assessmentLabel(rg,'Growing','Contracting'),profitLabel=num(core)?core>0?'Profitable':core<0?'Loss-making':'Break-even':'Not assessed';
  const riskHigh=analysis.risk.map.find(r=>r.status==='high'),riskWatch=analysis.risk.map.find(r=>r.status==='watch')||analysis.risk.extra.find(r=>r.status==='Monitor'),riskKnown=analysis.risk.map.some(r=>r.status!=='unknown')||analysis.risk.extra.length;
  const riskLabel=riskHigh?'Elevated':riskWatch?'Monitor':riskKnown?'Reviewed':'Not assessed',riskDetail=riskHigh?.title||riskWatch?.title||(riskKnown?'No elevated reviewed exposure':'Evidence unavailable');
@@ -104,12 +158,12 @@ function overviewPanel(panel,m,d,q,p,source){
  summaryTile('Momentum',evidenceClass(ev),ev.count?ev.count+' comparable YoY periods':'History unavailable','Fundamentals',ev.kind==='sustained'||ev.kind==='structural'?ev.direction<0?'caution':ev.direction>0||ev.persistence>0?'positive':'neutral':'neutral')+
  summaryTile('Financial risk',riskLabel,riskDetail,'Financial risk',riskHigh||riskWatch?'caution':'neutral')+
  summaryTile('Valuation',pre?'Milestones':val?.st?val.st.premium>10?'Above history':val.st.premium< -10?'Below history':'Near history':pe>0?'Current P/E':'N/A',pe>0?fmt(pe)+'x trailing P/E':'P/E unavailable / not relevant','Fundamentals',val?.tone||'neutral')+'</div>'+
- '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><h2 id="attention-title">What deserves your attention</h2></div></div><div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+esc(f.target)+(f.evidence?' · '+esc(f.evidence):'')+'</span><strong>'+esc(f.title)+'</strong><small>'+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">No current material findings.</p>')+'</div><aside class="diligence"><div class="tile-kicker">THESIS PRESSURE / WATCH</div>'+list(analysis.checks.length?analysis.checks.slice(0,3).map(c=>c.name+' · '+c.value):m.risks.slice(0,3))+'<button class="stock-action" data-target="Thesis & catalysts">Review thesis ↗</button></aside></div></section>'+
+ '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><h2 id="attention-title">What deserves your attention</h2></div></div><div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+esc(f.target)+(f.evidence?' · '+esc(f.evidence):'')+'</span><strong>'+esc(f.title)+'</strong><small>'+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">No current material findings.</p>')+'</div><aside class="diligence"><div class="tile-kicker">'+(isScreening(s)?'DEEP RESEARCH CHECKLIST':'THESIS PRESSURE / WATCH')+'</div>'+list(isScreening(s)?m.kpis:analysis.checks.length?analysis.checks.slice(0,3).map(c=>c.name+' · '+c.value):m.risks.slice(0,3))+(isScreening(s)?'<p class="stock-note">Company-specific KPIs, filing exposures and thesis not yet reviewed.</p>':'<button class="stock-action" data-target="Thesis & catalysts">Review thesis ↗</button>')+'</aside></div></section>'+
  '<div class="valuation-section">'+valuationContext(m,p,pre)+'</div>';
  panel.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{tab=b.dataset.target;render();(b.dataset.section&&el(b.dataset.section)||el('panel')).scrollIntoView({block:'nearest'});});
 }
 
-const broker=s=>['IBKR','HOOD'].includes(s);
+const broker=s=>['IBKR','HOOD'].includes(s)||restrictedProfile(s);
 const isRate=k=>['gross_margin','operating_margin','pretax_margin','roe','roic','tax_rate'].includes(k);
 const higherGood=new Set(['revenue','gross_profit','operating_profit','pretax','net_income','eps','gross_margin','operating_margin','pretax_margin','ocf','fcf','roe','roic']);
 const lowerGood=new Set(['shares','sbc']);
@@ -346,7 +400,7 @@ function qualitySection(qrows,returnData=false){
    add('cash',cashRatio<.8?'Weak operating cash conversion':'Strong operating cash generation',fmt(cashRatio,2)+'x','TTM OCF / consolidated net income',['OCF '+money(ocf)+' · net income '+money(net),num(disc?.ttm?.old_ocf)?'OCF prior year '+money(disc.ttm.old_ocf):num(dep)?'Depreciation / amortisation '+money(dep):null,num(wc)?'Working capital change '+money(wc):num(sbc)?'Stock compensation '+money(sbc):null],cashRatio<.8?'Cash generation trails accounting earnings; accrual drivers may still be unresolved.':'Operating cash exceeds reported earnings, before investment spending.',cashRatio<.8?'caution':'positive',85,disclosure);
   }else if(s!=='OKLO'&&(!num(net)||!num(ocf)))missing.push('Matched TTM consolidated income / operating cash flow');
   const capGap=num(cg)&&num(og)&&cg>og+10,negativeFcf=num(fcf)&&fcf<0,fcfDrop=num(fcf)&&num(oldFcf)&&oldFcf>0&&fcf<.75*oldFcf;
-  if(s==='OKLO'&&(num(fcf)||num(q.cash))){
+  if(precommercial(s)&&(num(fcf)||num(q.cash))){
    const runway=num(fcf)&&fcf<0&&num(q.cash)?12*q.cash/-fcf:null;
    add('runway','Pre-commercial cash burn',num(runway)?fmt(runway,1)+' mo':num(fcf)?money(fcf):money(q.cash),num(runway)?'TTM cash runway proxy':num(fcf)?'TTM free cash flow':'Cash & short-term investments',[num(q.cash)?'Reported cash '+money(q.cash):null,num(fcf)?'TTM FCF '+money(fcf):null], 'Runway proxy is not committed project funding; licensing and construction remain critical.',negativeFcf?'caution':'neutral',95);
   }else if(capGap||negativeFcf||fcfDrop){
@@ -538,6 +592,7 @@ function scenarioSpecs(s,d,q){
  if(num(cash))add('Deployment delay / historical burn','Additional months of burn','months',36,1,12,num(burn)&&burn<0?-burn/12:null,num(burn)?money(-burn/12)+' monthly trailing free cash burn':'','Constant historical burn excludes future construction costs.',(v,b)=>['Additional cash consumption',money(-b*v),'Remaining reported cash proxy '+money(cash-b*v)],same?e.url:'');
  if(same)add('Deployment funding sufficiency','Hypothetical project cash needs','%',200,5,100,cash,money(cash)+' cash and marketable debt securities','Not a project budget; excludes other obligations.',(v,b)=>['Hypothetical project cash requirement',money(b*v/100),'Remaining liquidity before other obligations '+money(b-b*v/100)],e.url);
  if(q.period)add('Equity financing dilution','New shares as % of existing shares','%',100,5,20,1,'Existing ownership normalised to 100%','Illustrative primary issuance; excludes warrants and share price changes.',(v,b)=>['Existing ownership diluted by',pct(100*v/(100+v)),'Existing holders retain '+pct(10000/(100+v))+' of post-issue equity']);}
+ if(isScreening(s)&&!restrictedProfile(s)){const ocf=ttm('ocf'),cap=ttm('capex');if(num(cap))add('Operating cash-flow slowdown','TTM operating cash flow haircut','%',60,5,20,ocf,money(ocf)+' TTM OCF · '+money(cap)+' capex','Holds capex fixed.',(v,b)=>['Illustrative annual free cash flow',money(b*(1-v/100)-cap),'Hypothetical sensitivity, not a forecast']);}
  return specs;
 }
 function renderStress(s,d,q){
@@ -702,8 +757,9 @@ function riskMapInsight(s,d,q,id,r){
  if(id==='runway'){
   const cash=matched&&s==='OKLO'?3.1308e9:q.cash,burn=t('fcf');
   if(!num(cash))return unknown('Cash and securities unavailable.','Financing gap cannot be quantified.');
-  return out(num(burn)&&burn<0?fmt(12*cash/-burn,0)+' months historical runway':money(cash)+' liquidity',['Cash and investments '+money(cash),num(burn)?'TTM FCF '+money(burn):null,matched?'Management reports one-year operating funding sufficiency; deployment funding is not established':null],'Historical burn does not capture accelerated construction costs. Project budgets and committed funding determine the true gap.',num(burn)&&burn<0&&12*cash/-burn<12?'high':num(burn)&&burn<0&&12*cash/-burn<24?'watch':'disclosed');
+  return out(num(burn)&&burn<0?fmt(12*cash/-burn,0)+' months historical runway':money(cash)+' liquidity',['Cash and investments '+money(cash),num(burn)?'TTM FCF '+money(burn):null,matched?'Management reports one-year operating funding sufficiency; deployment funding is not established':null],(isScreening(s)?'Historical burn is not a forecast; financing and future spending determine actual runway.':'Historical burn does not capture accelerated construction costs. Project budgets and committed funding determine the true gap.'),num(burn)&&burn<0&&12*cash/-burn<12?'high':num(burn)&&burn<0&&12*cash/-burn<24?'watch':'disclosed');
  }
+ if(isScreening(s)&&['shares','capex'].includes(id)&&r.status!=='unknown')return out(r.metric,[r.why],r.next,r.status);
  return unknown('Period-matched disclosure unavailable.','Exposure cannot be quantified from the available filing data.');
 }
 function riskEvolutionInsight(r){
@@ -739,7 +795,7 @@ function riskEvolutionInsight(r){
 
 
 function riskOverviewData(s,d,q){
- const map=exposureDimensions[s].map(([id,title])=>{const r=resilienceAt(s,d,q,id),a=riskMapInsight(s,d,q,id,r);return {id,...r,...a,title:a.title||title};});
+ const map=(exposureDimensions[s]||[]).map(([id,title])=>{const r=resilienceAt(s,d,q,id),a=riskMapInsight(s,d,q,id,r);return {id,...r,...a,title:a.title||title};});
  const related={IBKR:{collateral:'liquidity'},HOOD:{cardfin:'cards'},AMZN:{obligations:'liquidity',leases:'liquidity',purchase:'shortterm',debtmaturity:'coverage'},GOOGL:{purchase:'shortterm',leases:'liquidity'},NVDA:{arconcentration:'receivables',inventoryprovision:'inventory'},KTOS:{contractassets:'receivables'},OKLO:{funding:'runway'}}[s]||{};
  const extra=[];
  for(const f of exposureCards(s,q)){const owner=map.find(r=>r.id===related[f.id]);if(owner&&owner.status!=='unknown'){(owner.filing||(owner.filing=[])).push(f);}else extra.push(f);}
@@ -1129,7 +1185,7 @@ function valCurrent(s,d,last){
 
 function valuationSignal(s,d,years=5){
  const hist=valHistory(d),rows=valWindow(hist,years),last=rows.at(-1),st=valStats(rows,'pe',last?.pe),a=valAttribution(rows);
- if(s==='OKLO')return {title:'Pre-commercial valuation',detail:'Value depends on funded deployment and commercial execution, not earnings multiples.',tone:'neutral',st,a};
+ if(precommercial(s))return {title:'Pre-commercial valuation',detail:'Value depends on funded deployment and commercial execution, not earnings multiples.',tone:'neutral',st,a};
  if(!st&&!a)return null;
  const title=st&&a&&a.earn>0&&a.multiple>0&&st.premium>10?'Earnings growth and multiple expansion':st?st.premium>10?'Above its historical P/E median':st.premium< -10?'Below its historical P/E median':'Near its historical P/E median':'Price versus earnings';
  const detail=a?(a.multiple>a.earn?'Re-rating contributed more than earnings growth; future returns depend on sustaining the premium.':a.earn>0&&a.multiple<0?'Earnings growth offset multiple compression.':a.earn>0?'Earnings growth has been an important contributor to returns.':'Earnings have not supported the full price change.'):'The historical multiple provides pricing context, not intrinsic value.';
@@ -1198,7 +1254,7 @@ function valuationTableRows(s,d,rows){
 
 const valuationOpen={history:false,price:false};
 function valuationCharts(d){
- const hist=valHistory(d),rows=valWindow(hist,valuationYears),last=rows.at(-1),a=valAttribution(rows),metrics=symbol==='OKLO'?['pb']:['IBKR','HOOD','GOOGL'].includes(symbol)?['pe']:Object.keys(valuationKeys);
+ const hist=valHistory(d),rows=valWindow(hist,valuationYears),last=rows.at(-1),a=valAttribution(rows),metrics=precommercial(symbol)?['pb']:['IBKR','HOOD','GOOGL'].includes(symbol)?['pe']:Object.keys(valuationKeys);
  const usable=metrics.filter(k=>valStats(rows,k,last?.[k]));if(usable.length&&!usable.includes(valuationMetric))valuationMetric=usable[0];
  const stat=valStats(rows,valuationMetric,last?.[valuationMetric]),short=valStats(valWindow(hist,1),valuationMetric,last?.[valuationMetric]),long=valStats(valWindow(hist,5),valuationMetric,last?.[valuationMetric]);
  const indexFields=[['price','Share price'],['eps','TTM diluted EPS'],['op','TTM operating profit']],active=indexFields.filter(([k])=>rows.filter(r=>num(r[k])&&r[k]>0).length>=8),base=rows.find(r=>active.every(([k])=>num(r[k])&&r[k]>0)),indexRows=base?rows.filter(r=>r.date>=base.date):[],traces=base?active.map(([k,n])=>({name:n,x:indexRows.map(r=>r.date),y:indexRows.map(r=>num(r[k])?100*r[k]/base[k]:null),mode:'lines',connectgaps:false})):[];
@@ -1567,8 +1623,8 @@ function thesisPanel(panel,m,d,source){
  el('save').onclick=()=>{const text=el('thesis').value.trim();if(!text){el('save-status').textContent='Enter a research conclusion.';return;}const next=[{date:new Date().toISOString(),period:el('thesis-period').value,outcome:el('thesis-conviction').value,text,thesis:active,evidence:checks.map(({name,status,value,period})=>({name,status,value,period}))},...notes];if(thesisWrite(key,next)){notes=next;draw();el('thesis').value='';el('save-status').textContent='Review and evidence saved in this browser.';}else el('save-status').textContent='Browser storage unavailable; not saved.';};
 }
 
-function render(){controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
-el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent((symbol==='OKLO'?'NYSE':'NASDAQ')+':'+symbol);el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry;el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
+function render(){if(!screeningTabs(symbol).includes(tab))tab='Overview';controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
+el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent((isScreening(symbol)?({NYQ:'NYSE',NMS:'NASDAQ',NGM:'NASDAQ',NCM:'NASDAQ',ASE:'AMEX'}[d.metadata?.exchange]||''):symbol==='OKLO'?'NYSE':'NASDAQ')?((isScreening(symbol)?({NYQ:'NYSE',NMS:'NASDAQ',NGM:'NASDAQ',NCM:'NASDAQ',ASE:'AMEX'}[d.metadata?.exchange]):symbol==='OKLO'?'NYSE':'NASDAQ')+':'+symbol):symbol);el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry+(isScreening(symbol)?' · Automatic screening':' · Deep research');el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
 el('overview').querySelectorAll('tr').forEach(r=>{r.onclick=()=>select(r.dataset.symbol);r.onkeydown=e=>{if(e.key==='Enter')select(r.dataset.symbol);};});
 el('cards').innerHTML=[['REVENUE YoY',pct(yoy(symbol,'revenue'))],['OPERATING MARGIN',pct(q.operating_margin)],['EPS YoY',pct(yoy(symbol,'eps'))],['TRAILING P/E',fmt(p.trailingPE)]].map(a=>'<div class="stat-card"><div class="stat-top">'+a[0]+'</div><div class="stat-number">'+a[1]+'</div><div class="stat-desc">'+esc(q.period||'No statement data')+'</div></div>').join('');
@@ -1582,6 +1638,7 @@ else if(tab==='Business Drivers'){kpiPanel(panel,m,d,source);}
 else if(tab==='Peers'){peerPanel(panel,m,d,source);}
 else if(tab==='Thesis & catalysts'){thesisPanel(panel,m,d,source);}
 }
-const h=location.hash.slice(1);if(M[h])symbol=h;
+const h=location.hash.slice(1);if(Object.prototype.hasOwnProperty.call(M,h))symbol=h;
+el('ticker-form').onsubmit=e=>{e.preventDefault();tickerSearch();};
 render();
-fetch('data/stocks.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Data not published');return r.json();}).then(j=>{data=j;el('freshness').textContent=j.generated_at?.slice(0,10)||'Unknown';el('data-status').textContent=j.source||'';render();}).catch(()=>{el('freshness').textContent='Unavailable';el('data-status').textContent='Financial data has not yet been published. Research framework remains accessible.';});
+fetch('data/stocks.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Data not published');return r.json();}).then(j=>{data=j;registerScreeningStocks();if(Object.prototype.hasOwnProperty.call(M,h))symbol=h;el('freshness').textContent=j.generated_at?.slice(0,10)||'Unknown';el('data-status').textContent=j.source||'';render();}).catch(()=>{el('freshness').textContent='Unavailable';el('data-status').textContent='Financial data has not yet been published. Research framework remains accessible.';});

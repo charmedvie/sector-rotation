@@ -73,3 +73,5 @@ a{color:#a9c9ff}.stock-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0
 
 /* Valuation rows share the existing financial-table grid. */
 #valuation-table .financial-group small{font-size:11px;color:#a9b9ce;font-weight:400;cursor:help}.valuation-charts details{margin-top:10px}.valuation-charts details>summary{cursor:pointer;font-weight:600;color:#dce6f6}.valuation-charts .val-range-head{padding:10px 0}
+
+.ticker-form{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}.ticker-form input{background:#162334;color:#e4edf8;border:1px solid #40536c;border-radius:6px;padding:8px 10px;min-width:180px}.ticker-feedback{font-size:12px;color:#b8c7da;margin-top:6px}.ticker-feedback small{display:block;margin-top:4px}.ticker-feedback a{color:#8bc9e8}.ticker-feedback:empty{display:none}
