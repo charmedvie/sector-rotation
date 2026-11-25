@@ -199,7 +199,7 @@ def generate(output):
         q=extract([safe(lambda:t.quarterly_income_stmt),safe(lambda:t.quarterly_balance_sheet),safe(lambda:t.quarterly_cashflow)])
         annual=extract([safe(lambda:t.income_stmt),safe(lambda:t.balance_sheet),safe(lambda:t.cashflow)]) if symbol in full else []
         info=safe(lambda:t.info,{}) or {}
-        if is_screening and (info.get('quoteType')!='EQUITY' or info.get('currency')!='USD' or info.get('financialCurrency')!='USD'):
+        if is_screening and (info.get('quoteType')!='EQUITY' or info.get('currency')!='USD' or info.get('financialCurrency')!='USD' or info.get('exchange') not in ('NYQ','NMS','NGM','NCM','ASE','PCX','BTS')):
             payload['screening_requests'][symbol]='unsupported_or_unverified_currency'
             if symbol not in PEERS: continue
             is_screening=False

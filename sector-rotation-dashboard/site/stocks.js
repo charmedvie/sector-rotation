@@ -59,7 +59,7 @@ function tickerSearch(){
  if(Object.prototype.hasOwnProperty.call(M,s)){feedback.textContent='';select(s);return;}
  const status=data.screening_requests?.[s];
  if(status){feedback.textContent=({requested:'Requested; data has not been published yet.',data_unavailable:'Requested; provider data is currently incomplete.',not_in_sec_directory:'Ticker not found in the SEC company directory.',unsupported_or_unverified_currency:'USD equity and statement currency could not be verified.',request_limit:'Screening limit reached. Close an older ticker request before adding another.'})[status]||'Request registered.';return;}
- feedback.innerHTML='Not loaded yet. <a href="'+esc(tickerRequestUrl(s))+'" target="_blank" rel="noopener">Request '+esc(s)+' on GitHub ↗</a><small> Submit the prefilled public issue while signed in as the repository owner. Reload after deployment.</small>';
+ feedback.innerHTML=(data.screening_registry_available===false?'Ticker registry temporarily unavailable. ':'Not loaded yet. ')+'<a href="'+esc(tickerRequestUrl(s))+'" target="_blank" rel="noopener">Request '+esc(s)+' on GitHub ↗</a><small> Submit the prefilled public issue while signed in as the repository owner. Reload after deployment.</small>';
 }
 
 let data={stocks:{}},symbol='IBKR',tab=tabs[0],frequency='quarterly';
@@ -1624,7 +1624,8 @@ function thesisPanel(panel,m,d,source){
 }
 
 function render(){if(!screeningTabs(symbol).includes(tab))tab='Overview';controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
-el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent((isScreening(symbol)?({NYQ:'NYSE',NMS:'NASDAQ',NGM:'NASDAQ',NCM:'NASDAQ',ASE:'AMEX'}[d.metadata?.exchange]||''):symbol==='OKLO'?'NYSE':'NASDAQ')?((isScreening(symbol)?({NYQ:'NYSE',NMS:'NASDAQ',NGM:'NASDAQ',NCM:'NASDAQ',ASE:'AMEX'}[d.metadata?.exchange]):symbol==='OKLO'?'NYSE':'NASDAQ')+':'+symbol):symbol);el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry+(isScreening(symbol)?' · Automatic screening':' · Deep research');el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
+const exchange=isScreening(symbol)?({NYQ:'NYSE',NMS:'NASDAQ',NGM:'NASDAQ',NCM:'NASDAQ',ASE:'AMEX',PCX:'AMEX',BTS:'CBOE'}[d.metadata?.exchange]||''):symbol==='OKLO'?'NYSE':'NASDAQ';
+el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent(exchange?exchange+':'+symbol:symbol);el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry+(isScreening(symbol)?' · Automatic screening':' · Deep research');el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
 el('overview').querySelectorAll('tr').forEach(r=>{r.onclick=()=>select(r.dataset.symbol);r.onkeydown=e=>{if(e.key==='Enter')select(r.dataset.symbol);};});
 el('cards').innerHTML=[['REVENUE YoY',pct(yoy(symbol,'revenue'))],['OPERATING MARGIN',pct(q.operating_margin)],['EPS YoY',pct(yoy(symbol,'eps'))],['TRAILING P/E',fmt(p.trailingPE)]].map(a=>'<div class="stat-card"><div class="stat-top">'+a[0]+'</div><div class="stat-number">'+a[1]+'</div><div class="stat-desc">'+esc(q.period||'No statement data')+'</div></div>').join('');
