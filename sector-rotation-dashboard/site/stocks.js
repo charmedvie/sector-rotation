@@ -211,72 +211,108 @@ function detailedTable(rows,annualView,annualRows){
 const qualityDisclosures={
  AMZN:{period:'2026-09-30',url:'https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/',q:{operating_profit:28076e6,pretax:26869e6,net_income:20685e6,total_net_income:20685e6,tax_expense:6184e6,eps:1.89,interest_expense:1691e6},prior:{operating_profit:17422e6,pretax:28170e6,net_income:21187e6,total_net_income:21187e6,tax_expense:6983e6,eps:1.95,interest_expense:538e6},ttm:{ocf:168300e6,total_net_income:134779e6,net_capex:210657e6,fcf:-42357e6,old_ocf:130700e6,old_fcf:14788e6},note:'Management attributes the decline in reported net income primarily to $9.5B of pre-tax Anthropic investment gains in Q3 2025.'}
 };
+
 function qualitySection(qrows){
- const s=symbol,d=get(s),q=qrows[0]||{},prev=previous(qrows,q),snapshot=qualityDisclosures[s],disc=snapshot?.period===q.period?snapshot:null,financial=broker(s),findings=[];
- // For a dated issuer disclosure, use its entire matched bridge, not a mixture of accounting bases.
+ const s=symbol,d=get(s),q=qrows[0]||{},prev=previous(qrows,q),snapshot=qualityDisclosures[s],disc=snapshot?.period===q.period?snapshot:null,financial=broker(s),findings=[],missing=[];
  const v=k=>disc&&num(disc.q[k])?disc.q[k]:q[k],p=k=>disc&&num(disc.prior[k])?disc.prior[k]:num(prev[k])?prev[k]:d.quality_prior?.[q.period]?.[k]??d.peer_prior?.[q.period]?.[k]??periodBase(qrows,q,k);
- const g=k=>num(v(k))&&p(k)>0?100*(v(k)/p(k)-1):null;
- const add=(title,status,observation,explanation,implication,cls='neutral',url='')=>findings.push({title,status,observation,explanation,implication,cls,url});
- const core=financial?'pretax':'operating_profit',label=financial?'pretax profit':'operating profit',eg=g('eps'),og=g(core);
- const delta=k=>num(v(k))&&num(p(k))?v(k)-p(k):null, dm=x=>(x>=0?'+':'−')+money(Math.abs(x));
- const pt=delta('pretax'),op=delta('operating_profit'),tax=delta('tax_expense'),ni=delta('net_income'),shares=g('shares');
- if(num(eg)&&num(og)){
-  const gap=eg-og,diverge=Math.abs(gap)>15,parts=[];
-  if(!financial&&num(pt)&&num(op))parts.push('Net non-operating contribution changed by '+dm(pt-op)+' (pretax profit less operating profit).');
-  if(num(tax))parts.push('Tax expense changed by '+dm(tax)+'.');
-  if(num(pt)&&num(tax)&&num(ni)){const residual=ni-(pt-tax);if(Math.abs(residual)>Math.max(Math.abs(ni)*.05,1e6))parts.push('Remaining common-income bridge '+dm(residual)+'; may include noncontrolling interests, preferred allocations or other reconciling items.');}
-  if(num(shares))parts.push('Diluted share count '+signed(shares)+' YoY.');
-  if(disc)parts.unshift(disc.note);
-  const explained=disc||(!financial&&num(pt)&&num(op)&&num(tax)&&num(ni))||(financial&&num(pt)&&num(tax)&&num(ni));
-  const implication=diverge?(og>0&&eg<og?'Core profit improved faster than reported EPS. '+(explained?'Distinguish the bridge effects from operating performance.':'Exact attribution remains incomplete.') : 'Reported per-share performance diverges from core profit; distinguish operating changes from below-the-line items.'): 'No large EPS/core-profit divergence on this screen; this is not proof of earnings quality.';
-  add('Earnings vs core profit',diverge?(explained?'Divergence explained':'Partial evidence'):'Broadly aligned','EPS '+signed(eg)+' vs '+label+' '+signed(og)+' YoY ('+fmt(gap)+'pp).',parts.join(' ')||'Comparable bridge components are missing; exact attribution is not established.',implication,diverge?'caution':'positive',disc?.url);
- }else add('Earnings vs core profit','Not assessed','Comparable positive EPS and core-profit bases unavailable.',num(v(core))?'Current '+label+': '+money(v(core))+'.':'Core profit unavailable.','Loss periods require absolute profit changes rather than percentage growth.');
- if(financial){
-  const f=filingRisk[s],same=f?.date===q.period;
-  add('Cash conversion','Sector-specific','Brokerage cash flows include movements in client balances and trading assets.',same&&s==='IBKR'?'Reported regulatory capital '+money(f.capital)+' vs required '+money(f.required)+'.':same&&s==='HOOD'?'Consumer loans '+money(f.loans)+'; past due '+money(f.pastDue)+'.':'No matched regulatory capital or credit snapshot.', 'Assess corporate liquidity, capital and credit separately from generic operating cash conversion.','neutral',same?f.url:'');
- }else{
-  const t=k=>ttmAt(qrows,0,k);
-  const net=disc?.ttm?.total_net_income??t('total_net_income'),ocf=disc?.ttm?.ocf??t('ocf');
-  // Consolidated profit can be derived from pretax less tax only when both are complete
-  // and continuing-operations scope is compatible with reported consolidated profit.
-  const dep=t('depreciation'),sbc=t('sbc'),wc=t('working_capital');
-  if(num(net)&&net>0&&num(ocf)){
-   const r=ocf/net,parts=[];
-   if(num(dep))parts.push('Depreciation/amortisation '+money(dep)+'.');
-   if(num(sbc))parts.push('Stock compensation '+money(sbc)+'.');
-   if(num(wc))parts.push('Reported working-capital change '+money(wc)+'.');
-   if(disc&&num(disc.ttm.old_ocf))parts.push('Operating cash flow increased from '+money(disc.ttm.old_ocf)+'.');
-   if(!parts.length)parts.push('Cash-flow adjustment detail is incomplete; the ratio does not identify all drivers.');
-   add('Cash conversion',r<.8?'Weak cash conversion':'Cash supports earnings','TTM OCF '+money(ocf)+' vs consolidated net income '+money(net)+' · '+fmt(r,2)+'x.',parts.join(' '),r<.8?'Reported profit exceeds cash generation materially; unverified accrual drivers remain open.':'Operating cash exceeds reported earnings; noncash expenses and gains can affect the ratio. This is before capex.',r<.8?'caution':'positive',disc?.url);
-  }else if(num(ocf)&&num(net)&&net<=0)add('Cash conversion','Loss period','TTM OCF '+money(ocf)+' vs consolidated net income '+money(net)+'.','Positive-profit conversion ratio is not meaningful.','Assess operating cash burn and financing runway instead.',ocf<0?'caution':'neutral');
-  else add('Cash conversion','Not assessed',num(ocf)?'TTM OCF '+money(ocf)+'; consolidated net income unavailable.':num(net)?'TTM consolidated net income '+money(net)+'; operating cash flow unavailable.':'Matched TTM cash flow and consolidated net income unavailable.','Four consecutive quarterly observations or a matched issuer TTM disclosure are required.','Do not substitute common-share net income for consolidated profit without reconciliation.');
-  const cg=g('capex'),fg=disc?.ttm?.fcf??t('fcf'),cap=disc?.ttm?.net_capex??t('capex'),parts=[];
-  if(num(ocf)&&num(cap))parts.push('TTM OCF '+money(ocf)+' vs '+(disc?'net cash capex ':'reported capex ')+money(cap)+'; FCF '+money(fg)+'.');
-  if(disc&&num(disc.ttm.old_fcf))parts.push('Prior-year FCF '+money(disc.ttm.old_fcf)+'.');
-  const cfg=kpiData[s],matched=cfg?.period===q.period,kr=id=>matched?cfg.rows.find(r=>r.id===id):null;
-  const yoyK=id=>{const r=kr(id);return r?kpiDelta(r,r.values[3],r.values[4]):null;};
-  if(s==='AMZN'&&matched){const a=yoyK('aws'),b=yoyK('awsProfit');if(num(a)&&num(b))parts.push('AWS revenue '+signed(a)+' and operating profit '+signed(b)+' YoY; evidence of cloud operating growth, not proof of incremental capex returns.');const r=kr('assets');if(r&&num(r.values[0])&&num(r.values[3]))parts.push('AWS segment assets '+fmt(r.values[0])+'B to '+fmt(r.values[3])+'B since fiscal year-end.');}
-  if(s==='GOOGL'&&matched){const a=yoyK('cloud');if(num(a))parts.push('Cloud revenue '+signed(a)+' YoY; segment growth does not by itself establish return on AI capex.');}
-  if(s==='NVDA'&&matched){const a=yoyK('dc');if(num(a))parts.push('Data Center revenue '+signed(a)+' YoY; supplier commitments and inventory remain distinct from owned capex.');}
-  if(s==='KTOS'&&matched){const r=kr('bookTTM');if(r&&num(r.values[3]))parts.push('TTM book-to-bill '+fmt(r.values[3])+'x; order intake is not cash realization.');}
-  if(s==='OKLO')parts.push('Pre-commercial spending should be evaluated against financing runway and deployment milestones, not current profit growth.');
-  const flag=num(cg)&&num(og)&&cg>og+10,pressure=num(fg)&&fg<0;
-  if(num(cg)||num(og)||num(fg)||parts.length){
-   add('Capital investment',pressure?'Cash flow pressure':flag?'Investment outpaces profit':'Investment context',(num(cg)?'Quarterly capex '+signed(cg)+' YoY. ':'Quarterly capex growth unavailable. ')+(num(og)?'Operating profit '+signed(og)+' YoY.':'Comparable operating profit growth unavailable.'),parts.join(' ')||'Matched TTM cash flow and operational metrics are incomplete.',pressure?'Capital spending exceeds internally generated cash on the measured FCF basis; returns and funding need continued evidence.':flag?'Investment is growing faster than profit; returns on incremental investment are not yet established.':'Growth and cash generation provide context, but do not establish incremental capital returns.',pressure||flag?'caution':'neutral',disc?.url||(matched?cfg.sources[0]?.[1]:''));
-  }else add('Capital investment','Not assessed','Comparable capex, earnings and cash flow unavailable.','No matched operating or investment data.','No conclusion about capital productivity.');
+ const g=k=>num(v(k))&&p(k)>0?100*(v(k)/p(k)-1):null,delta=k=>num(v(k))&&num(p(k))?v(k)-p(k):null,dm=x=>(x>=0?'+':'−')+money(Math.abs(x)),pp=x=>(x>=0?'+':'')+fmt(x,1)+'pp';
+ const t=k=>ttmAt(qrows,0,k),core=financial?'pretax':'operating_profit',label=financial?'Pretax profit':'Operating profit',eg=g('eps'),og=g(core),rg=g('revenue'),sg=g('shares');
+ const cfg=kpiData[s],matched=!!q.period&&cfg?.period===q.period,kr=id=>matched?cfg.rows.find(r=>r.id===id):null,kv=id=>kr(id)?.values[3],ky=id=>{const r=kr(id);return r?kpiDelta(r,r.values[3],r.values[4]):null;},kf=id=>{const r=kr(id);return r?kpiFmt(r,r.values[3]):'—';};
+ const source=matched?cfg.sources[0]?.[1]:'',disclosure=disc?.url||'',add=(id,title,metric,metricLabel,bullets,conclusion,cls,priority,url='')=>findings.push({id,title,metric,metricLabel,bullets:bullets.filter(Boolean).slice(0,3),conclusion,cls,priority,url});
+ const tr=num(v('tax_expense'))&&v('pretax')>0?100*v('tax_expense')/v('pretax'):q.tax_rate,oldTr=num(p('tax_expense'))&&p('pretax')>0?100*p('tax_expense')/p('pretax'):p('tax_rate'),taxShift=num(tr)&&num(oldTr)&&Math.abs(tr-oldTr)>5;
+ const taxImpact=taxShift&&num(v('pretax'))?(oldTr-tr)*v('pretax')/100:null;
+ const pt=delta('pretax'),op=delta('operating_profit'),tax=delta('tax_expense'),ni=delta('net_income');
+ // A material EPS/core-profit divergence or tax shift gets one earnings-quality card.
+ if((num(eg)&&num(og)&&Math.abs(eg-og)>15)||taxShift){
+  const bullets=[],diverge=num(eg)&&num(og)&&Math.abs(eg-og)>15;
+  if(num(eg))bullets.push('Diluted EPS '+signed(eg)+' YoY'+(num(og)?' vs '+label.toLowerCase()+' '+signed(og):''));
+  if(disc)bullets.push('Prior-year Anthropic investment gains: $9.5B pre-tax (issuer disclosure)');
+  const bridge=!financial&&num(pt)&&num(op)?pt-op:null;
+  if(num(bridge))bullets.push('Net non-operating contribution changed by '+dm(bridge));
+  if(taxShift){const taxLine='Effective tax rate '+pct(oldTr)+' → '+pct(tr)+(num(taxImpact)?' · '+dm(taxImpact)+' profit sensitivity':'');if(bullets.length>=3)bullets[2]=taxLine;else bullets.push(taxLine);}
+  else if(num(tax)&&bullets.length<3)bullets.push('Tax expense changed by '+dm(tax));
+  else if(num(sg)&&Math.abs(sg)>2&&bullets.length<3)bullets.push('Diluted shares '+signed(sg)+' YoY');
+  const known=!!disc||(!financial&&num(bridge)&&num(tax)&&num(ni))||(financial&&num(pt)&&num(tax)&&num(ni));
+  const improving=diverge&&og>0&&eg<og;
+  const conclusion=(improving?'Core profit growth exceeds reported EPS growth.':diverge?'Reported EPS diverges from core profit.':'Tax-rate changes materially affect reported earnings.')+(disc?' Prior-year investment gains explain the comparison effect.':known?' Arithmetic bridge, not verified underlying causes.':' Full attribution remains unresolved.');
+  add('earnings',improving?'Underlying earnings strengthening':taxShift&&!diverge?'Tax-driven earnings change':'Earnings divergence',num(og)?signed(og):pct(tr),num(og)?label+' YoY':'Effective tax rate',bullets,conclusion,improving&&known?'positive':'caution',100,disclosure);
+ }else if(s!=='OKLO'&&(!num(eg)||!num(og)))missing.push('Comparable EPS / '+label.toLowerCase()+' growth');
+ // Operating leverage is separate only if it adds a material insight.
+ const marginKey=financial?'pretax_margin':'operating_margin',margin=v(marginKey),oldMargin=p(marginKey),marginMove=num(margin)&&num(oldMargin)?margin-oldMargin:null;
+ if(num(rg)&&num(og)&&(Math.abs(og-rg)>=8||Math.abs(marginMove??0)>=1.5)){
+  const spread=og-rg,positive=spread>=8&&(!num(marginMove)||marginMove>=0),negative=spread<=-8||num(marginMove)&&marginMove<=-1.5;
+  // Avoid a second profit-growth card when the earnings bridge already conveys the same result,
+  // unless the revenue/profit gap or margin change independently adds context.
+  if(s!=='AMZN'||!findings.some(f=>f.id==='earnings')||Math.abs(marginMove??0)>=3||Math.abs(spread)>=25){
+   add('leverage',positive?'Positive operating leverage':negative?'Profitability lagging sales':'Profit and revenue divergence',num(marginMove)?pp(marginMove):pp(spread),num(marginMove)?(financial?'Pretax':'Operating')+' margin change YoY':label+' growth less revenue growth',['Revenue '+signed(rg)+' YoY',label+' '+signed(og)+' YoY',num(marginMove)?'Margin '+pct(oldMargin)+' → '+pct(margin):null],positive?'Profit growth outpaces sales. Cost and mix attribution requires segment detail.':negative?'Profitability is lagging growth; distinguish costs, mix and execution.':'Profit and sales are moving at different rates.',positive?'positive':negative?'caution':'neutral',72,disclosure);
+  }
+ }else if(s!=='OKLO'&&num(rg)&&Math.abs(rg)>=10&&!findings.some(f=>f.id==='earnings')){
+  add('growth',rg>0?'Material revenue growth':'Revenue contraction',signed(rg),'Revenue YoY',[num(v('revenue'))?'Quarterly revenue '+money(v('revenue')):null,num(og)?label+' '+signed(og)+' YoY':null],rg>0?'Sales expansion is evident; profitability determines its economic quality.':'Sales are contracting; duration and business drivers matter.',rg>0?'positive':'caution',50);
  }
- const sg=g('shares'),ng=g('net_income');
- if(num(sg)){const concern=sg>2,parts=[];if(num(q.sbc))parts.push('Quarterly stock-based compensation '+money(q.sbc)+'.');if(num(q.issuance))parts.push('Reported common stock issuance cash proceeds '+money(q.issuance)+'.');if(num(q.repurchases))parts.push('Reported common stock payments '+money(Math.abs(q.repurchases))+'.');if(s==='IBKR')parts.push('Ownership exchanges may change listed share count without equivalent economic dilution.');if(!parts.length)parts.push('Comparable issuance and repurchase details unavailable.');add('Per-share economics',concern?'Share count rising':'No large share increase','Diluted average shares '+signed(sg)+' YoY'+(num(ng)?' vs common net income '+signed(ng):'')+'.',parts.join(' '),concern?'Higher weighted share count can dilute per-share results; the precise issuance/ownership bridge is not established.':'No large share count increase on this screen.',concern?'caution':'neutral');}
- else add('Per-share economics','Not assessed','Comparable diluted share count unavailable.','No reliable share-count bridge.','No dilution conclusion.');
- const tr=num(v('tax_expense'))&&v('pretax')>0?100*v('tax_expense')/v('pretax'):q.tax_rate,old=num(p('tax_expense'))&&p('pretax')>0?100*p('tax_expense')/p('pretax'):p('tax_rate');
- if(num(tr)&&num(old)){const shift=Math.abs(tr-old)>5,impact=num(v('pretax'))?(old-tr)*v('pretax')/100:null;add('Tax rate',shift?'Material tax shift':'No large tax shift','Effective tax rate '+pct(tr)+' vs '+pct(old)+' a year earlier.',num(impact)?'At current pretax profit, the rate difference implies '+dm(impact)+' of after-tax profit versus the prior rate (arithmetic sensitivity, not a causal tax attribution).':'Rate difference observable; tax expense bridge unavailable.',shift?'Tax changes can distort EPS growth; exact discrete tax or jurisdiction drivers require disclosure.':'No large rate shift on this screen.',shift?'caution':'neutral',disc?.url);}
- else add('Tax rate','Not assessed','Comparable tax expense and positive pretax profit required.','Effective tax rate not meaningful or missing.','No tax-distortion conclusion.');
- if(financial)add('Provider accounting definitions','Sector-specific','Pretax profit is used for core comparison.','Standardized operating profit may exclude interest-related costs.','Use reported net revenue, pretax margin and regulatory capital rather than generic industrial measures.');
- return '<div class="fund-findings">'+findings.sort((a,b)=>Number(b.cls==='caution')-Number(a.cls==='caution')).map(f=>'<article class="fund-finding '+f.cls+'"><div class="fund-finding-top"><strong>'+esc(f.title)+'</strong><span>'+esc(f.status)+'</span></div><p><b>Observation:</b> '+esc(f.observation)+'</p><p><b>Explanation:</b> '+esc(f.explanation)+'</p><p><b>Implication:</b> '+esc(f.implication)+'</p>'+(f.url?'<p><a href="'+esc(f.url)+'" target="_blank" rel="noopener">Matched disclosure ↗</a> · '+esc(q.period)+'</p>':'')+'</article>').join('')+'</div>';
+ if(!financial){
+  const net=disc?.ttm?.total_net_income??t('total_net_income'),ocf=disc?.ttm?.ocf??t('ocf'),cap=disc?.ttm?.net_capex??t('capex'),fcf=disc?.ttm?.fcf??t('fcf'),cg=g('capex'),oldFcf=disc?.ttm?.old_fcf??ttmAt(qrows,4,'fcf');
+  const cashRatio=num(net)&&net>0&&num(ocf)?ocf/net:null;
+  if(num(cashRatio)&&(cashRatio<.8||cashRatio>=1.1)){
+   const dep=t('depreciation'),wc=t('working_capital'),sbc=t('sbc');
+   add('cash',cashRatio<.8?'Weak operating cash conversion':'Strong operating cash generation',fmt(cashRatio,2)+'x','TTM OCF / consolidated net income',['OCF '+money(ocf)+' · net income '+money(net),num(disc?.ttm?.old_ocf)?'OCF prior year '+money(disc.ttm.old_ocf):num(dep)?'Depreciation / amortisation '+money(dep):null,num(wc)?'Working capital change '+money(wc):num(sbc)?'Stock compensation '+money(sbc):null],cashRatio<.8?'Cash generation trails accounting earnings; accrual drivers may still be unresolved.':'Operating cash exceeds reported earnings, before investment spending.',cashRatio<.8?'caution':'positive',85,disclosure);
+  }else if(s!=='OKLO'&&(!num(net)||!num(ocf)))missing.push('Matched TTM consolidated income / operating cash flow');
+  const capGap=num(cg)&&num(og)&&cg>og+10,negativeFcf=num(fcf)&&fcf<0,fcfDrop=num(fcf)&&num(oldFcf)&&oldFcf>0&&fcf<.75*oldFcf;
+  if(s==='OKLO'&&(num(fcf)||num(q.cash))){
+   const runway=num(fcf)&&fcf<0&&num(q.cash)?12*q.cash/-fcf:null;
+   add('runway','Pre-commercial cash burn',num(runway)?fmt(runway,1)+' mo':num(fcf)?money(fcf):money(q.cash),num(runway)?'TTM cash runway proxy':num(fcf)?'TTM free cash flow':'Cash & short-term investments',[num(q.cash)?'Reported cash '+money(q.cash):null,num(fcf)?'TTM FCF '+money(fcf):null], 'Runway proxy is not committed project funding; licensing and construction remain critical.',negativeFcf?'caution':'neutral',95);
+  }else if(capGap||negativeFcf||fcfDrop){
+   const bullets=[num(cg)&&num(og)?'Capex '+signed(cg)+' vs operating profit '+signed(og)+' YoY':null,num(ocf)&&num(cap)?'TTM OCF '+money(ocf)+' vs '+(disc?'net cash capex ':'capex ')+money(cap):null];
+   const assets=kr('assets');
+   if(s==='AMZN'&&assets&&num(assets.values[0])&&num(assets.values[3]))bullets.push('AWS assets '+money(assets.values[0]*1e9)+' → '+money(assets.values[3]*1e9)+' since FY-end');
+   else if(num(oldFcf))bullets.push('Prior-year FCF '+money(oldFcf));
+   add('capex',negativeFcf?'Capital investment and cash pressure':'Investment outpaces profit',num(fcf)?money(fcf):num(cg)?signed(cg):'—',num(fcf)?'TTM free cash flow':'Quarterly capex growth YoY',bullets,negativeFcf?'Investment exceeds internally generated cash; incremental returns remain unproven.':'Capital intensity is rising; assess incremental operating returns.', 'caution',98,disclosure||source);
+  }else if(!num(fcf)&&!num(cg)&&s!=='OKLO')missing.push('Comparable capex / free cash flow');
+ }
+ if(num(sg)&&Math.abs(sg)>2){
+  add('shares',sg>0?'Diluted share count rising':'Diluted share count declining',signed(sg),'Diluted average shares YoY',[num(g('net_income'))?'Common net income '+signed(g('net_income'))+' YoY':null,num(q.sbc)?'Quarterly stock compensation '+money(q.sbc):null,num(q.repurchases)?'Common stock payments '+money(Math.abs(q.repurchases)):num(q.issuance)?'Common stock issuance '+money(q.issuance):null],s==='IBKR'?'Ownership exchanges can affect listed share count without equivalent economic dilution.':sg>0?'Higher weighted shares can dilute per-share results; issuance attribution is incomplete.':'Lower weighted shares can support EPS; buyback attribution requires reconciliation.',sg>0?'caution':'neutral',67);
+ }
+ // Company-specific operational evidence: matched reporting periods only.
+ if(matched){
+  if(s==='AMZN'&&num(ky('awsProfit'))&&num(ky('aws'))){
+   const incrOp=kr('awsProfit').values[3]-kr('awsProfit').values[4],incrRev=kr('aws').values[3]-kr('aws').values[4],totalOp=delta('operating_profit'),totalRev=delta('revenue');
+   add('driver','AWS growth and profitability',signed(ky('awsProfit')),'AWS operating profit YoY',['AWS revenue '+signed(ky('aws'))+' YoY · margin '+kf('awsMargin'),'Incremental AWS revenue '+money(incrRev*1e9)+' · profit '+money(incrOp*1e9),num(totalOp)&&totalOp>0?'AWS contributed '+pct(100*incrOp*1e9/totalOp)+' of consolidated operating profit growth':num(totalRev)&&totalRev>0?'AWS contributed '+pct(100*incrRev*1e9/totalRev)+' of consolidated revenue growth':null],ky('awsProfit')>ky('aws')?'Cloud profit growth exceeds revenue growth; incremental asset returns still need evidence.':'Cloud growth and profit contribution remain central.',ky('awsProfit')>0?'positive':'caution',93,source);
+  }
+  if(s==='GOOGL'&&num(ky('cloud'))){
+   const cr=kr('cloud'),inc=cr.values[3]-cr.values[4],total=delta('revenue');
+   add('driver','Cloud and Search growth',signed(ky('cloud')),'Google Cloud revenue YoY',[num(ky('search'))?'Search revenue '+signed(ky('search'))+' YoY':null,'Cloud margin '+kf('cloudMargin')+' · backlog '+kf('backlog'),num(total)&&total>0?'Cloud share of consolidated revenue growth '+pct(100*inc*1e9/total):'Incremental Cloud revenue '+money(inc*1e9)],'Cloud is expanding; Search durability and backlog conversion remain important.','positive',91,source);
+  }
+  if(s==='NVDA'&&num(ky('dc'))){
+   const r=kr('dc'),inc=r.values[3]-r.values[4],total=delta('revenue');
+   add('driver','Data Center demand',signed(ky('dc')),'Data Center revenue YoY',['Data Center revenue '+kf('dc'),'Data Center share of total sales '+kf('dcShare'),num(total)&&total>0?'Data Center share of consolidated revenue growth '+pct(100*inc*1e9/total):'Incremental Data Center revenue '+money(inc*1e9)],'AI infrastructure demand drives growth and increases end-market concentration.','positive',91,cfg.sources[r.src]?.[1]||source);
+  }
+  if(s==='IBKR'&&num(ky('accounts'))&&num(ky('comm'))){
+   add('driver','Customer growth vs monetisation',signed(ky('accounts')),'Customer accounts YoY',['Commission revenue '+signed(ky('comm'))+' YoY','Daily revenue trades '+signed(ky('darts'))+' YoY','Net interest margin '+kf('nim')+' vs '+pct(kr('nim').values[4])],ky('accounts')-ky('comm')>10?'Customer growth exceeds commission growth; mix and activity may explain the gap.':'Customer acquisition and monetisation are expanding together.',ky('accounts')-ky('comm')>10?'caution':'positive',92,source);
+  }
+  if(s==='HOOD'&&num(ky('gold'))){
+   add('driver','Subscription and asset gathering',signed(ky('gold')),'Gold subscribers YoY',['Funded customers '+signed(ky('customers'))+' YoY · ARPU '+kf('arpu'),'Quarterly net deposits '+kf('deposits')+' vs '+kpiFmt(kr('deposits'),kr('deposits').values[2])+' prior quarter','Net interest revenue '+signed(ky('nii'))+' YoY'],'Subscription adoption is expanding, but deposits and interest monetisation need monitoring.','neutral',91,source);
+  }
+  if(s==='KTOS'&&num(kv('bookTTM'))){
+   add('driver','Funded demand and backlog',kf('bookTTM'),'TTM book-to-bill',['Total backlog '+kf('backlog'),'Funded backlog '+kf('funded')+' · '+kf('fundedShare')+' of total','Organic revenue growth '+kf('organic')],'Bookings support future production; funded backlog is not recognized revenue.',kv('bookTTM')>1?'positive':'caution',92,source);
+  }
+  if(s==='OKLO'){
+   add('driver','Commercial readiness remains unproven','12 GW','Announced Switch master agreement',['Preliminary safety analysis approved (June 2026)','5 metric tons HALEU awarded; fabrication not established','Binding contracted capacity not verified'],'Announced pipeline and approvals are not operating authorization or funded capacity.','caution',92,source);
+  }
+ }else if(q.period)missing.push('Current-period company-specific KPI disclosures');
+ if(financial){
+  const f=filingRisk[s];
+  if(f?.date===q.period&&s==='IBKR'){
+   add('capital','Regulatory capital and margin lending',fmt(f.capital/f.required,2)+'x','Aggregate regulatory capital coverage',['Capital '+money(f.capital)+' vs required '+money(f.required),'Average margin loans '+signed(100*(f.marginLoans/f.oldMarginLoans-1))+' YoY','Nine-month bad debt '+money(f.badDebt9m)],'Reported capital exceeds requirements; margin lending and gap losses remain relevant.','neutral',88,f.url);
+  }
+  if(f?.date===q.period&&s==='HOOD'){
+   add('credit','Consumer credit expansion',money(f.cardProvision),'Quarterly card credit provision',['Prior-year card provision '+money(f.oldCardProvision),'Past-due loans '+money(f.pastDue)+' of '+money(f.loans),'Write-offs '+money(f.writeOff)+' vs '+money(f.oldWriteOff)+' prior year'],'Credit costs are rising; assess loan growth, seasoning and risk-adjusted product profitability.','caution',99,f.url);
+  }
+ }
+ const chosen=findings.sort((a,b)=>b.priority-a.priority).slice(0,6);
+ return (chosen.length?'<div class="fund-findings insight-grid">'+chosen.map(f=>'<article class="fund-finding insight-card '+f.cls+'" data-insight="'+esc(f.id)+'"><div class="fund-finding-top"><strong>'+esc(f.title)+'</strong></div><div class="insight-number">'+esc(f.metric)+'</div><div class="insight-metric">'+esc(f.metricLabel)+'</div><ul class="insight-bullets">'+f.bullets.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul><div class="insight-conclusion">'+esc(f.conclusion)+'</div>'+(f.url?'<a class="insight-source" href="'+esc(f.url)+'" target="_blank" rel="noopener">Disclosure ↗</a>':'')+'</article>').join('')+'</div>':'<p class="stock-note">No material insight can be established from the available comparable observations.</p>')+(missing.length?'<p class="stock-note insight-missing">Important data gaps: '+esc(missing.join(' · '))+'.</p>':'');
 }
 function fundamentalsPanel(panel,d,note,source){
  const qrows=deriveRows(d.quarterly),annual=deriveRows(d.annual,true),rows=frequency==='annual'?annual:qrows;
- panel.innerHTML='<h2>Fundamentals</h2><section class="fund-section"><div class="section-kicker">01 / EARNINGS QUALITY</div><h3>What explains the numbers?</h3>'+qualitySection(qrows)+'<p class="stock-note">Calculated explanations distinguish arithmetic bridges from verified issuer disclosures; unmatched drivers remain unresolved. Thresholds: EPS/profit gap 15pp, capex/profit gap 10pp, OCF/net income 0.8x, share growth 2%, tax shift 5pp.</p></section>'+
+ panel.innerHTML='<h2>Fundamentals</h2><section class="fund-section"><div class="section-kicker">01 / KEY FUNDAMENTAL INSIGHTS</div><h3>What matters in the latest results?</h3>'+qualitySection(qrows)+'<p class="stock-note">Materiality screens prioritise up to six insights; fewer appear when evidence is limited. Quarterly comparisons use compatible prior-year figures; cash metrics use TTM. Arithmetic bridges are not verified causal attribution. Operational disclosures must match the financial period. Screening thresholds are research heuristics, not investment rules.</p></section>'+
  '<section class="fund-section"><div class="section-kicker">02 / FINANCIAL STATEMENTS</div><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<p class="stock-note">Colours require two consecutive comparable changes in the same direction (2% relative tolerance; 0.75pp for rates). Quarterly colours compare three successive quarters (two QoQ movements); annual colours compare three successive years. Latest YoY is coloured independently using a single year-over-year comparison. Seasonal effects may influence quarterly trends. Ambiguous balance-sheet and investment increases are not automatically good or bad. Missing values and unsupported comparisons are grey. Raw provider figures are retained.</p><p class="stock-note">Long-term trend: up to five fiscal years, actual available span shown; C = CAGR. Margin and return changes are in percentage points. Long-term colour reflects the two latest annual movements, not the entire CAGR. Latest YoY uses the selected quarterly or annual view. ROE = common earnings / average common equity; ROIC = operating profit after effective tax / average (total equity + debt − cash), approximate. Quarterly returns use TTM and require four consecutive quarters and year-ago balance sheet. Brokerage metrics are adapted; generic ROIC/FCF trends are not interpreted as operating quality.</p>'+note+source+'</section>';
  el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};
 }
