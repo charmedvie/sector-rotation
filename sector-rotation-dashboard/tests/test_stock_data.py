@@ -41,3 +41,12 @@ def test_peer_equity_and_pretax_comparatives():
     assert peer_comparatives(rows,facts)['2026-09-30']=={'pretax':150,'equity':800}
     rows[0]['equity']=2000
     assert 'equity' not in peer_comparatives(rows,facts)['2026-09-30']
+
+from src.stock_data import quality_comparatives
+def test_quality_comparatives_require_current_match():
+    rows=[{'period':'2026-09-30','tax_expense':20,'shares':100}]
+    def r(start,end,val):return dict(form='10-Q',filed='2026-11-01',start=start,end=end,val=val)
+    facts={'IncomeTaxExpenseBenefit':{'units':{'USD':[r('2026-07-01','2026-09-30',20),r('2025-07-01','2025-09-30',15)]}},'WeightedAverageNumberOfDilutedSharesOutstanding':{'units':{'shares':[r('2026-07-01','2026-09-30',100),r('2025-07-01','2025-09-30',95)]}}}
+    assert quality_comparatives(rows,facts)['2026-09-30']=={'tax_expense':15,'shares':95}
+    rows[0]['tax_expense']=200
+    assert 'tax_expense' not in quality_comparatives(rows,facts)['2026-09-30']

@@ -16,7 +16,7 @@ FIELDS = {
  'total_net_income':['Net Income Including Noncontrolling Interests'], 'tax_expense':['Tax Provision'],
  'total_equity':['Total Equity Gross Minority Interest'],
  'eps':['Diluted EPS'], 'shares':['Diluted Average Shares'],
- 'interest_expense':['Interest Expense'], 'sbc':['Stock Based Compensation'],
+ 'interest_expense':['Interest Expense'], 'interest_income':['Interest Income'], 'other_nonop':['Other Non Operating Income Expenses'], 'nonop_interest':['Net Non Operating Interest Income Expense'], 'investment_gain':['Gain On Sale Of Security'], 'depreciation':['Depreciation And Amortization','Depreciation Amortization Depletion'], 'working_capital':['Change In Working Capital'], 'issuance':['Common Stock Issuance'], 'repurchases':['Common Stock Payments'], 'sbc':['Stock Based Compensation'],
  'ocf':['Operating Cash Flow'], 'capex':['Capital Expenditure'],
  'assets':['Total Assets'], 'equity':['Stockholders Equity','Common Stock Equity'],
  'cash':['Cash Cash Equivalents And Short Term Investments','Cash And Cash Equivalents'],
@@ -75,7 +75,7 @@ def sec_facts(symbol, cik=None):
 
 def quarterly_facts(facts, tag, field):
     units=facts.get(tag,{}).get('units',{})
-    rows=units.get('USD/shares' if field=='eps' else 'USD',[])
+    rows=units.get('USD/shares' if field=='eps' else 'shares' if field=='shares' else 'USD',[])
     out={}
     for r in rows:
         if r.get('form') not in ('10-Q','10-K') or not r.get('start') or not r.get('end'): continue
@@ -87,9 +87,9 @@ def quarterly_facts(facts, tag, field):
         if end not in out or filed>=out[end][0]: out[end]=(filed,v)
     return {k:v[1] for k,v in out.items()}
 
-def prior_year_comparatives(rows, facts):
+def prior_year_comparatives(rows, facts, tags_by_field=None):
     out={}
-    for field,tags in SEC_TAGS.items():
+    for field,tags in (SEC_TAGS if tags_by_field is None else tags_by_field).items():
         for tag in tags:
             series=quarterly_facts(facts,tag,field)
             matches=[r for r in rows if r.get(field) is not None and r['period'] in series]
@@ -145,6 +145,20 @@ def peer_comparatives(rows, facts):
             break
     return out
 
+
+QUALITY_TAGS = {
+    'pretax':['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest'],
+    'tax_expense':['IncomeTaxExpenseBenefit'],
+    'net_income':['NetIncomeLoss'],
+    'total_net_income':['ProfitLoss','NetIncomeLoss'],
+    'shares':['WeightedAverageNumberOfDilutedSharesOutstanding'],
+    'interest_expense':['InterestExpense','InterestAndDebtExpense'],
+    'other_nonop':['NonoperatingIncomeExpense'],
+}
+def quality_comparatives(rows,facts):
+    # Only accept tags that reconcile to same-period standardized observations.
+    return prior_year_comparatives(rows,facts,QUALITY_TAGS)
+
 def generate(output):
     import yfinance as yf
     output=Path(output)
@@ -169,8 +183,9 @@ def generate(output):
         facts = safe(lambda:sec_facts(symbol,cik),{}) if cik is not None else {}
         prior = safe(lambda:prior_year_comparatives(q,facts),{}) if facts and symbol in PILOTS else {}
         peer_prior = safe(lambda:peer_comparatives(q,facts),{}) if facts else {}
+        quality_prior = safe(lambda:quality_comparatives(q,facts),{}) if facts and symbol in PILOTS else {}
         valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in PILOTS else []
-        payload['stocks'][symbol]={'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
+        payload['stocks'][symbol]={'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
         print(f'{symbol}: {len(q)} quarters, {len(annual)} years')
     output.parent.mkdir(parents=True,exist_ok=True)
     tmp=output.with_suffix('.tmp')
