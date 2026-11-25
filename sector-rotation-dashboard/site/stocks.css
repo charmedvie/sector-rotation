@@ -34,3 +34,6 @@ a{color:#a9c9ff}.stock-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0
 
 /* v16 — evidence horizon */
 .evidence-label{font-size:10px;letter-spacing:.045em;color:#a9b9ce!important;text-transform:uppercase;font-weight:650}.evidence-detail{font-size:11px;color:#a9b9ce;line-height:1.45;margin-top:5px;overflow-wrap:anywhere}.insight-card .evidence-detail{padding-top:5px}.risk-map-item .evidence-detail{border-top:1px solid #34465b;padding-top:6px}.kpi-tile .evidence-detail{display:block;margin-top:5px}
+
+/* v17 — filing exposure analysis */
+.exposure-bullets{font-size:13px;color:#c5d0df;line-height:1.5;padding-left:17px;margin:12px 0;display:grid;gap:6px}.exposure-card .risk-metric{overflow-wrap:anywhere}.exposure-card .risk-next{margin-top:10px}.risk-priority-grid .exposure-card{min-width:0}
