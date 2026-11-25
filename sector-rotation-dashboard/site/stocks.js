@@ -454,6 +454,92 @@ function kpiPanel(panel,m,d,source){
  '<details class="risk-method"><summary>Sources & methodology</summary><p>'+foot+'</p><p>Reviewed snapshot; updates require new filing extraction. Calculated ratios and residuals are identified in the metric descriptions; unavailable values are not estimated. Historical quarter labels are fiscal quarters for NVIDIA.</p>'+source+'</details>';
 }
 
+
+let valuationYears=5,valuationMetric='pe';
+const valuationKeys={pe:'Trailing P/E',pb:'Price / book',pfcf:'Price / free cash flow'};
+const valMultiple=(v)=>num(v)&&v>0?fmt(v,1)+'x':'—';
+const valSigned=(v)=>num(v)?(v>0?'+':'')+fmt(v,1)+'%':'—';
+function valHistory(d){return (d.valuation_history||[]).filter(r=>r.date&&num(r.price)&&r.price>0).slice().sort((a,b)=>a.date.localeCompare(b.date));}
+function valWindow(history,years){if(!history.length)return [];const cutoff=new Date(history.at(-1).date+'T00:00:00Z');cutoff.setUTCFullYear(cutoff.getUTCFullYear()-years);return history.filter(r=>new Date(r.date+'T00:00:00Z')>=cutoff);}
+function valStats(rows,k,current){
+ const x=rows.map(r=>r[k]).filter(v=>num(v)&&v>0).sort((a,b)=>a-b);
+ if(x.length<8||!num(current)||current<=0)return null;
+ const mid=x.length>>1,median=x.length%2?x[mid]:(x[mid-1]+x[mid])/2;
+ return {lo:x[0],hi:x.at(-1),median,n:x.length,percentile:100*(x.filter(v=>v<current).length+.5*x.filter(v=>v===current).length)/x.length,premium:100*(current/median-1)};
+}
+function valRange(k,rows,last){
+ const st=valStats(rows,k,last?.[k]);if(!st)return '<article class="val-range"><h3>'+esc(valuationKeys[k])+'</h3><p class="stock-note">Comparable historical observations unavailable.</p></article>';
+ const pos=v=>12+296*(v-st.lo)/(st.hi-st.lo||1),mid=pos(st.median),cur=Math.max(12,Math.min(308,pos(last[k])));
+ return '<article class="val-range"><div class="val-range-head"><h3>'+esc(valuationKeys[k])+'</h3><strong>'+valMultiple(last[k])+'</strong></div><svg viewBox="0 0 320 52" role="img" aria-label="'+esc('Range '+valMultiple(st.lo)+' to '+valMultiple(st.hi)+'; median '+valMultiple(st.median)+'; latest '+valMultiple(last[k]))+'"><rect x="12" y="14" width="296" height="9" rx="4" fill="#35465c"/><line x1="'+mid+'" x2="'+mid+'" y1="6" y2="31" stroke="#a8b9ce" stroke-dasharray="3 2" stroke-width="2"/><circle cx="'+cur+'" cy="18.5" r="6" fill="#e8b365" stroke="#141e2d" stroke-width="2"/><text x="12" y="46" fill="#a9b9ce" font-size="10">'+valMultiple(st.lo)+'</text><text x="308" y="46" text-anchor="end" fill="#a9b9ce" font-size="10">'+valMultiple(st.hi)+'</text></svg><div class="val-range-meta"><span>Median <b>'+valMultiple(st.median)+'</b></span><span>'+fmt(st.percentile,0)+'th percentile</span><span>'+valSigned(st.premium)+' vs median</span></div></article>';
+}
+function valAttribution(rows){
+ const good=rows.filter(r=>num(r.eps)&&r.eps>0&&num(r.pe)&&r.pe>0),first=good[0],last=rows.at(-1);
+ if(!first||!last||!num(last.eps)||last.eps<=0||!num(last.pe)||first.date===last.date)return null;
+ const total=100*(last.price/first.price-1),earn=100*(last.eps/first.eps-1),multiple=total-earn;
+ return {first,last,total,earn,multiple};
+}
+function valAttributionHtml(a){
+ if(!a)return '<p class="stock-note">Positive comparable EPS at both endpoints is required for price-return attribution.</p>';
+ const mx=Math.max(1,Math.abs(a.earn),Math.abs(a.multiple),Math.abs(a.total));
+ return '<div class="val-attribution"><div class="val-return"><small>Share price change</small><strong>'+valSigned(a.total)+'</strong><small>'+esc(a.first.date)+' → '+esc(a.last.date)+'</small></div>'+[['Earnings growth',a.earn],['Multiple contribution (incl. interaction)',a.multiple]].map(([n,v])=>'<div><div class="risk-bar-label"><span>'+esc(n)+'</span><strong>'+(v>0?'+':'')+fmt(v,1)+'pp</strong></div><div class="kpi-signed-track"><i></i><span class="'+(v<0?'negative':'positive')+'" style="width:'+Math.abs(v)/mx*50+'%"></span></div></div>').join('')+'<p class="stock-note">Exact arithmetic decomposition: price return = EPS change + residual multiple contribution, including interaction. Price return excludes dividends.</p></div>';
+}
+function valCurrent(s,d,last){
+ const p=d.quote||{},q=d.quarterly?.[0]||{},rows=d.quarterly||[],annual=deriveRows(rows),ttm=k=>ttmAt(rows,0,k),op=ttm('operating_profit'),fcf=ttm('fcf'),mc=p.marketCap,ev=p.enterpriseValue;
+ const items={
+  pe:['Trailing P/E',valMultiple(p.trailingPE),'Provider; positive earnings only'],
+  pb:['Price / book',valMultiple(p.priceToBook),'Provider; ownership structure may affect comparability'],
+  ps:['Price / sales',valMultiple(p.priceToSalesTrailing12Months),'Provider'],
+  evsales:['EV / sales',valMultiple(p.enterpriseToRevenue),'Provider'],
+  evebitda:['EV / EBITDA',valMultiple(p.enterpriseToEbitda),'Provider; positive denominator only'],
+  evop:['EV / operating profit',num(ev)&&num(op)&&ev>0&&op>0?valMultiple(ev/op):'—','Enterprise value / four-quarter operating profit'],
+  yield:['FCF yield',num(fcf)&&num(mc)&&mc>0?valSigned(100*fcf/mc):'—','Four-quarter FCF / provider market cap; negative yield shown'],
+  roe:['ROE',num(annual[0]?.roe)?pct(annual[0].roe):'—','TTM common earnings / average common equity'],
+  cap:['Market cap',num(mc)?money(mc):'—','Provider'],
+  ev:['Enterprise value',num(ev)?money(ev):'—','Provider'],
+  cashadj:['Market cap less reported cash',num(mc)&&num(q.cash)?money(mc-q.cash):'—','Not enterprise value; debt and cash restrictions excluded'],
+  cash:['Cash & short-term investments',num(q.cash)?money(q.cash):'—','Reported balance; not necessarily unrestricted'],
+  pfcf:['Price / FCF',num(mc)&&num(fcf)&&mc>0&&fcf>0?valMultiple(mc/fcf):'—','Market cap / four-quarter FCF'],
+ };
+ const hist=valHistory(d),prior=last&&valWindow(hist,1)[0],eg=prior&&last&&((new Date(last.date)-new Date(prior.date))/86400000)>=350&&num(prior.eps)&&prior.eps>0&&num(last.eps)&&last.eps>0?100*(last.eps/prior.eps-1):null;
+ items.peg=['Trailing PEG',num(eg)&&eg>0&&num(last?.pe)&&last.pe>0?valMultiple(last.pe/eg):'—','Reconstructed P/E divided by trailing EPS YoY growth (%)'];
+ const keys={IBKR:['pe','pb','roe','cap'],HOOD:['pe','ps','pb','cap'],AMZN:['pe','evop','yield','pfcf'],GOOGL:['pe','yield','evop','pfcf'],NVDA:['pe','peg','yield','pfcf'],KTOS:['evsales','evebitda','pe','yield'],OKLO:['cap','ev','cashadj','cash']}[s];
+ return '<div class="val-current">'+keys.map(k=>{const [n,v,detail]=items[k];return '<article><small>'+esc(n)+'</small><strong>'+esc(v)+'</strong><p>'+esc(detail)+'</p></article>';}).join('')+'</div>';
+}
+function valAssessment(s,rows,last,a){
+ if(s==='OKLO')return '<div class="kpi-insight"><strong>Pre-commercial valuation</strong><p>Conventional earnings multiples cannot establish fair value without positive, durable earnings. Focus on cash-adjusted market value, funding requirements, deployment and binding commercial milestones. No assumed project value.</p></div>';
+ const st=valStats(rows,'pe',last?.pe),findings=[];
+ if(st)findings.push('Reconstructed P/E is '+valSigned(st.premium)+' versus the selected historical median ('+fmt(st.percentile,0)+'th percentile).');
+ else findings.push('A reliable current historical P/E comparison is not available.');
+ if(a){findings.push('Share price '+valSigned(a.total)+' versus trailing EPS '+valSigned(a.earn)+' over the comparable period.');findings.push('Multiple contribution '+(a.multiple>0?'+':'')+fmt(a.multiple,1)+'pp, including the interaction with earnings growth.');}
+ let headline='Insufficient historical evidence for a valuation assessment';
+ if(st)headline=st.premium>10?'Trading above its own historical median':st.premium< -10?'Trading below its own historical median':'Trading near its own historical median';
+ if(st&&a&&a.earn>0&&a.multiple>0&&st.premium>10)headline='Earnings growth accompanied by multiple expansion';
+ return '<div class="kpi-insight"><strong>'+esc(headline)+'</strong>'+list(findings)+'<p>Research question: '+esc(M[s].question)+' Historical pricing is context, not a fair-value estimate.</p></div>';
+}
+function valPanel(panel,m,d,p,source){
+ const hist=valHistory(d),rows=valWindow(hist,valuationYears),last=rows.at(-1),a=valAttribution(rows),st=valStats(rows,valuationMetric,last?.[valuationMetric]),has=rows.length>=8,metrics=Object.keys(valuationKeys);
+ const period=rows.length?rows[0].date+' to '+last.date:'History unavailable';
+ const usable=metrics.filter(k=>valStats(rows,k,last?.[k]));if(usable.length&&!usable.includes(valuationMetric))valuationMetric=usable[0];
+ const stat=valStats(rows,valuationMetric,last?.[valuationMetric]),short=valStats(valWindow(hist,1),valuationMetric,last?.[valuationMetric]),long=valStats(valWindow(hist,5),valuationMetric,last?.[valuationMetric]);
+ const indexFields=[['price','Share price'],['eps','TTM diluted EPS'],['op','TTM operating profit']];
+ // All indexed series use the same first date with positive price, EPS and operating profit where possible.
+ const active=indexFields.filter(([k])=>rows.some(r=>num(r[k])&&r[k]>0));
+ const base=rows.find(r=>active.every(([k])=>num(r[k])&&r[k]>0));
+ const indexRows=base?rows.filter(r=>r.date>=base.date):[];
+ const traces=base?active.map(([k,n])=>({name:n,x:indexRows.map(r=>r.date),y:indexRows.map(r=>num(r[k])?100*r[k]/base[k]:null),mode:'lines',connectgaps:false})):[]; 
+ const options=[1,3,5,10].map(n=>'<button data-val-years="'+n+'" aria-pressed="'+(n===valuationYears)+'">'+n+'Y</button>').join('');
+ panel.innerHTML='<h2>Valuation</h2><p class="stock-note">Historical comparisons use the company’s own trading history, not forecasts or a target price. '+esc(period)+'</p><div class="val-toolbar"><span>History window</span><div class="val-periods">'+options+'</div></div>'+
+ '<section class="val-section"><div class="section-kicker">01 / HISTORICAL VALUATION CONTEXT</div><h3>Where does valuation sit?</h3><div class="val-ranges">'+metrics.map(k=>valRange(k,rows,last)).join('')+'</div><p class="stock-note">Weekly closes; reconstructed multiples at latest observed date '+esc(last?.date||'—')+'. Ranges require at least eight valid observations; median is calculated from available positive observations. P/B and P/FCF history is only reconstructed for suitable single-class companies.</p></section>'+
+ '<section class="val-section"><div class="section-kicker">02 / PRICE VS FUNDAMENTALS</div><h3>What drove the share price?</h3>'+(traces.length&&has?'<div id="val-index-chart" class="stock-chart"></div><p class="stock-note">Indexed to 100 at the first shared available positive base ('+esc(base.date)+'). TTM EPS uses reported annual/quarterly figures or the annual + YTD change proxy. Price excludes dividends.</p>':'<p class="stock-note">Historical indexed series unavailable.</p>')+valAttributionHtml(a)+'</section>'+
+ '<section class="val-section"><div class="section-kicker">03 / VALUATION DYNAMICS</div><div class="val-range-head"><h3>Multiple through time</h3><label>Multiple <select id="val-metric">'+metrics.map(k=>'<option value="'+k+'" '+(!usable.includes(k)?'disabled':'')+'>'+esc(valuationKeys[k])+'</option>').join('')+'</select></label></div>'+(stat?'<div id="val-multiple-chart" class="stock-chart"></div><div class="val-current val-summary">'+[['vs 1Y median',short?valSigned(short.premium):'—'],['vs 5Y median',long?valSigned(long.premium):'—'],['Selected-window percentile',fmt(stat.percentile,0)+'th']].map(([n,v])=>'<article><small>'+esc(n)+'</small><strong>'+esc(v)+'</strong></article>').join('')+'</div>':'<p class="stock-note">Insufficient positive comparable history for this multiple.</p>')+'</section>'+
+ '<section class="val-section"><div class="section-kicker">04 / BUSINESS-SPECIFIC METRICS</div><h3>Current valuation snapshot</h3>'+valCurrent(symbol,d,last)+'<p class="stock-note">Provider multiples and latest financial-statement calculations may differ from reconstructed filing-date multiples.</p></section>'+
+ '<section class="val-section"><div class="section-kicker">05 / ASSESSMENT</div><h3>What the evidence says</h3>'+valAssessment(symbol,rows,last,a)+'</section>'+
+ '<details class="risk-method"><summary>Data methodology & limitations</summary><p>Weekly split-adjusted closes from Yahoo Finance, SEC companyfacts from 10-K / 10-Q filings. A filing enters the model on the next trading date; same-day figures are excluded. Interim TTM EPS may use annual EPS plus current YTD EPS minus prior YTD EPS, an approximation because weighted share counts change. Prior comparative figures are only used after their filing date. Historical P/B and P/FCF use period-end share counts, not exact daily market cap. Split adjustments use observed split dates and assume filings after the split are restated. Values can be incomplete around splits, reporting transitions and missing disclosures. Negative denominators are omitted. The sample is not a fully audited historical valuation feed.</p>'+source+'</details>';
+ panel.querySelectorAll('[data-val-years]').forEach(b=>b.onclick=()=>{valuationYears=Number(b.dataset.valYears);render();});el('val-metric').value=valuationMetric;el('val-metric').onchange=e=>{valuationMetric=e.target.value;render();};
+ if(traces.length&&has)chart('val-index-chart',traces,'Indexed · 100');
+ if(stat)chart('val-multiple-chart',[{name:valuationKeys[valuationMetric],x:rows.map(r=>r.date),y:rows.map(r=>num(r[valuationMetric])?r[valuationMetric]:null),mode:'lines',connectgaps:false},{name:'Selected-window median',x:rows.map(r=>r.date),y:rows.map(()=>stat.median),mode:'lines',line:{dash:'dot',color:'#a8b9ce'}}],'Multiple');
+}
+
 function render(){controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
 el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry;el('question').textContent=m.question;el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
@@ -466,7 +552,7 @@ if(tab==='Overview'){overviewPanel(panel,m,d,q,p,source);}
 else if(tab==='Fundamentals'){fundamentalsPanel(panel,d,note,source);}
 else if(tab==='Financial risk'){riskPanel(panel,m,d,q,note,source);}
 else if(tab==='Business KPIs'){kpiPanel(panel,m,d,source);}
-else if(tab==='Valuation'){panel.innerHTML='<h2>Valuation</h2>'+table(['Metric','Current provider value'],[['Trailing P/E',fmt(p.trailingPE)],['Price/book',fmt(p.priceToBook)],['EV/revenue',fmt(p.enterpriseToRevenue)],['EV/EBITDA',fmt(p.enterpriseToEbitda)],['Market cap',money(p.marketCap)],['Enterprise value',money(p.enterpriseValue)],['Trailing EPS',fmt(p.trailingEps,2)]])+'<p class="stock-note">Current provider multiples only. Historical point-in-time multiples require filing dates and split-consistent earnings; not estimated here. Negative earnings make P/E unsuitable.</p>'+source;}
+else if(tab==='Valuation'){valPanel(panel,m,d,p,source);}
 else if(tab==='Peers'){panel.innerHTML='<h2>Competitive comparison</h2>'+table(['Ticker','Period','Revenue YoY','Operating margin','Pretax margin','EPS YoY','P/E'],[symbol,...m.peers].map(s=>[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(latest(s).pretax_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)]))+'<p class="stock-note">Latest available fiscal quarters may differ. Segment-level and accounting differences limit direct comparison.</p>';}
 else if(tab==='Technical'){const a=d.prices||[];const sma=(n,i)=>i+1<n?null:a.slice(i+1-n,i+1).reduce((v,r)=>v+r.close,0)/n;panel.innerHTML='<h2>Price & timing</h2><div id="price-chart" class="stock-chart"></div>'+table(['Last close date','Close','SMA50','SMA200'],[[p.date||'—',fmt(p.lastClose,2),fmt(sma(50,a.length-1),2),fmt(sma(200,a.length-1),2)]])+'<p class="stock-note">Historical close series as provided; moving averages are simple averages, not your custom TradingView signals. Custom signal integration pending.</p>';chart('price-chart',[{name:'Close',x:a.map(r=>r.date),y:a.map(r=>r.close),mode:'lines'},...([50,200].map(n=>({name:'SMA '+n,x:a.map(r=>r.date),y:a.map((r,i)=>sma(n,i)),mode:'lines'})))],'USD');}
 else{panel.innerHTML='<h2>Thesis & catalysts</h2>'+box('Research question','<p>'+esc(m.question)+'</p>'+list(m.risks))+'<p class="stock-note">Private notes are stored only in this browser. They are not sent to GitHub and do not sync between devices. Save creates a dated snapshot.</p><label for="thesis">Thesis, catalyst or invalidation criteria</label><textarea id="thesis"></textarea><button class="stock-action" id="save">Save dated snapshot</button><p id="save-status"></p><div id="history"></div>';const key='stock-intelligence-notes-'+symbol;let notes=[];try{notes=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(notes))notes=[];}catch{}const draw=()=>{el('history').innerHTML=notes.map(n=>box(n.date,'<p style="white-space:pre-wrap">'+esc(n.text)+'</p>')).join('');};el('thesis').value=notes[0]?.text||'';draw();el('save').onclick=()=>{const text=el('thesis').value.trim();if(!text)return;const next=[{date:new Date().toISOString(),text},...notes];try{localStorage.setItem(key,JSON.stringify(next));notes=next;draw();el('save-status').textContent='Saved in this browser.';}catch{el('save-status').textContent='Browser storage unavailable; not saved.';}};}

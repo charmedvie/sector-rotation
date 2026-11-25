@@ -5,6 +5,7 @@ import json
 import math
 from urllib.request import Request, urlopen
 import pandas as pd
+from .valuation_data import historical_valuation
 
 PILOTS = ['IBKR','HOOD','AMZN','GOOGL','NVDA','KTOS','OKLO']
 PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE']
@@ -117,16 +118,20 @@ def generate(output):
         q=extract([safe(lambda:t.quarterly_income_stmt),safe(lambda:t.quarterly_balance_sheet),safe(lambda:t.quarterly_cashflow)])
         annual=extract([safe(lambda:t.income_stmt),safe(lambda:t.balance_sheet),safe(lambda:t.cashflow)]) if symbol in PILOTS else []
         info=safe(lambda:t.info,{}) or {}
-        h=safe(lambda:t.history(period='1y',auto_adjust=False,timeout=15)) if symbol in PILOTS else None
+        h=safe(lambda:t.history(period='10y',auto_adjust=False,actions=True,timeout=25)) if symbol in PILOTS else None
+        if symbol in PILOTS and (h is None or h.empty): h=safe(lambda:t.history(period='1y',auto_adjust=False,actions=True,timeout=15))
         prices=[]
         if h is not None and not h.empty and 'Close' in h:
-            prices=[{'date':pd.Timestamp(d).date().isoformat(),'close':number(v)} for d,v in h['Close'].items() if number(v) is not None]
-        quote={k:number(info.get(k)) for k in ['trailingPE','priceToBook','enterpriseToRevenue','enterpriseToEbitda','marketCap','enterpriseValue','trailingEps']}
+            cutoff=pd.Timestamp(h.index[-1])-pd.DateOffset(years=1)
+            prices=[{'date':pd.Timestamp(d).date().isoformat(),'close':number(v)} for d,v in h['Close'].items() if d>=cutoff and number(v) is not None]
+        quote={k:number(info.get(k)) for k in ['trailingPE','priceToBook','enterpriseToRevenue','enterpriseToEbitda','priceToSalesTrailing12Months','marketCap','enterpriseValue','trailingEps']}
         quote['currency']=info.get('currency')
         quote['financialCurrency']=info.get('financialCurrency')
         if prices: quote['lastClose']=prices[-1]['close']; quote['date']=prices[-1]['date']
-        prior = safe(lambda:prior_year_comparatives(q,sec_facts(symbol)),{}) if symbol in CIKS else {}
-        payload['stocks'][symbol]={'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'status':'available' if q else 'unavailable'}
+        facts = safe(lambda:sec_facts(symbol),{}) if symbol in CIKS else {}
+        prior = safe(lambda:prior_year_comparatives(q,facts),{}) if facts else {}
+        valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in PILOTS else []
+        payload['stocks'][symbol]={'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
         print(f'{symbol}: {len(q)} quarters, {len(annual)} years')
     output.parent.mkdir(parents=True,exist_ok=True)
     tmp=output.with_suffix('.tmp')
