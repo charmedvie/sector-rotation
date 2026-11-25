@@ -28,3 +28,16 @@ def test_valuation_missing_or_negative_eps_no_multiple():
     facts={'EarningsPerShareDiluted':{'units':{'USD/shares':[dict(start='2024-01-01',end='2024-12-31',filed='2025-02-20',val=-1,accn='a',form='10-K')]}}}
     h=pd.DataFrame({'Close':[20.]},index=pd.to_datetime(['2025-02-28']))
     assert 'pe' not in historical_valuation('OKLO',facts,h)[0]
+
+from src.stock_data import peer_comparatives
+def test_peer_equity_and_pretax_comparatives():
+    rows=[{'period':'2026-09-30','equity':1000,'pretax':200}]
+    def rec(end,val,start=None):
+        r=dict(form='10-Q',filed='2026-11-01',end=end,val=val)
+        if start:r['start']=start
+        return r
+    facts={'StockholdersEquity':{'units':{'USD':[rec('2026-09-30',1000),rec('2025-09-30',800)]}},
+           'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest':{'units':{'USD':[rec('2026-09-30',200,'2026-07-01'),rec('2025-09-30',150,'2025-07-01')]}}}
+    assert peer_comparatives(rows,facts)['2026-09-30']=={'pretax':150,'equity':800}
+    rows[0]['equity']=2000
+    assert 'equity' not in peer_comparatives(rows,facts)['2026-09-30']

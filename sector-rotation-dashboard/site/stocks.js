@@ -540,6 +540,130 @@ function valPanel(panel,m,d,p,source){
  if(stat)chart('val-multiple-chart',[{name:valuationKeys[valuationMetric],x:rows.map(r=>r.date),y:rows.map(r=>num(r[valuationMetric])?r[valuationMetric]:null),mode:'lines',connectgaps:false},{name:'Selected-window median',x:rows.map(r=>r.date),y:rows.map(()=>stat.median),mode:'lines',line:{dash:'dot',color:'#a8b9ce'}}],'Multiple');
 }
 
+
+const peerGroups={
+ IBKR:[['SCHW','Charles Schwab','Direct','Brokerage and wealth management; bank balance-sheet exposure'],['HOOD','Robinhood','Direct','Retail brokerage and consumer fintech']],
+ HOOD:[['IBKR','Interactive Brokers','Direct','Global brokerage, active and professional investors'],['SCHW','Charles Schwab','Direct','Brokerage, wealth management and banking'],['SOFI','SoFi','Adjacent','Digital banking, lending and financial services'],['COIN','Coinbase','Adjacent','Crypto trading, custody and infrastructure']],
+ AMZN:[['MSFT','Microsoft','Segment','Cloud infrastructure and enterprise software'],['GOOGL','Alphabet','Segment','Cloud infrastructure and advertising'],['WMT','Walmart','Segment','Retail and marketplace economics'],['META','Meta Platforms','Segment','Digital advertising']],
+ GOOGL:[['META','Meta Platforms','Segment','Digital advertising and consumer engagement'],['MSFT','Microsoft','Segment','Cloud and AI infrastructure'],['AMZN','Amazon','Segment','Cloud and advertising']],
+ NVDA:[['AMD','Advanced Micro Devices','Direct','Accelerators, CPUs and data center computing'],['AVGO','Broadcom','Segment','Custom AI silicon and networking; software diversification']],
+ KTOS:[['AVAV','AeroVironment','Direct','Unmanned systems and defense technology'],['LHX','L3Harris','Adjacent','Defense electronics, communications and aerospace'],['RTX','RTX','Adjacent','Aerospace, defense and advanced systems']],
+ OKLO:[['SMR','NuScale Power','Development peer','Small modular reactor commercialization'],['NNE','NANO Nuclear Energy','Development peer','Early-stage microreactor development'],['BWXT','BWX Technologies','Adjacent','Established nuclear manufacturing and services']]
+};
+const peerFinance=new Set(['IBKR','HOOD','SCHW','SOFI','COIN']);
+const peerState={};
+const peerPalette=['#70d5bd','#80a9e5','#c2a0ec','#e7b66d','#dc899e'];
+const peerSpecs={
+ rev:{label:'Revenue growth (YoY)',kind:'high',unit:'%'},
+ op:{label:'Operating profit growth (YoY)',kind:'high',unit:'%'},
+ pretax:{label:'Pretax profit growth (YoY)',kind:'high',unit:'%'},
+ eps:{label:'Diluted EPS growth (YoY)',kind:'high',unit:'%'},
+ margin:{label:'Operating margin',kind:'high',unit:'%'},
+ pretaxMargin:{label:'Pretax margin',kind:'high',unit:'%'},
+ roe:{label:'ROE (TTM)',kind:'high',unit:'%'},
+ fcfMargin:{label:'FCF margin (TTM)',kind:'high',unit:'%'},
+ pe:{label:'Trailing P/E',kind:'multiple',unit:'x'},
+ pb:{label:'Price / book',kind:'multiple',unit:'x'},
+ evsales:{label:'EV / sales',kind:'multiple',unit:'x'},
+ evebitda:{label:'EV / EBITDA',kind:'multiple',unit:'x'},
+ marketcap:{label:'Market cap',kind:'context',unit:'$'},
+ cash:{label:'Cash & short-term investments',kind:'context',unit:'$'},
+ runway:{label:'Cash runway proxy',kind:'context',unit:'months'},
+ burn:{label:'TTM free cash burn',kind:'context',unit:'$'}
+};
+function peerSettings(s){
+ const financial=peerFinance.has(s),dev=s==='OKLO';
+ return peerState[s]||(peerState[s]={enabled:peerGroups[s].map(r=>r[0]),x:dev?'cash':'rev',y:dev?'marketcap':'pe',trend:dev?'cash':'rev'});
+}
+function peerMedian(values){const a=values.filter(num).sort((x,y)=>x-y),i=a.length>>1;return a.length?(a.length%2?a[i]:(a[i-1]+a[i])/2):null;}
+function peerPrior(s,r,k){
+ const d=get(s),b=previous(d.quarterly||[],r);
+ return num(b[k])?b[k]:d.peer_prior?.[r.period]?.[k]??d.prior_year?.[r.period]?.[k]??null;
+}
+function peerValue(s,r,k){
+ const d=get(s),rows=d.quarterly||[],q=r||{},p=d.quote||{},i=rows.indexOf(r),fin=peerFinance.has(s);
+ const grow=field=>num(q[field])&&peerPrior(s,q,field)>0?100*(q[field]/peerPrior(s,q,field)-1):null;
+ const trailing=field=>i<0?null:ttmAt(rows,i,field);
+ const validMultiple=v=>num(v)&&v>0?v:null;
+ if(k==='rev')return grow('revenue');
+ if(k==='op')return fin?null:grow('operating_profit');
+ if(k==='pretax')return grow('pretax');
+ if(k==='eps')return grow('eps');
+ if(k==='margin')return fin?null:num(q.operating_margin)?q.operating_margin:null;
+ if(k==='pretaxMargin')return num(q.pretax_margin)?q.pretax_margin:null;
+ if(k==='roe'){const ni=trailing('net_income'),old=peerPrior(s,q,'equity'),eq=num(q.equity)&&num(old)?(q.equity+old)/2:null;return num(ni)&&eq>0?100*ni/eq:null;}
+ if(k==='fcfMargin'){const f=trailing('fcf'),rev=trailing('revenue');return !fin&&num(f)&&rev>0?100*f/rev:null;}
+ if(k==='pe')return validMultiple(p.trailingPE);
+ if(k==='pb')return validMultiple(p.priceToBook);
+ if(k==='evsales')return fin?null:validMultiple(p.enterpriseToRevenue);
+ if(k==='evebitda')return fin?null:validMultiple(p.enterpriseToEbitda);
+ if(k==='marketcap')return num(p.marketCap)&&p.marketCap>0?p.marketCap:null;
+ if(k==='cash')return num(q.cash)&&q.cash>=0?q.cash:null;
+ if(k==='burn'){const f=trailing('fcf');return num(f)&&f<0?-f:null;}
+ if(k==='runway'){const f=trailing('fcf');return num(q.cash)&&q.cash>=0&&num(f)&&f<0?12*q.cash/-f:null;}
+ return null;
+}
+function peerFmt(k,v){if(!num(v))return '—';const u=peerSpecs[k].unit;return u==='%'?pct(v):u==='x'?valMultiple(v):u==='$'?money(v):fmt(v,1)+' mo';}
+function peerCompatible(s,focus){
+ const a=latest(s).period,b=latest(focus).period;if(!a||!b)return false;
+ return Math.abs(new Date(a)-new Date(b))/86400000<=62;
+}
+function peerBaseline(s,ids,k){
+ const a=ids.filter(x=>x!==s&&peerCompatible(x,s)).map(x=>peerValue(x,latest(x),k)).filter(num);
+ return a.length>=2?peerMedian(a):null;
+}
+function peerTone(k,v,med){
+ if(!num(v)||!num(med)||peerSpecs[k].kind==='context')return 'neutral';
+ const tol=peerSpecs[k].unit==='%'?.75:Math.max(Math.abs(med)*.02,.01);
+ if(Math.abs(v-med)<=tol)return 'neutral';
+ if(peerSpecs[k].kind==='multiple')return v<med?'lower':'higher';
+ return v>med?'above':'below';
+}
+function peerSelect(id,keys,current){return '<select id="'+id+'">'+keys.map(k=>'<option value="'+k+'"'+(k===current?' selected':'')+'>'+esc(peerSpecs[k].label)+'</option>').join('')+'</select>';}
+function peerGraph(s,ids,st){
+ const points=ids.map((id,i)=>({id,i,x:peerValue(id,latest(id),st.x),y:peerValue(id,latest(id),st.y),date:latest(id).period})).filter(p=>num(p.x)&&num(p.y)&&peerCompatible(p.id,s));
+ const other=points.filter(p=>p.id!==s),mx=other.length>=2?peerMedian(other.map(p=>p.x)):null,my=other.length>=2?peerMedian(other.map(p=>p.y)):null;
+ const layout={paper_bgcolor:'transparent',plot_bgcolor:'#101a28',font:{color:'#b7c6db'},margin:{l:76,r:35,t:16,b:58},xaxis:{title:peerSpecs[st.x].label,gridcolor:'#29394c',zerolinecolor:'#536378',automargin:true},yaxis:{title:peerSpecs[st.y].label,gridcolor:'#29394c',automargin:true},showlegend:false,hovermode:'closest',shapes:[]};
+ if(mx!=null&&my!=null)layout.shapes=[{type:'line',xref:'x',yref:'paper',x0:mx,x1:mx,y0:0,y1:1,line:{color:'#91a5bf',dash:'dot',width:1}},{type:'line',xref:'paper',yref:'y',x0:0,x1:1,y0:my,y1:my,line:{color:'#91a5bf',dash:'dot',width:1}}];
+ // Monetary axes display USD billions rather than long tick labels.
+ for(const [axis,key] of [['xaxis',st.x],['yaxis',st.y]])if(peerSpecs[key].unit==='$')layout[axis].tickformat='~s';
+ const traces=points.map(p=>({type:'scatter',mode:'markers+text',name:p.id,x:[p.x],y:[p.y],text:[p.id],textposition:p.id===s?'top center':'bottom center',textfont:{size:p.id===s?14:12,color:peerPalette[p.i]},marker:{size:p.id===s?19:12,color:peerPalette[p.i],line:{color:p.id===s?'#e4fff6':'#132033',width:p.id===s?2:1}},hovertemplate:esc(p.id)+'<br>'+esc(peerSpecs[st.x].label)+': '+esc(peerFmt(st.x,p.x))+'<br>'+esc(peerSpecs[st.y].label)+': '+esc(peerFmt(st.y,p.y))+'<br>Financial period '+esc(p.date)+'<extra></extra>'}));
+ return {points,other,mx,my,layout,traces};
+}
+function peerAssessment(s,ids){
+ const cfg=peerFinance.has(s)?['rev','pretaxMargin','eps','pe']:s==='OKLO'?['cash','runway','marketcap']:['rev','margin','eps','pe'],q=latest(s),findings=[];
+ for(const k of cfg){const v=peerValue(s,q,k),med=peerBaseline(s,ids,k);if(!num(v)||!num(med))continue;
+ const delta=v-med,dir=peerTone(k,v,med);
+ if(peerSpecs[k].kind==='context')continue;
+ if(peerSpecs[k].kind==='multiple')findings.push({tone:dir==='higher'?'caution':'neutral',text:peerSpecs[k].label+' is '+peerFmt(k,v)+' versus '+peerFmt(k,med)+' peer median ('+valSigned(100*(v/med-1))+'). A lower multiple is not necessarily undervaluation.'});
+ else findings.push({tone:dir==='above'?'positive':dir==='below'?'caution':'neutral',text:peerSpecs[k].label+' is '+peerFmt(k,v)+' versus '+peerFmt(k,med)+' peer median ('+(delta>0?'+':'')+fmt(delta,1)+'pp).'});
+ }
+ const headline=s==='OKLO'?'Compare development stage, financing and execution—not earnings multiples':findings.length?'Relative positioning across available evidence':'Insufficient comparable observations';
+ return '<div class="kpi-insight"><strong>'+esc(headline)+'</strong>'+(findings.length?'<div class="peer-findings">'+findings.map(f=>'<p class="peer-finding '+f.tone+'">'+esc(f.text)+'</p>').join('')+'</div>':'<p>No peer-relative conclusions without at least two valid, comparable peer observations per metric.</p>')+'<p>'+esc(s==='AMZN'||s==='GOOGL'?'Consolidated results mix distinct businesses; segment-level cloud, retail and advertising comparisons remain a separate research need.':s==='OKLO'?'BWXT is an established operator, not a pre-commercial valuation benchmark. Funding and milestones matter more than growth multiples.':peerFinance.has(s)?'Different customer mixes, leverage, interest reporting and ownership structures limit comparability.':'Product mix, fiscal calendars and accounting definitions may explain differences.')+'</p></div>';
+}
+function peerPanel(panel,m,d,source){
+ const s=symbol,st=peerSettings(s),group=peerGroups[s],fin=peerFinance.has(s),dev=s==='OKLO',ids=[s,...group.map(r=>r[0]).filter(id=>st.enabled.includes(id))];
+ const growthKeys=fin?['rev','pretax','eps']:dev?['cash','burn','runway','rev','eps']:['rev','op','eps','pretax'];
+ const multipleKeys=fin?['pe','pb']:dev?['marketcap','pb','evsales','pe','evebitda']:['pe','pb','evsales','evebitda'];
+ const qualityKeys=fin?['rev','pretax','pretaxMargin','eps','roe','pe','pb']:dev?['cash','burn','runway','marketcap','pb','evsales']:['rev','op','margin','pretaxMargin','eps','roe','fcfMargin','pe','pb','evsales','evebitda'];
+ const trendKeys=fin?['rev','pretax','eps','pretaxMargin','roe']:dev?['cash','burn','runway','rev']:['rev','op','eps','margin','pretaxMargin','roe','fcfMargin'];
+ const graph=peerGraph(s,ids,st),excluded=ids.filter(id=>!graph.points.some(p=>p.id===id));
+ const trendSeries=ids.map((id,i)=>{const rows=(get(id).quarterly||[]).slice(0,4).reverse();return {name:id,x:rows.map(r=>r.period),y:rows.map(r=>peerValue(id,r,st.trend)),mode:'lines+markers',connectgaps:false,line:{color:peerPalette[i],width:id===s?3:1.6},marker:{size:id===s?8:6},hovertemplate:esc(id)+'<br>%{x}<br>%{y:.2f}<extra></extra>'};});
+ const trendHas=trendSeries.some(t=>t.y.some(num));
+ const comparison='<div class="table-scroll"><table class="fund-table peer-table"><thead><tr><th>Metric</th>'+ids.map(id=>'<th class="'+(id===s?'peer-selected':'')+'">'+esc(id)+'<small>'+esc(latest(id).period||'Unavailable')+(id!==s&&!peerCompatible(id,s)?' · outside window':'')+'</small></th>').join('')+'</tr></thead><tbody>'+qualityKeys.map(k=>{const med=peerBaseline(s,ids,k);return '<tr><th scope="row">'+esc(peerSpecs[k].label)+(num(med)?'<small>Peer median '+esc(peerFmt(k,med))+'</small>':'')+'</th>'+ids.map(id=>{const v=peerValue(id,latest(id),k),tone=peerCompatible(id,s)?peerTone(k,v,med):'neutral';return '<td class="peer-cell peer-'+tone+(id===s?' peer-selected':'')+'" title="'+esc(!peerCompatible(id,s)?'Period unavailable or outside comparison window':num(med)?'Relative to included peer median':'Insufficient peers for benchmark')+'">'+esc(peerFmt(k,v))+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>';
+ panel.innerHTML='<h2>Peers</h2><p class="stock-note">Compare operating economics and valuation without composite rankings or an automatic winner.</p>'+
+ '<section class="peer-section"><div class="section-kicker">01 / COMPETITIVE POSITIONING</div><h3>Comparison universe</h3><div class="peer-list"><article class="peer-company peer-focus"><div class="peer-ticker" style="color:'+peerPalette[0]+'">'+esc(s)+'</div><div><strong>'+esc(m.name)+'</strong><small>Selected company · '+esc(m.industry)+'</small></div><span>Selected</span></article>'+group.map(([id,name,type,desc],i)=>'<label class="peer-company"><div class="peer-ticker">'+esc(id)+'</div><div><strong>'+esc(name)+'</strong><small>'+esc(desc)+'</small></div><span class="peer-relation">'+esc(type)+'</span><input type="checkbox" data-peer="'+id+'" aria-label="Include '+esc(id)+'" '+(st.enabled.includes(id)?'checked':'')+'></label>').join('')+'</div><p class="stock-note">Select peers to update all comparisons. Segment and adjacent peers are useful context, not like-for-like benchmarks.</p></section>'+
+ '<section class="peer-section"><div class="section-kicker">02 / GROWTH VS VALUATION</div><h3>'+esc(dev?'Capital and valuation map':'Growth versus valuation map')+'</h3><div class="peer-controls"><label>X axis '+peerSelect('peer-x',growthKeys,st.x)+'</label><label>Y axis '+peerSelect('peer-y',multipleKeys,st.y)+'</label></div>'+(graph.points.length?'<div id="peer-scatter" class="stock-chart peer-chart"></div>':'<p class="stock-note">No comparable observations for the selected axes.</p>')+(num(graph.mx)&&num(graph.my)?'<p class="stock-note">Dotted lines: included peers’ medians, excluding '+esc(s)+'. X: '+esc(peerFmt(st.x,graph.mx))+' · Y: '+esc(peerFmt(st.y,graph.my))+'. These are descriptive, not buy/sell quadrants.</p>':'<p class="stock-note">At least two plotted peers are required for median reference lines.</p>')+(excluded.length?'<p class="stock-note">Not plotted (unavailable, nonpositive multiple or unmatched reporting period): '+esc(excluded.join(', '))+'.</p>':'')+'</section>'+
+ '<section class="peer-section"><div class="section-kicker">03 / COMPARATIVE BUSINESS QUALITY</div><h3>Business economics and valuation</h3><div class="peer-legend"><span class="peer-above">Higher operating metric</span><span class="peer-below">Lower operating metric</span><span class="peer-lower">Lower multiple</span><span class="peer-higher">Higher multiple</span><span>Neutral / unavailable</span></div>'+comparison+'<p class="stock-note">Colours are relative to the selected peer median, not historical trends or investment quality. Two valid peer observations required. Valuation multiples are positive provider figures; quarterly statement dates are shown. Comparisons exclude reporting periods more than 62 days apart from '+esc(s)+'. Tolerance: 0.75pp for rates and 2% for multiples.</p></section>'+
+ '<section class="peer-section"><div class="section-kicker">04 / RELATIVE FUNDAMENTAL MOMENTUM</div><div class="val-range-head"><h3>Last four reported quarters</h3><label>Metric '+peerSelect('peer-trend',trendKeys,st.trend)+'</label></div>'+(trendHas?'<div id="peer-trend-chart" class="stock-chart peer-chart"></div>':'<p class="stock-note">Comparable quarterly series unavailable.</p>')+'<p class="stock-note">Actual fiscal period ends; missing observations stay blank. YoY growth requires a positive comparable prior-year base. No synthetic quarter values.</p></section>'+
+ '<section class="peer-section"><div class="section-kicker">05 / COMPETITIVE ASSESSMENT</div><h3>What stands out</h3>'+peerAssessment(s,ids)+'</section>'+
+ '<details class="risk-method"><summary>Data methodology & sources</summary><p>Standardized quarterly statements and provider multiples; SEC prior-year comparatives used only when compatible with matching provider observations. ROE = TTM common net income / average current and year-ago common equity; FCF margin = TTM reported FCF / TTM revenue. Runway proxy = reported cash and investments / trailing monthly free cash burn, not committed project funding. Generic operating margins, EV multiples and FCF metrics are not used for financial-company comparisons. Data for different fiscal periods, currencies and business mixes may not be fully comparable.</p>'+source+'</details>';
+ panel.querySelectorAll('[data-peer]').forEach(b=>b.onchange=()=>{const id=b.dataset.peer;if(b.checked&&!st.enabled.includes(id))st.enabled.push(id);if(!b.checked)st.enabled=st.enabled.filter(x=>x!==id);render();});
+ for(const [id,k] of [['peer-x','x'],['peer-y','y'],['peer-trend','trend']]){el(id).value=st[k];el(id).onchange=e=>{st[k]=e.target.value;render();};}
+ if(window.Plotly&&graph.points.length)Plotly.react('peer-scatter',graph.traces,graph.layout,{responsive:true,displayModeBar:false});
+ if(trendHas)chart('peer-trend-chart',trendSeries,peerSpecs[st.trend].label);
+}
+
 function render(){controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
 el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry;el('question').textContent=m.question;el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
@@ -553,7 +677,7 @@ else if(tab==='Fundamentals'){fundamentalsPanel(panel,d,note,source);}
 else if(tab==='Financial risk'){riskPanel(panel,m,d,q,note,source);}
 else if(tab==='Business KPIs'){kpiPanel(panel,m,d,source);}
 else if(tab==='Valuation'){valPanel(panel,m,d,p,source);}
-else if(tab==='Peers'){panel.innerHTML='<h2>Competitive comparison</h2>'+table(['Ticker','Period','Revenue YoY','Operating margin','Pretax margin','EPS YoY','P/E'],[symbol,...m.peers].map(s=>[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(latest(s).pretax_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)]))+'<p class="stock-note">Latest available fiscal quarters may differ. Segment-level and accounting differences limit direct comparison.</p>';}
+else if(tab==='Peers'){peerPanel(panel,m,d,source);}
 else if(tab==='Technical'){const a=d.prices||[];const sma=(n,i)=>i+1<n?null:a.slice(i+1-n,i+1).reduce((v,r)=>v+r.close,0)/n;panel.innerHTML='<h2>Price & timing</h2><div id="price-chart" class="stock-chart"></div>'+table(['Last close date','Close','SMA50','SMA200'],[[p.date||'—',fmt(p.lastClose,2),fmt(sma(50,a.length-1),2),fmt(sma(200,a.length-1),2)]])+'<p class="stock-note">Historical close series as provided; moving averages are simple averages, not your custom TradingView signals. Custom signal integration pending.</p>';chart('price-chart',[{name:'Close',x:a.map(r=>r.date),y:a.map(r=>r.close),mode:'lines'},...([50,200].map(n=>({name:'SMA '+n,x:a.map(r=>r.date),y:a.map((r,i)=>sma(n,i)),mode:'lines'})))],'USD');}
 else{panel.innerHTML='<h2>Thesis & catalysts</h2>'+box('Research question','<p>'+esc(m.question)+'</p>'+list(m.risks))+'<p class="stock-note">Private notes are stored only in this browser. They are not sent to GitHub and do not sync between devices. Save creates a dated snapshot.</p><label for="thesis">Thesis, catalyst or invalidation criteria</label><textarea id="thesis"></textarea><button class="stock-action" id="save">Save dated snapshot</button><p id="save-status"></p><div id="history"></div>';const key='stock-intelligence-notes-'+symbol;let notes=[];try{notes=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(notes))notes=[];}catch{}const draw=()=>{el('history').innerHTML=notes.map(n=>box(n.date,'<p style="white-space:pre-wrap">'+esc(n.text)+'</p>')).join('');};el('thesis').value=notes[0]?.text||'';draw();el('save').onclick=()=>{const text=el('thesis').value.trim();if(!text)return;const next=[{date:new Date().toISOString(),text},...notes];try{localStorage.setItem(key,JSON.stringify(next));notes=next;draw();el('save-status').textContent='Saved in this browser.';}catch{el('save-status').textContent='Browser storage unavailable; not saved.';}};}
 }

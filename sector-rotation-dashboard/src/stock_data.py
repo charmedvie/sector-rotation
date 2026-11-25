@@ -8,7 +8,7 @@ import pandas as pd
 from .valuation_data import historical_valuation
 
 PILOTS = ['IBKR','HOOD','AMZN','GOOGL','NVDA','KTOS','OKLO']
-PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE']
+PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT']
 FIELDS = {
  'revenue': ['Total Revenue'], 'gross_profit':['Gross Profit'],
  'operating_profit':['Operating Income'], 'pretax':['Pretax Income'],
@@ -66,8 +66,9 @@ SEC_TAGS = {
     'operating_profit':['OperatingIncomeLoss'],
     'eps':['EarningsPerShareDiluted'],
 }
-def sec_facts(symbol):
-    req=Request(f'https://data.sec.gov/api/xbrl/companyfacts/CIK{CIKS[symbol]:010d}.json',
+def sec_facts(symbol, cik=None):
+    cik = cik if cik is not None else CIKS[symbol]
+    req=Request(f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json',
         headers={'User-Agent':'Stock Intelligence Lab https://github.com/charmedvie/sector-rotation','Accept':'application/json'})
     with urlopen(req, timeout=12) as res:
         return json.load(res).get('facts',{}).get('us-gaap',{})
@@ -109,10 +110,46 @@ def prior_year_comparatives(rows, facts):
             break
     return out
 
+
+def sec_ticker_ciks():
+    req=Request('https://www.sec.gov/files/company_tickers.json',
+        headers={'User-Agent':'Stock Intelligence Lab https://github.com/charmedvie/sector-rotation','Accept':'application/json'})
+    with urlopen(req, timeout=12) as res:
+        return {r['ticker']:int(r['cik_str']) for r in json.load(res).values()}
+
+def instant_facts(facts, tag):
+    out={}
+    for r in facts.get(tag,{}).get('units',{}).get('USD',[]):
+        if r.get('form') not in ('10-Q','10-K') or r.get('start') or not r.get('end'): continue
+        v=number(r.get('val'))
+        if v is None: continue
+        end=r['end']; filed=r.get('filed','')
+        if end not in out or filed>=out[end][0]: out[end]=(filed,v)
+    return {k:v[1] for k,v in out.items()}
+
+def peer_comparatives(rows, facts):
+    out=prior_year_comparatives(rows,facts)
+    # Require matching consolidated current values, then use the same compatible tag one year earlier.
+    for field,tags in {'pretax':['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest'],
+                       'equity':['StockholdersEquity','CommonStockholdersEquity']}.items():
+        for tag in tags:
+            series=instant_facts(facts,tag) if field=='equity' else quarterly_facts(facts,tag,field)
+            matches=[r for r in rows if r.get(field) is not None and r['period'] in series]
+            def agrees(r):
+                return abs(r[field]-series[r['period']])<=max(1,abs(r[field])*.01)
+            if not matches or not all(agrees(r) for r in matches): continue
+            for r in matches:
+                target=pd.Timestamp(r['period'])-pd.DateOffset(years=1)
+                candidates=[(abs((pd.Timestamp(k)-target).days),v) for k,v in series.items() if abs((pd.Timestamp(k)-target).days)<12]
+                if candidates: out.setdefault(r['period'],{})[field]=min(candidates,key=lambda t:t[0])[1]
+            break
+    return out
+
 def generate(output):
     import yfinance as yf
     output=Path(output)
     payload={'generated_at':datetime.now(timezone.utc).isoformat(),'source':'Yahoo Finance via yfinance; compatible comparative quarters from SEC companyfacts when available. Standardized statements not independently reconciled.','stocks':{}}
+    peer_ciks=safe(sec_ticker_ciks,{}) or {}
     for symbol in PILOTS+PEERS:
         t=yf.Ticker(symbol)
         q=extract([safe(lambda:t.quarterly_income_stmt),safe(lambda:t.quarterly_balance_sheet),safe(lambda:t.quarterly_cashflow)])
@@ -128,10 +165,12 @@ def generate(output):
         quote['currency']=info.get('currency')
         quote['financialCurrency']=info.get('financialCurrency')
         if prices: quote['lastClose']=prices[-1]['close']; quote['date']=prices[-1]['date']
-        facts = safe(lambda:sec_facts(symbol),{}) if symbol in CIKS else {}
-        prior = safe(lambda:prior_year_comparatives(q,facts),{}) if facts else {}
+        cik=CIKS.get(symbol,peer_ciks.get(symbol))
+        facts = safe(lambda:sec_facts(symbol,cik),{}) if cik is not None else {}
+        prior = safe(lambda:prior_year_comparatives(q,facts),{}) if facts and symbol in PILOTS else {}
+        peer_prior = safe(lambda:peer_comparatives(q,facts),{}) if facts else {}
         valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in PILOTS else []
-        payload['stocks'][symbol]={'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
+        payload['stocks'][symbol]={'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
         print(f'{symbol}: {len(q)} quarters, {len(annual)} years')
     output.parent.mkdir(parents=True,exist_ok=True)
     tmp=output.with_suffix('.tmp')
