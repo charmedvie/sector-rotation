@@ -36,7 +36,9 @@ jobs:
       - name: Test relative strength calculations
         run: python -m pytest -q
       - name: Validate dashboard JavaScript
-        run: node --check site/stocks.js
+        run: |
+          node --check site/stocks.js
+          node --test tests/test_stocks_ui.cjs
       - name: Fetch market data and calculate rotation
         run: python -m src.generate_data --output site/data/rotation.json
       - uses: actions/configure-pages@v5
