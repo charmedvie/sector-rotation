@@ -107,6 +107,127 @@ function overviewPanel(panel,m,d,q,p,source){
  panel.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{tab=b.dataset.target;render();el('panel').scrollIntoView({block:'nearest'});});
 }
 
+
+const broker=s=>['IBKR','HOOD'].includes(s);
+const isRate=k=>['gross_margin','operating_margin','pretax_margin','roe','roic','tax_rate'].includes(k);
+const higherGood=new Set(['revenue','gross_profit','operating_profit','pretax','net_income','eps','gross_margin','operating_margin','pretax_margin','ocf','fcf','roe','roic']);
+const lowerGood=new Set(['shares','sbc']);
+function num(v){return Number.isFinite(v);}
+function change(a,b,k){
+ if(!num(a)||!num(b))return null;
+ if(isRate(k))return a-b;
+ if(b>0&&a>=0)return 100*(a/b-1);
+ return null;
+}
+function changeText(a,b,k){
+ if(!num(a)||!num(b))return '—';
+ if(!isRate(k)&&b<=0){if(b<0&&a>0)return 'Loss → profit';if(b===0&&a>0)return 'Zero → positive';if(b<0&&a===0)return 'Loss → zero';if(b<0&&a<0)return a>b?'Loss narrows':a<b?'Loss widens':'Flat loss';return 'N/M';}
+ const v=change(a,b,k);if(v==null)return a<0&&b>0?'Positive → negative':'—';
+ return (v>0?'+':'')+fmt(v,1)+(isRate(k)?'pp':'%');
+}
+function eligible(k){
+ if(broker(symbol)&&['gross_profit','gross_margin','operating_profit','operating_margin','ocf','fcf','roic','shares','sbc'].includes(k))return false;
+ return higherGood.has(k)||lowerGood.has(k);
+}
+function direction(a,b,k){
+ if(!num(a)||!num(b))return null;
+ const delta=a-b,tol=isRate(k)?0.75:Math.max(Math.abs(b)*0.02, k==='eps'?0.01:1e-9);
+ return Math.abs(delta)<=tol?0:Math.sign(delta);
+}
+function cellTrend(k,dirs){
+ if(dirs.length<2||dirs.some(x=>x==null))return 'muted';
+ if(dirs.every(x=>x===0))return 'muted';
+ if(dirs[0]===0||dirs[1]===0||dirs[0]!==dirs[1])return 'muted';
+ if(!eligible(k))return ['debt','receivables','inventory','capex','shares','sbc','tax_rate'].includes(k)&&dirs[0]>0?'investigate':'muted';
+ return (lowerGood.has(k)?-dirs[0]:dirs[0])>0?'good':'bad';
+}
+function periodBase(rows,r,k,annual=false){
+ const b=previous(rows,r);
+ if(num(b[k]))return b[k];
+ return annual?null:(get(symbol).prior_year?.[r.period]?.[k]??null);
+}
+function consecutive(a,b,annual=false){
+ if(!a?.period||!b?.period)return false;
+ const days=(new Date(a.period)-new Date(b.period))/86400000;
+ return annual?days>=345&&days<=385:days>=70&&days<=105;
+}
+function columnTrend(rows,i,k,annual=false){
+ const a=rows[i],b=rows[i+1],c=rows[i+2];
+ if(!consecutive(a,b,annual)||!consecutive(b,c,annual))return 'muted';
+ if(annual)return cellTrend(k,[direction(a[k],b[k],k),direction(b[k],c[k],k)]);
+ // Compare the same fiscal quarter YoY twice rather than confusing seasonality with a trend.
+ const x=periodBase(rows,a,k),y=periodBase(rows,b,k);
+ return cellTrend(k,[direction(a[k],x,k),direction(b[k],y,k)]);
+}
+function sumField(rows,k){return rows.length===4&&rows.every(r=>num(r[k]))?rows.reduce((a,r)=>a+r[k],0):null;}
+function average(a,b){return num(a)&&num(b)?(a+b)/2:null;}
+function invested(r){return num(r?.total_equity)&&num(r?.debt)&&num(r?.cash)?r.total_equity+r.debt-r.cash:null;}
+function deriveRows(raw,annual=false){
+ return raw.map((r,i)=>{
+ const out={...r}, prior=previous(raw,r), window=raw.slice(i,i+4);
+ const valid=annual||window.length===4&&window.every((w,j)=>j===0||consecutive(window[j-1],w));
+ const n=k=>annual?(r[k]??null):valid?sumField(window,k):null;
+ const ni=n('net_income'),eq=average(r.equity,prior.equity);
+ if(num(ni)&&eq>0)out.roe=100*ni/eq;
+ const tax=n('tax_expense'),pt=n('pretax'),op=n('operating_profit'),ic=average(invested(r),invested(prior));
+ if(num(r.tax_expense)&&r.pretax>0)out.tax_rate=100*r.tax_expense/r.pretax;
+ if(!broker(symbol)&&num(op)&&op>0&&num(tax)&&pt>0&&tax>=0&&tax<=pt&&ic>0)out.roic=100*op*(1-tax/pt)/ic;
+ return out;
+ });
+}
+const extraFields=[['roe','ROE (annual / TTM)'],['roic','ROIC (annual / TTM)'],['tax_rate','Effective tax rate'],['tax_expense','Income tax expense']];
+function fundValue(k,v){return isRate(k)?pct(v):value(k,v);}
+function trendCell(text,cl='muted',tooltip=''){return '<td class="trend-'+cl+'"'+(tooltip?' title="'+esc(tooltip)+'"':'')+'>'+esc(text)+'</td>';}
+function momentumTable(annual,qrows){
+ const recent=qrows.slice(0,4);
+ const keys=['revenue','operating_profit','pretax','operating_margin','pretax_margin','eps','roe','roic','fcf','shares'];
+ const named=Object.fromEntries([...fields,...extraFields]);
+ const selected=keys.filter(k=>!broker(symbol)||!['operating_profit','operating_margin','roic','fcf'].includes(k));
+ return '<div class="table-scroll"><table class="fund-table momentum-table"><thead><tr>'+['Metric','Long-term trend','Latest quarter YoY',...recent.map(r=>r.period)].map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead><tbody>'+selected.map(k=>{
+ const a=annual.find(r=>num(r[k])), candidates=a?annual.filter(r=>num(r[k])&&r.period<a.period&&(new Date(a.period)-new Date(r.period))/86400000<=1850):[],b=candidates.at(-1);
+ let long='—',lc='muted';
+ if(a&&b){const years=(new Date(a.period)-new Date(b.period))/86400000/365.2425;if(years>=1.8){const y=Math.round(years);if(isRate(k))long=y+'Y '+changeText(a[k],b[k],k);else if(a[k]>0&&b[k]>0){const c=100*(Math.pow(a[k]/b[k],1/years)-1);long=y+'Y '+(c>0?'+':'')+fmt(c,1)+'% C';}else long=y+'Y '+changeText(a[k],b[k],k);lc=columnTrend(annual,annual.indexOf(a),k,true);}}
+ const q=recent[0]||{},prev=periodBase(qrows,q,k);
+ return '<tr><th scope="row">'+esc(named[k])+'</th>'+trendCell(long,lc,'Actual available fiscal year span; color uses two latest annual comparisons')+trendCell(changeText(q[k],prev,k),columnTrend(qrows,0,k),'Same quarter prior year')+recent.map((r,i)=>trendCell(fundValue(k,r[k]),columnTrend(qrows,i,k),'Trend uses two consecutive same-quarter YoY comparisons')).join('')+'</tr>';
+ }).join('')+'</tbody></table></div>';
+}
+function detailedTable(rows,annual){
+ return '<div class="table-scroll"><table class="fund-table"><thead><tr>'+['Metric',...rows.map(r=>r.period),'Latest YoY'].map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead><tbody>'+[...fields,...extraFields].map(([k,n])=>'<tr><th scope="row">'+esc(n)+'</th>'+rows.map((r,i)=>trendCell(fundValue(k,r[k]),columnTrend(rows,i,k,annual),'Two consistent '+(annual?'annual':'same-quarter YoY')+' changes required')).join('')+trendCell(changeText(rows[0]?.[k],rows[0]?periodBase(rows,rows[0],k,annual):null,k),columnTrend(rows,0,k,annual))+'</tr>').join('')+'</tbody></table></div>';
+}
+function qualitySection(qrows){
+ const q=qrows[0]||{},p=k=>periodBase(qrows,q,k),g=k=>growth(q,{[k]:p(k)},k);
+ const financial=broker(symbol),findings=[];
+ const add=(title,status,detail,cls)=>findings.push({title,status,detail,cls});
+ const core=financial?'pretax':'operating_profit',label=financial?'Pretax profit':'Operating profit';
+ const eg=g('eps'),og=g(core);
+ if(num(eg)&&num(og)){const gap=eg-og;add('Earnings vs core profit',Math.abs(gap)>15?'Investigate':'Broadly aligned','EPS '+signed(eg)+' vs '+label.toLowerCase()+' '+signed(og)+' YoY ('+fmt(gap)+'pp difference). '+(Math.abs(gap)>15?'Check tax, investment gains/losses, noncontrolling interests and share count.':'No large divergence on this comparison; this does not verify earnings quality.'),Math.abs(gap)>15?'caution':'positive');}
+ else add('Earnings vs core profit','Not assessed','Positive prior-year bases and comparable EPS / '+label.toLowerCase()+' are required. Loss periods are not assigned percentage growth.','neutral');
+ if(financial)add('Cash conversion','Sector-specific','Brokerage cash flows reflect customer balances and trading assets; conventional OCF/FCF ratios are not reliable business-quality tests. Review liquidity and regulatory capital instead.','neutral');
+ else {
+ const w=qrows.slice(0,4),valid=w.length===4&&w.every((r,i)=>i===0||consecutive(w[i-1],r)),net=valid?sumField(w,'total_net_income'):null,ocf=valid?sumField(w,'ocf'):null;
+ if(num(net)&&net>0&&num(ocf)){const ratio=ocf/net;add('Cash conversion',ratio<0.8?'Investigate':'Cash supports earnings','TTM operating cash flow / consolidated net income '+fmt(ratio,2)+'x. '+(ratio<0.8?'Review working capital, accruals and noncash gains.':'Cash conversion exceeds the 0.8x screening threshold; noncash expenses can also lift this ratio.'),ratio<0.8?'caution':'positive');}
+ else add('Cash conversion','Not assessed','Requires four consecutive quarters of OCF and positive consolidated net income. For loss-making businesses, monitor cash burn instead.','neutral');
+ const cg=g('capex');if(num(cg)&&num(og))add('Capital investment',cg>og+10?'Investigate':'No divergence flag','Capex '+signed(cg)+' vs operating profit '+signed(og)+' YoY. '+(cg>og+10?'Review future capacity, depreciation and returns; expansion is not inherently negative.':'No large capex/profit growth gap on this check.'),cg>og+10?'caution':'neutral');
+ else add('Capital investment','Not assessed','Comparable positive prior-year capex and operating profit required.','neutral');
+ }
+ const sg=g('shares'),ng=g('net_income');
+ if(num(sg)){const concern=sg>2;add('Per-share economics',concern?'Investigate':'No large share increase','Diluted average shares '+signed(sg)+' YoY'+(num(ng)?' vs common net income '+signed(ng):'')+'. '+(symbol==='IBKR'?'Ownership exchanges may increase listed shares without economic dilution.':concern?'Check equity issuance, stock compensation and buybacks.':'Share count movement alone does not establish dilution.'),concern?'caution':'neutral');}
+ else add('Per-share economics','Not assessed','Comparable diluted share count unavailable.','neutral');
+ const tr=q.tax_rate,old=p('tax_rate');
+ if(num(tr)&&num(old))add('Tax rate',Math.abs(tr-old)>5?'Investigate':'No large tax shift','Effective tax rate '+pct(tr)+' vs '+pct(old)+' a year earlier. '+(Math.abs(tr-old)>5?'Review discrete tax items and jurisdiction mix.':'No large change on this check.'),Math.abs(tr-old)>5?'caution':'neutral');
+ else add('Tax rate','Not assessed','Comparable tax expense and positive pretax profit required.','neutral');
+ if(financial)add('Provider accounting definitions','Verify in filings','Standardized operating profit and margin may exclude interest costs. Pretax profit is used for the core-profit comparison; reported figures remain in the raw table.','caution');
+ const sorted=findings.sort((a,b)=>Number(b.cls==='caution')-Number(a.cls==='caution'));
+ return '<div class="fund-findings">'+sorted.map(f=>'<article class="fund-finding '+f.cls+'"><div class="fund-finding-top"><strong>'+esc(f.title)+'</strong><span>'+esc(f.status)+'</span></div><p>'+esc(f.detail)+'</p></article>').join('')+'</div>';
+}
+function fundamentalsPanel(panel,d,note,source){
+ const qrows=deriveRows(d.quarterly),annual=deriveRows(d.annual,true),rows=frequency==='annual'?annual:qrows;
+ panel.innerHTML='<h2>Fundamentals</h2><section class="fund-section"><div class="section-kicker">01 / EARNINGS QUALITY</div><h3>What explains the numbers?</h3>'+qualitySection(qrows)+'<p class="stock-note">Rule-based checks, not verified causes. Thresholds: EPS/profit gap 15pp, capex/profit gap 10pp, OCF/net income 0.8x, share growth 2%, tax shift 5pp.</p></section>'+
+ '<section class="fund-section"><div class="section-kicker">02 / LONG-TERM FUNDAMENTAL MOMENTUM</div><h3>Business trajectory</h3>'+momentumTable(annual,qrows)+'<p class="stock-note">Long-term trend: up to five fiscal years, actual elapsed years shown; C = CAGR. Latest YoY uses same fiscal quarter. Margin and return changes are percentage points. ROE = common earnings / average common equity; ROIC = operating profit after effective tax / average (total equity + debt − cash), approximate. Quarterly returns use TTM and require four consecutive quarters and year-ago balance sheet. Brokerage metrics are adapted; no generic ROIC/FCF assessment.</p></section>'+
+ '<section class="fund-section"><div class="section-kicker">03 / FINANCIAL STATEMENTS</div><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual')+'<p class="stock-note">Colours require two consecutive comparable changes in the same direction (2% relative tolerance; 0.75pp for rates). Quarterly comparisons are YoY, annual comparisons are year-to-year. Ambiguous balance-sheet and investment increases are not automatically good or bad. Missing values and unsupported comparisons are grey. Raw provider figures are retained.</p>'+note+source+'</section>';
+ el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};
+}
+
 function render(){controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
 el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry;el('question').textContent=m.question;el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
@@ -116,7 +237,7 @@ const panel=el('panel');const note='<p class="stock-note">Period ends, not filin
 const source='<p><a target="_blank" rel="noopener" href="https://www.sec.gov/edgar/browse/?CIK='+m.sec+'">SEC filings ↗</a> · <a target="_blank" rel="noopener" href="https://finance.yahoo.com/quote/'+symbol+'/financials/">Financial data source ↗</a></p>';
 panel.classList.remove('overview-panel');
 if(tab==='Overview'){overviewPanel(panel,m,d,q,p,source);}
-else if(tab==='Fundamentals'){const rows=d[frequency]||[];const quarters=d.quarterly.slice(0,4).reverse(),quarterCharts=frequency==='quarterly'?'<div class="section-kicker">FINANCIAL MOMENTUM · LAST FOUR QUARTERS</div><div class="four-chart-grid detail-quarter-grid">'+momentumChart(quarters,d.quarterly,'revenue','Revenue',money)+momentumChart(quarters,d.quarterly,'operating_profit','Operating profit',money)+momentumChart(quarters,d.quarterly,'eps','Diluted EPS',v=>'$'+fmt(v,2))+fourBars('Pretax margin',quarters,quarters.map(r=>r.pretax_margin??null),pct,'Reported pretax margin')+'</div>':'';panel.innerHTML='<h2>Financial statements & momentum</h2><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label>'+note+quarterCharts+'<div class="stock-grid"><div id="fin-chart" class="stock-chart"></div><div id="margin-chart" class="stock-chart"></div></div>'+table(['Metric',...rows.map(r=>r.period),'Latest YoY'],fields.map(([k,n])=>[n,...rows.map(r=>value(k,r[k])),k.includes('margin')?'—':pct(rows[0]?growth(rows[0],previous(rows,rows[0]),k):null)]))+source;el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};const a=rows.slice().reverse();chart('fin-chart',['revenue','operating_profit','net_income'].map(k=>({type:'bar',name:fields.find(f=>f[0]===k)[1],x:a.map(r=>r.period),y:a.map(r=>r[k]==null?null:r[k]/1e9)})),'Billions');chart('margin-chart',['operating_margin','pretax_margin'].map(k=>({type:'scatter',mode:'lines+markers',name:fields.find(f=>f[0]===k)[1],x:a.map(r=>r.period),y:a.map(r=>r[k]??null)})),'%');}
+else if(tab==='Fundamentals'){fundamentalsPanel(panel,d,note,source);}
 else if(tab==='Financial risk'){const b=previous(d.quarterly,q),flags=[];const rg=growth(q,b,'revenue');for(const [k,n,explanation] of [['receivables','Receivables','Review collection, contract assets and revenue recognition.'],['inventory','Inventory','Review demand, inventory turns and write-downs.'],['capex','Capex','Review incremental returns and capital commitments.'],['shares','Diluted shares','Distinguish SBC, offerings and ownership exchanges.'],['debt','Debt','Review financing uses, maturities and interest costs.']]){const g=growth(q,b,k);if(g!=null&&rg!=null&&g>rg+10)flags.push(n+' grew '+pct(g)+' vs revenue '+pct(rg)+'. '+explanation);}const eg=growth(q,b,'eps'),og=growth(q,b,'operating_profit');if(eg!=null&&og!=null&&Math.abs(eg-og)>15)flags.push('EPS growth '+pct(eg)+' vs operating profit '+pct(og)+': investigate taxes, non-operating items and dilution.');panel.innerHTML='<h2>Financial risk & forensic screening</h2>'+note+'<div class="stock-grid">'+box('Calculated flags',flags.length?list(flags):'<p>No flags from available comparable data. This does not imply low risk.</p>')+box('Business-specific diligence (not verified findings)',list(m.risks))+box('Balance sheet',table(['Metric','Latest'],[['Cash',money(q.cash)],['Debt',money(q.debt)],['Equity / assets',pct(q.equity_assets)],['Current assets',money(q.current_assets)],['Current liabilities',money(q.current_liabilities)]]))+'</div><p class="stock-note">Screen uses an explicit 10 percentage-point divergence threshold (15 for EPS vs operating profit). Financial institutions require separate regulatory capital and customer balance analysis. No automated footnote interpretation yet.</p>'+source;}
 else if(tab==='Business KPIs'){panel.innerHTML='<h2>Company-specific intelligence</h2><p class="stock-note">Diligence framework. These operating KPIs require filing extraction; values have not yet been populated.</p>'+table(['Metric / disclosure','Status'],m.kpis.map(k=>[k,'Needs filing extraction']))+source+(symbol==='OKLO'?'<p><a href="https://www.nrc.gov/reactors/new-reactors/advanced.html" target="_blank" rel="noopener">NRC advanced reactors ↗</a></p>':'');}
 else if(tab==='Valuation'){panel.innerHTML='<h2>Valuation</h2>'+table(['Metric','Current provider value'],[['Trailing P/E',fmt(p.trailingPE)],['Price/book',fmt(p.priceToBook)],['EV/revenue',fmt(p.enterpriseToRevenue)],['EV/EBITDA',fmt(p.enterpriseToEbitda)],['Market cap',money(p.marketCap)],['Enterprise value',money(p.enterpriseValue)],['Trailing EPS',fmt(p.trailingEps,2)]])+'<p class="stock-note">Current provider multiples only. Historical point-in-time multiples require filing dates and split-consistent earnings; not estimated here. Negative earnings make P/E unsuitable.</p>'+source;}

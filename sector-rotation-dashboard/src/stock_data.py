@@ -12,6 +12,8 @@ FIELDS = {
  'revenue': ['Total Revenue'], 'gross_profit':['Gross Profit'],
  'operating_profit':['Operating Income'], 'pretax':['Pretax Income'],
  'net_income':['Net Income Common Stockholders','Net Income'],
+ 'total_net_income':['Net Income Including Noncontrolling Interests'], 'tax_expense':['Tax Provision'],
+ 'total_equity':['Total Equity Gross Minority Interest'],
  'eps':['Diluted EPS'], 'shares':['Diluted Average Shares'],
  'interest_expense':['Interest Expense'], 'sbc':['Stock Based Compensation'],
  'ocf':['Operating Cash Flow'], 'capex':['Capital Expenditure'],
