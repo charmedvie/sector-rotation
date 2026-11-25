@@ -57,7 +57,7 @@ def test_nearby_cover_page_shares_and_fcf_independent_of_equity():
     facts={**flow('NetCashProvidedByUsedInOperatingActivities',100),**flow('PaymentsToAcquirePropertyPlantAndEquipment',40),
            'StockholdersEquity':{'units':{'USD':[dict(end='2025-12-31',filed='2026-02-10',val=200,form='10-K')]}},
            'EntityCommonStockSharesOutstanding':{'units':{'shares':[dict(end='2026-01-25',filed='2026-02-10',val=10,form='10-K')]}}}
-    h=pd.DataFrame({'Close':[20.,20.]},index=pd.to_datetime(['2026-02-09','2026-02-13']))
+    h=pd.DataFrame({'Close':[20.,20.]},index=pd.to_datetime(['2026-02-06','2026-02-13']))
     pts=historical_valuation('AMZN',facts,h)
     assert 'pb' not in pts[0] and 'pfcf' not in pts[0]
     assert pts[1]['pb']==1 and abs(pts[1]['pfcf']-200/60)<1e-10
