@@ -180,21 +180,32 @@ function deriveRows(raw,annual=false){
 const extraFields=[['roe','ROE (annual / TTM)'],['roic','ROIC (annual / TTM)'],['tax_rate','Effective tax rate'],['tax_expense','Income tax expense']];
 function fundValue(k,v){return isRate(k)?pct(v):value(k,v);}
 function trendCell(text,cl='muted',tooltip=''){return '<td class="trend-'+cl+'"'+(tooltip?' title="'+esc(tooltip)+'"':'')+'>'+esc(text)+'</td>';}
-function momentumTable(annual,qrows){
- const recent=qrows.slice(0,4);
- const keys=['revenue','operating_profit','pretax','operating_margin','pretax_margin','eps','roe','roic','fcf','shares'];
- const named=Object.fromEntries([...fields,...extraFields]);
- const selected=keys.filter(k=>!broker(symbol)||!['operating_profit','operating_margin','roic','fcf'].includes(k));
- return '<div class="table-scroll"><table class="fund-table momentum-table"><thead><tr>'+['Metric','Long-term trend','Latest quarter YoY',...recent.map(r=>r.period)].map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead><tbody>'+selected.map(k=>{
+const financialGroups=[
+ ['Growth & earnings',['revenue','gross_profit','operating_profit','pretax','net_income','eps']],
+ ['Profitability & capital efficiency',['gross_margin','operating_margin','pretax_margin','roe','roic']],
+ ['Cash flow & investment',['ocf','capex','fcf']],
+ ['Balance sheet & financial health',['assets','equity','cash','debt','receivables','inventory']],
+ ['Shareholder dilution & tax',['sbc','shares','tax_rate','tax_expense']]
+];
+function longTermCell(annual,k){
  const a=annual.find(r=>num(r[k])), candidates=a?annual.filter(r=>num(r[k])&&r.period<a.period&&(new Date(a.period)-new Date(r.period))/86400000<=1850):[],b=candidates.at(-1);
- let long='—',lc='muted';
- if(a&&b){const years=(new Date(a.period)-new Date(b.period))/86400000/365.2425;if(years>=1.8){const y=Math.round(years);if(isRate(k))long=y+'Y '+changeText(a[k],b[k],k);else if(a[k]>0&&b[k]>0){const c=100*(Math.pow(a[k]/b[k],1/years)-1);long=y+'Y '+(c>0?'+':'')+fmt(c,1)+'% C';}else long=y+'Y '+changeText(a[k],b[k],k);lc=columnTrend(annual,annual.indexOf(a),k,true);}}
- const q=recent[0]||{},prev=periodBase(qrows,q,k);
- return '<tr><th scope="row">'+esc(named[k])+'</th>'+trendCell(long,lc,'Actual available fiscal year span; color uses two latest annual comparisons')+trendCell(changeText(q[k],prev,k),yoyColour(qrows,k),'Single YoY comparison, independent of quarterly trend')+recent.map((r,i)=>trendCell(fundValue(k,r[k]),columnTrend(qrows,i,k),'Trend uses two consecutive QoQ movements')).join('')+'</tr>';
- }).join('')+'</tbody></table></div>';
+ let text='—',cl='muted';
+ if(a&&b){
+  const years=(new Date(a.period)-new Date(b.period))/86400000/365.2425;
+  if(years>=1.8){
+   const y=Math.round(years);
+   if(isRate(k))text=y+'Y '+changeText(a[k],b[k],k);
+   else if(a[k]>0&&b[k]>0){const c=100*(Math.pow(a[k]/b[k],1/years)-1);text=y+'Y '+(c>0?'+':'')+fmt(c,1)+'% C';}
+   else text=y+'Y '+changeText(a[k],b[k],k);
+   cl=columnTrend(annual,annual.indexOf(a),k,true);
+  }
+ }
+ return trendCell(text,cl,'Actual available fiscal year span; colour uses two latest annual comparisons, not the full-period change');
 }
-function detailedTable(rows,annual){
- return '<div class="table-scroll"><table class="fund-table"><thead><tr>'+['Metric',...rows.map(r=>r.period),'Latest YoY'].map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead><tbody>'+[...fields,...extraFields].map(([k,n])=>'<tr><th scope="row">'+esc(n)+'</th>'+rows.map((r,i)=>trendCell(fundValue(k,r[k]),columnTrend(rows,i,k,annual),'Two consistent '+(annual?'annual':'quarter-over-quarter')+' changes required')).join('')+trendCell(changeText(rows[0]?.[k],rows[0]?periodBase(rows,rows[0],k,annual):null,k),yoyColour(rows,k,annual),'Single YoY comparison, independent of period trend')+'</tr>').join('')+'</tbody></table></div>';
+function detailedTable(rows,annualView,annualRows){
+ const named=Object.fromEntries([...fields,...extraFields]);
+ return '<div class="table-scroll"><table class="fund-table grouped-financials"><thead><tr>'+['Metric','Long-term trend','Latest YoY',...rows.map(r=>r.period)].map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead>'+
+ financialGroups.map(([heading,keys])=>'<tbody><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">'+esc(heading)+'</th></tr>'+keys.map(k=>'<tr data-financial-field="'+esc(k)+'"><th scope="row">'+esc(named[k])+'</th>'+longTermCell(annualRows,k)+trendCell(changeText(rows[0]?.[k],rows[0]?periodBase(rows,rows[0],k,annualView):null,k),yoyColour(rows,k,annualView),'Single YoY comparison, independent of period trend')+rows.map((r,i)=>trendCell(fundValue(k,r[k]),columnTrend(rows,i,k,annualView),'Two consistent '+(annualView?'annual':'quarter-over-quarter')+' changes required')).join('')+'</tr>').join('')+'</tbody>').join('')+'</table></div>';
 }
 function qualitySection(qrows){
  const q=qrows[0]||{},p=k=>periodBase(qrows,q,k),g=k=>growth(q,{[k]:p(k)},k);
@@ -225,8 +236,7 @@ function qualitySection(qrows){
 function fundamentalsPanel(panel,d,note,source){
  const qrows=deriveRows(d.quarterly),annual=deriveRows(d.annual,true),rows=frequency==='annual'?annual:qrows;
  panel.innerHTML='<h2>Fundamentals</h2><section class="fund-section"><div class="section-kicker">01 / EARNINGS QUALITY</div><h3>What explains the numbers?</h3>'+qualitySection(qrows)+'<p class="stock-note">Rule-based checks, not verified causes. Thresholds: EPS/profit gap 15pp, capex/profit gap 10pp, OCF/net income 0.8x, share growth 2%, tax shift 5pp.</p></section>'+
- '<section class="fund-section"><div class="section-kicker">02 / LONG-TERM FUNDAMENTAL MOMENTUM</div><h3>Business trajectory</h3>'+momentumTable(annual,qrows)+'<p class="stock-note">Long-term trend: up to five fiscal years, actual elapsed years shown; C = CAGR. Latest YoY uses same fiscal quarter. Margin and return changes are percentage points. ROE = common earnings / average common equity; ROIC = operating profit after effective tax / average (total equity + debt − cash), approximate. Quarterly returns use TTM and require four consecutive quarters and year-ago balance sheet. Brokerage metrics are adapted; no generic ROIC/FCF assessment.</p></section>'+
- '<section class="fund-section"><div class="section-kicker">03 / FINANCIAL STATEMENTS</div><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual')+'<p class="stock-note">Colours require two consecutive comparable changes in the same direction (2% relative tolerance; 0.75pp for rates). Quarterly colours compare three successive quarters (two QoQ movements); annual colours compare three successive years. Latest YoY is coloured independently using a single year-over-year comparison. Seasonal effects may influence quarterly trends. Ambiguous balance-sheet and investment increases are not automatically good or bad. Missing values and unsupported comparisons are grey. Raw provider figures are retained.</p>'+note+source+'</section>';
+ '<section class="fund-section"><div class="section-kicker">02 / FINANCIAL STATEMENTS</div><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<p class="stock-note">Colours require two consecutive comparable changes in the same direction (2% relative tolerance; 0.75pp for rates). Quarterly colours compare three successive quarters (two QoQ movements); annual colours compare three successive years. Latest YoY is coloured independently using a single year-over-year comparison. Seasonal effects may influence quarterly trends. Ambiguous balance-sheet and investment increases are not automatically good or bad. Missing values and unsupported comparisons are grey. Raw provider figures are retained.</p><p class="stock-note">Long-term trend: up to five fiscal years, actual available span shown; C = CAGR. Margin and return changes are in percentage points. Long-term colour reflects the two latest annual movements, not the entire CAGR. Latest YoY uses the selected quarterly or annual view. ROE = common earnings / average common equity; ROIC = operating profit after effective tax / average (total equity + debt − cash), approximate. Quarterly returns use TTM and require four consecutive quarters and year-ago balance sheet. Brokerage metrics are adapted; generic ROIC/FCF trends are not interpreted as operating quality.</p>'+note+source+'</section>';
  el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};
 }
 
