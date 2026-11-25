@@ -154,10 +154,31 @@ QUALITY_TAGS = {
     'shares':['WeightedAverageNumberOfDilutedSharesOutstanding'],
     'interest_expense':['InterestExpense','InterestAndDebtExpense'],
     'other_nonop':['NonoperatingIncomeExpense'],
+    'gross_profit':['GrossProfit'],
+    'ocf':['NetCashProvidedByUsedInOperatingActivities'],
+    'capex':['PaymentsToAcquirePropertyPlantAndEquipment'],
+    'sbc':['ShareBasedCompensation'],
 }
 def quality_comparatives(rows,facts):
     # Only accept tags that reconcile to same-period standardized observations.
-    return prior_year_comparatives(rows,facts,QUALITY_TAGS)
+    out=prior_year_comparatives(rows,facts,{**SEC_TAGS,**QUALITY_TAGS})
+    instant_tags={'cash':['CashAndCashEquivalentsAtCarryingValue'], 'inventory':['InventoryNet'], 'receivables':['AccountsReceivableNetCurrent','ReceivablesNetCurrent'], 'assets':['Assets'], 'equity':['StockholdersEquity'], 'debt':['LongTermDebtAndFinanceLeaseObligationsCurrent','LongTermDebtAndCapitalLeaseObligations']}
+    for field,tags in instant_tags.items():
+        for tag in tags:
+            series=instant_facts(facts,tag)
+            matches=[r for r in rows if r.get(field) is not None and r['period'] in series]
+            if not matches or not all(abs(r[field]-series[r['period']])<=max(1,abs(r[field])*.01) for r in matches): continue
+            for r in matches:
+                target=pd.Timestamp(r['period'])-pd.DateOffset(years=1)
+                candidates=[(abs((pd.Timestamp(k)-target).days),v) for k,v in series.items() if abs((pd.Timestamp(k)-target).days)<12]
+                if candidates: out.setdefault(r['period'],{})[field]=min(candidates,key=lambda t:t[0])[1]
+            break
+    # Calculate ratios only from reconciled comparable components, never a standalone percentage guess.
+    for period,p in out.items():
+        for k,top in [('gross_margin','gross_profit'),('operating_margin','operating_profit'),('pretax_margin','pretax')]:
+            if p.get('revenue',0)>0 and top in p: p[k]=100*p[top]/p['revenue']
+        if 'ocf' in p and 'capex' in p: p['fcf']=p['ocf']-p['capex']
+    return out
 
 def generate(output):
     import yfinance as yf

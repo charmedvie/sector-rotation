@@ -180,6 +180,92 @@ function deriveRows(raw,annual=false){
 const extraFields=[['roe','ROE (annual / TTM)'],['roic','ROIC (annual / TTM)'],['tax_rate','Effective tax rate'],['tax_expense','Income tax expense']];
 function fundValue(k,v){return isRate(k)?pct(v):value(k,v);}
 function trendCell(text,cl='muted',tooltip=''){return '<td class="trend-'+cl+'"'+(tooltip?' title="'+esc(tooltip)+'"':'')+'>'+esc(text)+'</td>';}
+
+// Comparable-period evidence: no trend inferred from raw sequential seasonal levels.
+const evidenceLabels={event:'One-off event',emerging:'Emerging change',sustained:'Sustained change',structural:'Structural improvement',mixed:'Mixed / stable evidence',level:'Current condition',unknown:'Insufficient history'};
+const evidenceTone={event:'neutral',emerging:'neutral',sustained:'neutral',structural:'positive',mixed:'neutral',level:'neutral',unknown:'neutral'};
+function comparablePrior(d,rows,r,k){
+ const old=previous(rows,r);
+ return num(old[k])?old[k]:d.quality_prior?.[r.period]?.[k]??d.prior_year?.[r.period]?.[k]??d.peer_prior?.[r.period]?.[k]??null;
+}
+function comparableChange(d,rows,r,k){
+ const v=r[k],old=comparablePrior(d,rows,r,k);
+ if(!num(v)||!num(old))return null;
+ return isRate(k)?v-old:old>0?100*(v/old-1):null;
+}
+function historicalComparisons(d,rows,k,i=0){
+ const out=[];
+ for(let n=i;n<Math.min(i+4,rows.length);n++){
+  if(n>i&&!consecutive(rows[n-1],rows[n]))break;
+  const r=rows[n],v=comparableChange(d,rows,r,k);if(!num(v))break;
+  out.push({period:r.period,value:v});
+ }
+ return out;
+}
+function comparisonEvidence(points,tol=2,prefer=1){
+ const xs=points.map(p=>p.value),latest=xs[0],prior=xs[1],third=xs[2];
+ const sign=x=>x>tol?1:x< -tol?-1:0;
+ const moves=xs.slice(0,-1).map((x,i)=>sign(x-xs[i+1]));
+ const momentum=moves.length>=2&&moves[0]&&moves[0]===moves[1]?moves[0]:0;
+ const persistent=xs.length>=3&&sign(latest)!==0&&xs.slice(0,3).every(x=>sign(x)===sign(latest))?sign(latest):0;
+ return {count:xs.length,points,momentum,persistent,direction:momentum*prefer,persistence:persistent*prefer,kind:xs.length===0?'unknown':xs.length<3?'emerging':momentum||persistent?'sustained':'mixed'};
+}
+function evidenceSeriesText(e,unit='%'){
+ return e.points.length?e.points.slice().reverse().map(p=>(p.value>0?'+':'')+fmt(p.value,1)+unit).join(' → '):'Comparable history unavailable';
+}
+function matchedTtmPrior(d,rows,k,i=0){
+ const w=rows.slice(i,i+4);if(w.length!==4||!w.every((r,j)=>j===0||consecutive(w[j-1],r)))return null;
+ const values=w.map(r=>comparablePrior(d,rows,r,k));return values.every(num)?values.reduce((a,b)=>a+b,0):null;
+}
+function annualEvidence(d,k){
+ const rows=d.annual||[],a=rows.find(r=>num(r[k]));if(!a)return null;
+ const end=rows.filter(r=>num(r[k])&&r.period<a.period&&(new Date(a.period)-new Date(r.period))/86400000<=1850).at(-1);
+ if(!end)return null;const years=(new Date(a.period)-new Date(end.period))/86400000/365.2425;if(years<2.8)return null;
+ const value=isRate(k)?a[k]-end[k]:a[k]>0&&end[k]>0?100*(Math.pow(a[k]/end[k],1/years)-1):null;
+ return num(value)?{value,years:Math.round(years)}:null;
+}
+function financialEvidence(d,rows,k,i=0,prefer=1){
+ const unit=isRate(k)?'pp':'%',e=comparisonEvidence(historicalComparisons(d,rows,k,i),isRate(k)?.75:2,prefer),a=i===0?annualEvidence(d,k):null;
+ // Structural improvement requires a favorable latest sustained direction AND aligned 3+ year history.
+ const structural=e.count>=3&&(e.direction>0||e.persistence>0&&e.direction>=0)&&e.points[0]?.value*prefer>0&&a&&a.value*prefer>(isRate(k)?.75:2);
+ const ttm=!isRate(k)&&!['shares','assets','equity','cash','debt','inventory','receivables','eps'].includes(k)?ttmAt(rows,i,k):null;
+ const prior=num(ttm)?matchedTtmPrior(d,rows,k,i):null;
+ return {...e,kind:structural?'structural':e.kind,unit,annual:a,ttm,prior,summary:evidenceSeriesText(e,unit)};
+}
+function evidenceBrief(e){
+ const parts=[e.count?e.count+' comparable YoY '+(e.count===1?'period':'periods')+': '+e.summary:'No comparable YoY history'];
+ if(num(e.ttm)&&num(e.prior))parts.push('TTM '+money(e.ttm)+' vs '+money(e.prior)+' prior year');
+ if(e.annual)parts.push(e.annual.years+'Y '+(e.annual.value>0?'+':'')+fmt(e.annual.value,1)+(e.unit==='pp'?'pp':'% CAGR'));
+ return parts.join(' · ');
+}
+function evidenceClass(e){
+ if(e.kind==='structural')return 'Structural improvement';
+ if(e.kind==='sustained'){
+  if(e.direction<0)return 'Sustained deceleration';
+  if(e.direction>0)return 'Sustained acceleration';
+  if(e.persistence<0)return 'Sustained deterioration';
+  if(e.persistence>0)return 'Sustained improvement';
+ }
+ return evidenceLabels[e.kind]||'Insufficient history';
+}
+function kpiEvidence(r,i=3){
+ if(!r)return {...comparisonEvidence([]),unit:'%',summary:'No comparable history'};
+ // A disclosed series of YoY growth rates is comparable across quarters. Raw levels are not.
+ const rateSeries=['awsGrowth','organic'].includes(r.id);
+ const points=[];
+ if(rateSeries){for(let n=i;n>=Math.max(0,i-3);n--){if(!num(r.values[n]))break;points.push({value:r.values[n],period:n});}}
+ else if(i===3){const x=kpiDelta(r,r.values[3],r.values[4]);if(num(x))points.push({value:x,period:i});}
+ const unit=rateSeries?'%':r.unit==='%'?'pp':'%',e=comparisonEvidence(points,r.unit==='%'&&!rateSeries?.75:2,r.kind==='down'?-1:1);
+ return {...e,unit,summary:evidenceSeriesText(e,unit)};
+}
+function comparableColor(d,rows,i,k,annual=false){
+ if(annual)return columnTrend(rows,i,k,true);
+ const e=financialEvidence(d,rows,k,i,lowerGood.has(k)?-1:1);
+ if(e.count<3||!e.persistence||e.direction&&e.direction!==e.persistence)return 'muted';
+ if(!eligible(k))return ['debt','receivables','inventory','capex','shares','sbc','tax_rate'].includes(k)&&e.persistent>0?'investigate':'muted';
+ return e.persistence>0?'good':'bad';
+}
+
 const financialGroups=[
  ['Growth & earnings',['revenue','gross_profit','operating_profit','pretax','net_income','eps']],
  ['Profitability & capital efficiency',['gross_margin','operating_margin','pretax_margin','roe','roic']],
@@ -205,7 +291,7 @@ function longTermCell(annual,k){
 function detailedTable(rows,annualView,annualRows){
  const named=Object.fromEntries([...fields,...extraFields]);
  return '<div class="table-scroll"><table class="fund-table grouped-financials"><thead><tr>'+['Metric','Long-term trend','Latest YoY',...rows.map(r=>r.period)].map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead>'+
- financialGroups.map(([heading,keys])=>'<tbody><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">'+esc(heading)+'</th></tr>'+keys.map(k=>'<tr data-financial-field="'+esc(k)+'"><th scope="row">'+esc(named[k])+'</th>'+longTermCell(annualRows,k)+trendCell(changeText(rows[0]?.[k],rows[0]?periodBase(rows,rows[0],k,annualView):null,k),yoyColour(rows,k,annualView),'Single YoY comparison, independent of period trend')+rows.map((r,i)=>trendCell(fundValue(k,r[k]),columnTrend(rows,i,k,annualView),'Two consistent '+(annualView?'annual':'quarter-over-quarter')+' changes required')).join('')+'</tr>').join('')+'</tbody>').join('')+'</table></div>';
+ financialGroups.map(([heading,keys])=>'<tbody><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">'+esc(heading)+'</th></tr>'+keys.map(k=>'<tr data-financial-field="'+esc(k)+'"><th scope="row">'+esc(named[k])+'</th>'+longTermCell(annualRows,k)+trendCell(changeText(rows[0]?.[k],rows[0]?periodBase(rows,rows[0],k,annualView):null,k),yoyColour(rows,k,annualView),'Single YoY comparison, independent of period trend')+rows.map((r,i)=>trendCell(fundValue(k,r[k]),comparableColor(get(symbol),rows,i,k,annualView),annualView?'Two consecutive annual changes':'Three comparable YoY periods; conflicting direction stays neutral')).join('')+'</tr>').join('')+'</tbody>').join('')+'</table></div>';
 }
 
 const qualityDisclosures={
@@ -307,13 +393,29 @@ function qualitySection(qrows){
    add('credit','Consumer credit expansion',money(f.cardProvision),'Quarterly card credit provision',['Prior-year card provision '+money(f.oldCardProvision),'Past-due loans '+money(f.pastDue)+' of '+money(f.loans),'Write-offs '+money(f.writeOff)+' vs '+money(f.oldWriteOff)+' prior year'],'Credit costs are rising; assess loan growth, seasoning and risk-adjusted product profitability.','caution',99,f.url);
   }
  }
- const chosen=findings.sort((a,b)=>b.priority-a.priority).slice(0,6);
- return (chosen.length?'<div class="fund-findings insight-grid">'+chosen.map(f=>'<article class="fund-finding insight-card '+f.cls+'" data-insight="'+esc(f.id)+'"><div class="fund-finding-top"><strong>'+esc(f.title)+'</strong></div><div class="insight-number">'+esc(f.metric)+'</div><div class="insight-metric">'+esc(f.metricLabel)+'</div><ul class="insight-bullets">'+f.bullets.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul><div class="insight-conclusion">'+esc(f.conclusion)+'</div>'+(f.url?'<a class="insight-source" href="'+esc(f.url)+'" target="_blank" rel="noopener">Disclosure ↗</a>':'')+'</article>').join('')+'</div>':'<p class="stock-note">No material insight can be established from the available comparable observations.</p>')+(missing.length?'<p class="stock-note insight-missing">Important data gaps: '+esc(missing.join(' · '))+'.</p>':'');
+ const evidenceFor=f=>{
+  if(f.id==='earnings'&&disc)return {label:'One-off event',detail:'Dated issuer disclosure; not evidence of a lasting trend.',tone:'neutral'};
+  if(f.id==='earnings'||f.id==='leverage'||f.id==='growth'||f.id==='shares'){
+   const key=f.id==='growth'?'revenue':f.id==='shares'?'shares':core,e=financialEvidence(d,qrows,key,0,f.id==='shares'?-1:1);
+   return {label:evidenceClass(e),detail:evidenceBrief(e),tone:e.kind==='structural'||e.kind==='sustained'?f.cls:'neutral'};
+  }
+  if(f.id==='cash'||f.id==='capex'||f.id==='runway'){
+   const key=f.id==='cash'?'ocf':'fcf',now=disc?.ttm?.[key]??t(key),prior=disc?.ttm?.['old_'+key]??matchedTtmPrior(d,qrows,key);
+   return {label:'TTM financial condition',detail:num(now)&&num(prior)?'TTM '+money(now)+' vs '+money(prior)+' prior year; one annual comparison, not a confirmed trend.':'Trailing four-quarter level; longer comparison unavailable.',tone:f.cls};
+  }
+  if(f.id==='driver'){
+   const id={AMZN:'awsGrowth',GOOGL:'cloud',NVDA:'dc',IBKR:'accounts',HOOD:'gold',KTOS:'bookTTM'}[s],e=kpiEvidence(kr(id));
+   return {label:s==='OKLO'?'Dated milestone':s==='KTOS'?'TTM demand observation':evidenceClass(e),detail:s==='OKLO'?'Reported milestones, not proof of commercial success.':s==='KTOS'?'Rolling book-to-bill level; historical comparison unavailable.':e.count?e.count+' comparable '+(s==='AMZN'?'AWS growth rates':'YoY observations')+': '+e.summary:'Comparable history unavailable.',tone:e.kind==='sustained'?f.cls:'neutral'};
+  }
+  return {label:'Current condition',detail:'Dated filing evidence; persistence not established.',tone:f.cls};
+ };
+ const chosen=findings.sort((a,b)=>b.priority-a.priority).slice(0,6).map(f=>({...f,evidence:evidenceFor(f)}));
+ return (chosen.length?'<div class="fund-findings insight-grid">'+chosen.map(f=>'<article class="fund-finding insight-card '+f.evidence.tone+'" data-insight="'+esc(f.id)+'"><div class="fund-finding-top"><strong>'+esc(f.title)+'</strong><span class="evidence-label">'+esc(f.evidence.label)+'</span></div><div class="insight-number">'+esc(f.metric)+'</div><div class="insight-metric">'+esc(f.metricLabel)+'</div><ul class="insight-bullets">'+f.bullets.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul><div class="insight-conclusion">'+esc(f.conclusion)+'</div><div class="evidence-detail">'+esc(f.evidence.detail)+'</div>'+(f.url?'<a class="insight-source" href="'+esc(f.url)+'" target="_blank" rel="noopener">Disclosure ↗</a>':'')+'</article>').join('')+'</div>':'<p class="stock-note">No material insight can be established from the available comparable observations.</p>')+(missing.length?'<p class="stock-note insight-missing">Important data gaps: '+esc(missing.join(' · '))+'.</p>':'');
 }
 function fundamentalsPanel(panel,d,note,source){
  const qrows=deriveRows(d.quarterly),annual=deriveRows(d.annual,true),rows=frequency==='annual'?annual:qrows;
- panel.innerHTML='<h2>Fundamentals</h2><section class="fund-section"><div class="section-kicker">01 / KEY FUNDAMENTAL INSIGHTS</div><h3>What matters in the latest results?</h3>'+qualitySection(qrows)+'<p class="stock-note">Materiality screens prioritise up to six insights; fewer appear when evidence is limited. Quarterly comparisons use compatible prior-year figures; cash metrics use TTM. Arithmetic bridges are not verified causal attribution. Operational disclosures must match the financial period. Screening thresholds are research heuristics, not investment rules.</p></section>'+
- '<section class="fund-section"><div class="section-kicker">02 / FINANCIAL STATEMENTS</div><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<p class="stock-note">Colours require two consecutive comparable changes in the same direction (2% relative tolerance; 0.75pp for rates). Quarterly colours compare three successive quarters (two QoQ movements); annual colours compare three successive years. Latest YoY is coloured independently using a single year-over-year comparison. Seasonal effects may influence quarterly trends. Ambiguous balance-sheet and investment increases are not automatically good or bad. Missing values and unsupported comparisons are grey. Raw provider figures are retained.</p><p class="stock-note">Long-term trend: up to five fiscal years, actual available span shown; C = CAGR. Margin and return changes are in percentage points. Long-term colour reflects the two latest annual movements, not the entire CAGR. Latest YoY uses the selected quarterly or annual view. ROE = common earnings / average common equity; ROIC = operating profit after effective tax / average (total equity + debt − cash), approximate. Quarterly returns use TTM and require four consecutive quarters and year-ago balance sheet. Brokerage metrics are adapted; generic ROIC/FCF trends are not interpreted as operating quality.</p>'+note+source+'</section>';
+ panel.innerHTML='<h2>Fundamentals</h2><section class="fund-section"><div class="section-kicker">01 / KEY FUNDAMENTAL INSIGHTS</div><h3>What matters in the latest results?</h3>'+qualitySection(qrows)+'<p class="stock-note">Material findings are classified by evidence horizon: one-off event, emerging change, sustained direction, structural improvement, or current condition. Three consecutive comparable YoY periods are required for a sustained assessment; structural improvement also needs aligned 3+ year history. TTM comparisons and missing evidence are shown explicitly.</p></section>'+
+ '<section class="fund-section"><div class="section-kicker">02 / FINANCIAL STATEMENTS</div><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<p class="stock-note">Quarterly trend colours require three consecutive comparable YoY changes with the same sign beyond 2% / 0.75pp; opposing growth momentum stays neutral. Annual colours retain two consecutive annual movements. Latest YoY is a single-period comparison, not a trend. Ambiguous balance-sheet and investment increases are not automatically good or bad. Missing values and unsupported comparisons are grey. Raw provider figures are retained.</p><p class="stock-note">Long-term trend: up to five fiscal years, actual available span shown; C = CAGR. Margin and return changes are in percentage points. Long-term colour reflects the two latest annual movements, not the entire CAGR. Latest YoY uses the selected quarterly or annual view. ROE = common earnings / average common equity; ROIC = operating profit after effective tax / average (total equity + debt − cash), approximate. Quarterly returns use TTM and require four consecutive quarters and year-ago balance sheet. Brokerage metrics are adapted; generic ROIC/FCF trends are not interpreted as operating quality.</p>'+note+source+'</section>';
  el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};
 }
 
@@ -367,6 +469,34 @@ function riskAt(s,d,q,id){
  if(id==='runway'){if(i<0||!num(r.cash))return missing();const burn=ttmAt(rows,i,'fcf');if(!num(burn)||burn>=0)return missing();const v=12*r.cash/-burn;return riskResult(v<12?'high':v<24?'watch':'disclosed',fmt(v,0)+' months proxy','Reported cash and investments / annual trailing free cash burn. Assumes all reported cash is available and constant burn; actual project funding and restrictions can materially change runway.','Review unrestricted cash and forward project commitments.');}
  return missing();
 }
+
+function riskEvidence(s,d,q,id,result){
+ const rows=d.quarterly||[],i=rows.indexOf(q);
+ if(result.status==='unknown')return {label:'Insufficient history',detail:'Required comparable evidence unavailable.'};
+ if(result.status==='structural')return {label:'Structural exposure',detail:'Exposure exists independently of quarterly trend.'};
+ if(['coverage','runway'].includes(id))return {label:'TTM condition',detail:'Rolling four-quarter baseline; not a confirmed direction.'};
+ if(id==='liquidity'||id==='capital'||id==='liquidity')return {label:'Current balance-sheet condition',detail:'A point-in-time level, not a trend.'};
+ if(i<0)return {label:'Current observation',detail:'No comparable trend established.'};
+ if(id==='cashflow'){
+  const now=ttmAt(rows,i,'fcf'),prior=matchedTtmPrior(d,rows,'fcf',i);
+  return {label:num(now)?'TTM condition':'Quarterly observation',detail:num(now)?'TTM FCF '+money(now)+(num(prior)?' vs '+money(prior)+' prior year.':'; prior TTM unavailable.'):'TTM FCF unavailable; quarterly cash flow may be seasonal.'};
+ }
+ const vals=[],field={gross:'gross_margin',shares:'shares',inventory:'inventory',receivables:'receivables',capex:'capex',earnings:'eps'}[id];
+ if(field){
+  for(let n=i;n<Math.min(i+4,rows.length);n++){
+   if(n>i&&!consecutive(rows[n-1],rows[n]))break;
+   const r=rows[n],a=comparableChange(d,rows,r,field),b=['inventory','receivables','capex','earnings'].includes(id)?comparableChange(d,rows,r,id==='capex'?'operating_profit':id==='earnings'?'pretax':'revenue'):null;
+   if(!num(a)||(['inventory','receivables','capex','earnings'].includes(id)&&!num(b)))break;
+   const x=id==='gross'?-a:id==='earnings'?Math.abs(a-b):num(b)?a-b:a;
+   vals.push({period:r.period,value:x});
+  }
+ }
+ const threshold=id==='earnings'?15:id==='gross'||id==='shares'?2:10;
+ if(vals.length>=3&&vals.slice(0,3).every(x=>x.value>threshold))return {label:'Persistent risk flag',detail:'Three comparable YoY periods exceed the screen: '+evidenceSeriesText({points:vals},id==='shares'?'%':'pp')+'.'};
+ if(vals.length>=3&&vals.slice(0,3).every(x=>x.value<=threshold))return {label:'No persistent flag in this screen',detail:'Three comparable YoY observations: '+evidenceSeriesText({points:vals},id==='shares'?'%':'pp')+'.'};
+ return {label:result.status==='watch'?'Emerging risk / current flag':'Current observation',detail:vals.length?vals.length+' comparable YoY observation(s): '+evidenceSeriesText({points:vals},id==='shares'?'%':'pp')+'. Persistence not established.':'Dated observation; comparable multi-quarter history unavailable.'};
+}
+
 function riskVisual(values){
  if(!values.length)return '';
  const max=Math.max(1,...values.map(v=>Math.abs(v.value)));
@@ -413,11 +543,11 @@ function renderStress(s,d,q){
  return {html,bind(){specs.forEach((x,i)=>{const slider=el('stress-slider-'+i),base=x.baseLabel?el('stress-base-'+i):null;slider.value=String(x.initial);const update=()=>{const v=Number(slider.value),b=base?(base.value.trim()!==''?Number(base.value):null):x.base;el('stress-val-'+i).textContent=fmt(v,1)+' '+x.unit;if(!num(b)||b<0||(base&&b===0)){el('stress-output-'+i).innerHTML='<p>Baseline unavailable. '+(base?'Enter a disclosed value to calculate.':'No estimate substituted.')+'</p>';return;}const [label,result,detail]=x.calc(v,b);el('stress-output-'+i).innerHTML='<span>'+esc(label)+'</span><strong>'+esc(result)+'</strong><small>'+esc(detail)+'</small>';};slider.oninput=update;if(base)base.oninput=update;update();});}};
 }
 function riskPanel(panel,m,d,q,note,source){
- const config=riskConfig[symbol],f=filingRisk[symbol],rs=config.map(([id,title,desc])=>({id,title,desc,...riskAt(symbol,d,q,id)})),priority=rs.filter(r=>['watch','high','structural'].includes(r.status)).sort((a,b)=>({high:0,watch:1,structural:2}[a.status]-({high:0,watch:1,structural:2}[b.status])));
+ const config=riskConfig[symbol],f=filingRisk[symbol],rs=config.map(([id,title,desc])=>{const r=riskAt(symbol,d,q,id);return {id,title,desc,...r,evidence:riskEvidence(symbol,d,q,id,r)};}),priority=rs.filter(r=>['watch','high','structural'].includes(r.status)).sort((a,b)=>({high:0,watch:1,structural:2}[a.status]-({high:0,watch:1,structural:2}[b.status])));
  const recent=(d.quarterly||[]).slice(0,4).reverse(),stress=renderStress(symbol,d,q);
  const label=r=>riskLabels[r.status]||'Not assessed';
  panel.innerHTML='<h2>Financial risk</h2><p class="risk-intro">Independent risk dimensions · '+esc(q.period?'Quarter ended '+q.period:'Reporting period unavailable')+' · no composite score</p>'+
- '<section class="risk-section"><div class="section-kicker">01 / FINANCIAL RESILIENCE</div><h3>Risk map</h3><div class="risk-map">'+rs.map(r=>'<article class="risk-map-item risk-'+r.status+'"><div class="risk-map-top"><strong>'+esc(r.title)+'</strong><span>'+esc(label(r))+'</span></div><div class="risk-metric">'+esc(r.metric)+'</div><small>'+esc(r.desc)+'</small></article>').join('')+'</div><p class="stock-note">No flag means a specific check did not trigger; it does not establish low overall risk. Structural exposure is not a quantified loss estimate.</p></section>'+
+ '<section class="risk-section"><div class="section-kicker">01 / FINANCIAL RESILIENCE</div><h3>Risk map</h3><div class="risk-map">'+rs.map(r=>'<article class="risk-map-item risk-'+r.status+'"><div class="risk-map-top"><strong>'+esc(r.title)+'</strong><span>'+esc(label(r))+'</span></div><div class="risk-metric">'+esc(r.metric)+'</div><small>'+esc(r.desc)+'</small><div class="evidence-detail">'+esc(r.evidence.label)+'</div></article>').join('')+'</div><p class="stock-note">Severity reflects the observed level or screen; evidence horizon distinguishes current conditions from persistent risk. No flag is not a low-risk verdict. Three comparable YoY periods are required to confirm a persistent growth-gap flag.</p></section>'+
  '<section class="risk-section risk-focus"><div class="section-kicker">02 / PRIORITY DILIGENCE</div><h3>Risks beneath the surface</h3><div class="risk-priority-grid">'+(priority.length?priority.map(r=>'<article class="risk-priority risk-'+r.status+'"><div class="risk-map-top"><span>'+esc(label(r))+'</span></div><h4>'+esc(r.title)+'</h4><div class="risk-metric">'+esc(r.metric)+'</div>'+riskVisual(r.values)+'<p>'+esc(r.why)+'</p><div class="risk-next"><strong>MONITOR NEXT QUARTER</strong><p>'+esc(r.next)+'</p></div>'+riskSource(r,f)+'</article>').join(''):'<p class="stock-note">No priority flags from available checks. Unassessed dimensions still require diligence.</p>')+'</div><div class="risk-unassessed"><strong>Filing work still needed</strong>'+list(rs.filter(r=>r.status==='unknown').map(r=>r.title+' — '+r.desc))+'</div></section>'+
  '<section class="risk-section"><div class="section-kicker">03 / SCENARIO ANALYSIS</div><h3>Financial stress tests</h3><div class="stress-grid">'+stress.html+'</div><p class="stock-note">Independent sensitivity scenarios, not forecasts or probabilities. Dated filing baselines remain fixed until reviewed; user-entered assumptions are not verified.</p></section>'+
  '<section class="risk-section"><div class="section-kicker">04 / HISTORICAL MONITORING</div><h3>Risk evolution · four quarters</h3><div class="table-scroll"><table class="risk-history"><thead><tr><th>Risk dimension</th>'+recent.map(r=>'<th>'+esc(r.period)+'</th>').join('')+'</tr></thead><tbody>'+config.map(([id,title])=>'<tr><th scope="row">'+esc(title)+'</th>'+recent.map(qr=>{const rr=riskAt(symbol,d,qr,id);return '<td><div class="risk-history-cell risk-'+rr.status+'" title="'+esc(rr.why)+'"><strong>'+esc(label(rr))+'</strong><small>'+esc(rr.metric)+'</small></div></td>';}).join('')+'</tr>').join('')+'</tbody></table></div><p class="stock-note">Historical cells are recalculated from available dated observations, not backfilled judgments or saved point-in-time ratings. Missing quarters or disclosures remain unassessed.</p></section>'+
@@ -527,15 +657,20 @@ function kpiGrowthBars(rows){
  const max=Math.max(1,...xs.map(x=>Math.abs(x.value)));
  return '<div class="kpi-growth">'+xs.map(x=>'<div><div class="risk-bar-label"><span>'+esc(x.label)+'</span><strong>'+esc(signed(x.value))+'</strong></div><div class="kpi-signed-track"><i></i><span class="'+(x.value<0?'negative':'positive')+'" style="width:'+Math.abs(x.value)/max*50+'%"></span></div></div>').join('')+'</div>';
 }
+function kpiEvidenceColor(r,i){
+ const e=kpiEvidence(r,i);
+ if(e.count<3||r.kind==='context'||r.kind==='watch')return 'muted';
+ return e.direction>0?'good':e.direction<0?'bad':'muted';
+}
 function kpiPanel(panel,m,d,source){
  const cfg=kpiData[symbol],rows=cfg.rows,labels=cfg.periods||['Q4 2025','Q1 2026','Q2 2026','Q3 2026'],by=id=>rows.find(r=>r.id===id),latestPeriod=d.quarterly?.[0]?.period,stale=latestPeriod&&latestPeriod>cfg.period;
- const card=r=>'<article class="kpi-tile"><div>'+esc(r.label)+'</div><strong class="trend-'+kpiTrend(r,3)+'">'+esc(kpiFmt(r,r.values[3]))+'</strong><small>YoY '+esc(kpiDeltaText(r,r.values[3],r.values[4]))+' · QoQ '+esc(kpiDeltaText(r,r.values[3],r.values[2]))+'</small><p>'+esc(r.why)+'</p></article>';
+ const card=r=>'<article class="kpi-tile"><div>'+esc(r.label)+'</div><strong class="trend-'+kpiEvidenceColor(r,3)+'">'+esc(kpiFmt(r,r.values[3]))+'</strong><small>YoY '+esc(kpiDeltaText(r,r.values[3],r.values[4]))+' · QoQ '+esc(kpiDeltaText(r,r.values[3],r.values[2]))+'</small><small class="evidence-detail">'+esc(evidenceClass(kpiEvidence(r)))+' · '+esc(kpiEvidence(r).summary)+'</small><p>'+esc(r.why)+'</p></article>';
  const milestone=cfg.milestones;
  const foot=cfg.sources.map(([n,url],i)=>'<a href="'+esc(url)+'" target="_blank" rel="noopener">['+(i+1)+'] '+esc(n)+' ↗</a>').join(' · ');
  panel.innerHTML='<h2>Business KPIs</h2><p class="stock-note">Reviewed operational disclosure snapshot · quarter ended '+esc(cfg.period)+(stale?' · newer financial quarter exists; operational data has not yet been refreshed':'')+' · not a live filing feed</p>'+
  '<section class="kpi-section"><div class="section-kicker">01 / CORE BUSINESS DRIVERS</div><h3>'+esc(milestone?'Execution milestones':'Business performance')+'</h3>'+(milestone?'<div class="kpi-milestones">'+milestone.slice(0,6).map(x=>'<article class="kpi-tile"><div>'+esc(x[0])+'</div><strong class="kpi-milestone-title">'+esc(x[1])+'</strong><small>'+esc(x[3])+' · '+esc(x[2])+'</small><p>'+esc(x[4])+'</p></article>').join('')+'</div>':'<div class="kpi-tiles">'+cfg.core.map(id=>card(by(id))).join('')+'</div>')+'</section>'+
- '<section class="kpi-section"><div class="section-kicker">02 / BUSINESS ECONOMICS</div><h3>'+esc(milestone?'Commercial readiness':cfg.mix.title||'Revenue engine')+'</h3>'+(milestone?'<div class="kpi-milestones">'+milestone.slice(6).map(x=>'<article class="kpi-tile"><div>'+esc(x[0])+'</div><strong class="kpi-milestone-title">'+esc(x[1])+'</strong><small>'+esc(x[3])+' · '+esc(x[2])+'</small><p>'+esc(x[4])+'</p></article>').join('')+'</div>':'<div class="kpi-economics"><div>'+kpiMix(cfg.mix)+'</div>'+(cfg.compare.length?'<div><div class="section-kicker">YOY GROWTH COMPARISON</div>'+kpiGrowthBars(cfg.compare.map(by))+'</div>':'<div><div class="section-kicker">DEMAND & EXECUTION</div>'+card(by('bookTTM'))+card(by('funded'))+'</div>')+'</div>')+'<div class="kpi-insight"><strong>What this means</strong><p>'+esc(cfg.insight)+'</p></div></section>'+
- '<section class="kpi-section"><div class="section-kicker">03 / OPERATIONAL MOMENTUM</div><h3>'+esc(milestone?'Milestone tracker':'Four-quarter operating trends')+'</h3>'+(milestone?table(['Metric / milestone','Reported observation','Status','Timing','What to verify'],milestone):'<div class="table-scroll"><table class="fund-table kpi-table"><thead><tr>'+['KPI',...labels,'Latest YoY'].map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr><th scope="row" title="'+esc(r.why)+'">'+esc(r.label)+' <sup>['+(r.src+1)+']</sup></th>'+r.values.slice(0,4).map((v,i)=>trendCell(kpiFmt(r,v),kpiTrend(r,i),'Two successive quarterly movements; metric-specific direction')).join('')+trendCell(kpiDeltaText(r,r.values[3],r.values[4]),'muted','Year-over-year change; percentage points for percentage metrics')+'</tr>').join('')+'</tbody></table></div><p class="stock-note">Green/red requires two successive movements beyond 2% relative or 0.75pp for percentage metrics. Higher margin lending/concentration can warrant investigation, not automatic improvement. Missing history remains grey; quarter-to-quarter seasonality and definition changes can affect trends.</p>')+'</section>'+
+ '<section class="kpi-section"><div class="section-kicker">02 / BUSINESS ECONOMICS</div><h3>'+esc(milestone?'Commercial readiness':cfg.mix.title||'Revenue engine')+'</h3>'+(milestone?'<div class="kpi-milestones">'+milestone.slice(6).map(x=>'<article class="kpi-tile"><div>'+esc(x[0])+'</div><strong class="kpi-milestone-title">'+esc(x[1])+'</strong><small>'+esc(x[3])+' · '+esc(x[2])+'</small><p>'+esc(x[4])+'</p></article>').join('')+'</div>':'<div class="kpi-economics"><div>'+kpiMix(cfg.mix)+'</div>'+(cfg.compare.length?'<div><div class="section-kicker">YOY GROWTH COMPARISON</div>'+kpiGrowthBars(cfg.compare.map(by))+'</div>':'<div><div class="section-kicker">DEMAND & EXECUTION</div>'+card(by('bookTTM'))+card(by('funded'))+'</div>')+'</div>')+'<div class="kpi-insight"><strong>What this means</strong><p>'+esc(cfg.insight)+'</p><small class="evidence-detail">Dated operational observations; persistence requires comparable multi-quarter evidence.</small></div></section>'+
+ '<section class="kpi-section"><div class="section-kicker">03 / OPERATIONAL MOMENTUM</div><h3>'+esc(milestone?'Milestone tracker':'Four-quarter operating trends')+'</h3>'+(milestone?table(['Metric / milestone','Reported observation','Status','Timing','What to verify'],milestone):'<div class="table-scroll"><table class="fund-table kpi-table"><thead><tr>'+['KPI',...labels,'Latest YoY'].map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr><th scope="row" title="'+esc(r.why)+'">'+esc(r.label)+' <sup>['+(r.src+1)+']</sup></th>'+r.values.slice(0,4).map((v,i)=>trendCell(kpiFmt(r,v),kpiEvidenceColor(r,i),'Comparable YoY growth-rate history only; sequential levels are descriptive')).join('')+trendCell(kpiDeltaText(r,r.values[3],r.values[4]),'muted','Year-over-year change; percentage points for percentage metrics')+'</tr>').join('')+'</tbody></table></div><p class="stock-note">Green/red requires three comparable YoY growth-rate observations with two consistent changes. Raw sequential levels are descriptive only; a single YoY comparison is not a trend. Most operational snapshots do not yet have comparable prior-year history for all quarters.</p>')+'</section>'+
  '<details class="risk-method"><summary>Sources & methodology</summary><p>'+foot+'</p><p>Reviewed snapshot; updates require new filing extraction. Calculated ratios and residuals are identified in the metric descriptions; unavailable values are not estimated. Historical quarter labels are fiscal quarters for NVIDIA.</p>'+source+'</details>';
 }
 
@@ -772,35 +907,34 @@ function thesisCheck(s,d,check){
  const out=(status,value,period,detail,src='')=>({name,condition,status,value,period,detail,src});
  const unknown=(detail='Required comparable evidence unavailable.',period=q.period||'—')=>out('unknown','—',period,detail);
  if(type==='manual')return unknown('Requires filing or event review; no automated conclusion.');
- if(type==='milestone'){const r=cfg.milestones?.[key];if(!r)return unknown();const unassessed=r[2]==='Not assessed';return out(unassessed?'unknown':'neutral',r[1],r[3],r[4],cfg.sources[0][1]);}
+ if(type==='milestone'){const r=cfg.milestones?.[key];if(!r)return unknown();return out(r[2]==='Not assessed'?'unknown':'neutral',r[1],r[3],r[4]+' Dated milestone, not a long-term thesis conclusion.',cfg.sources[0][1]);}
  if(type==='risk'){
   const r=riskAt(s,d,q,key);if(r.status==='unknown')return unknown(r.why);
-  return out(r.status==='high'?'pressure':r.status==='watch'||r.status==='structural'?'watch':r.status==='clear'?'support':'neutral',r.metric,q.period||'—',r.why,r.src||'');
+  const e=riskEvidence(s,d,q,key,r);
+  return out(r.status==='high'||e.label==='Persistent risk flag'?'pressure':r.status==='watch'||r.status==='structural'?'watch':'neutral',r.metric,q.period||'—',r.why+' '+e.label+' · '+e.detail,r.src||'');
  }
  if(type==='kpi'){
   const r=cfg.rows.find(x=>x.id===key);if(!r||!num(r.values[3]))return unknown('Operational disclosure not populated.',cfg.period);
-  const v=r.values[3],old=r.values[4],delta=kpiDelta(r,v,old),trend=kpiTrend(r,3),stale=q.period&&q.period>cfg.period;
-  let status='neutral',detail=r.why;
-  if(stale){status='unknown';detail+=' Newer financial period exists; operational snapshot needs refresh.';}
-  else if(rule==='context'){status='watch';detail+=' Comparable capital-return history is required for a directional assessment.';}
-  else if(rule==='above1'){status=v>1?'support':v<1?'watch':'neutral';detail+=' Research condition: above 1x.';}
-  else if(trend==='bad'){status='pressure';detail+=' Two successive adverse quarterly movements.';}
-  else if(trend==='good'){status='support';detail+=' Two successive favorable quarterly movements.';}
-  else if(num(delta)){const tol=r.unit==='%'?.75:2,sign=rule==='down'?-delta:delta;status=sign>tol?'support':sign< -tol?'watch':'neutral';detail+=' Single YoY comparison, not a confirmed multi-quarter trend.';}
-  else {status='neutral';detail+=' Comparable trend not established.';}
+  if(q.period&&q.period>cfg.period)return unknown('Newer financial period exists; operational snapshot needs refresh.',cfg.period);
+  const v=r.values[3],old=r.values[4],delta=kpiDelta(r,v,old),e=kpiEvidence(r);
+  let status='neutral',detail=r.why+' '+evidenceClass(e)+' · '+e.summary+'.';
+  if(rule==='context'){status='watch';detail+=' Comparable capital-return history required.';}
+  else if(rule==='above1'){status=v<1?'watch':'neutral';detail+=' TTM level versus 1x research threshold; no directional conclusion.';}
+  else if(e.count>=3&&e.direction<0){status='pressure';detail+=' Sustained adverse growth momentum.';}
+  else if(e.count>=3&&e.direction>0&&e.points[0]?.value*(rule==='down'?-1:1)>0){status='support';detail+=' Sustained favorable growth momentum.';}
+  else if(num(delta)&&(rule==='down'?-delta:delta)< -(r.unit==='%'?.75:2)){status='watch';detail+=' Emerging adverse observation; not a confirmed trend.';}
+  else detail+=' Insufficient comparable history for sustained thesis support.';
   return out(status,kpiFmt(r,v)+(num(delta)?' · YoY '+kpiDeltaText(r,v,old):''),cfg.period,detail,cfg.sources[r.src]?.[1]||'');
  }
  if(type==='ttm'){
-  const now=ttmAt(rows,0,key);if(!num(now))return unknown('Four consecutive quarters required for TTM calculation.');
-  const old=ttmAt(rows,4,key),qoq=ttmAt(rows,1,key),prior=ttmAt(rows,2,key);
-  const dirs=[direction(now,qoq,key),direction(qoq,prior,key)],trend=cellTrend(key,dirs);
-  const status=now<0?'pressure':trend==='bad'?'watch':trend==='good'?'support':'neutral';
-  return out(status,money(now)+' TTM',q.period,(num(old)?'Year-ago TTM '+money(old)+'. ':'')+(now<0?'Negative reported FCF; distinguish planned investment from operating weakness.':trend==='good'?'Two successive TTM improvements.':trend==='bad'?'Two successive TTM declines.':'Positive cash generation; recovery trend not established.'));
+  const now=ttmAt(rows,0,key),prior=matchedTtmPrior(d,rows,key);if(!num(now))return unknown('Four consecutive quarters required for TTM calculation.');
+  const status=now<0?'pressure':num(prior)&&now<prior*.75&&prior>0?'watch':'neutral';
+  return out(status,money(now)+' TTM',q.period,(num(prior)?'Previous year TTM '+money(prior)+'. ':'Previous year TTM unavailable. ')+(now<0?'Current negative TTM cash generation; distinguish planned investment from operating weakness.':'TTM condition, not a confirmed sustained recovery.'));
  }
  if(type==='fin'){
-  const v=q[key];if(!num(v))return unknown();const trend=columnTrend(rows,0,key),old=periodBase(rows,q,key);
-  const status=rule==='context'?'neutral':trend==='bad'?'pressure':trend==='good'?'support':num(old)&&direction(v,old,key)<0?'watch':'neutral';
-  return out(status,fundValue(key,v),q.period,(num(old)?'Year-ago '+fundValue(key,old)+'. ':'')+(rule==='context'?'Review alongside debt, depreciation and operating cash flow.':trend==='bad'?'Two adverse QoQ movements.':trend==='good'?'Two favorable QoQ movements.':'Multi-quarter trend not established.'));
+  const v=q[key];if(!num(v))return unknown();const e=financialEvidence(d,rows,key),old=comparablePrior(d,rows,q,key);
+  const status=rule==='context'?'neutral':e.count>=3&&(e.direction<0||e.persistence<0&&e.direction<=0)?'pressure':e.count>=3&&(e.direction>0&&e.points[0]?.value>0||e.persistence>0&&e.direction>=0)?'support':num(old)&&direction(v,old,key)<0?'watch':'neutral';
+  return out(status,fundValue(key,v),q.period,(num(old)?'Year-ago '+fundValue(key,old)+'. ':'')+(rule==='context'?'Review alongside debt, depreciation and operating cash flow. ':evidenceClass(e)+' · ')+evidenceBrief(e));
  }
  return unknown();
 }
@@ -815,7 +949,7 @@ function thesisPanel(panel,m,d,source){
  const sourceLink=c=>c.src?' <a href="'+esc(c.src)+'" target="_blank" rel="noopener">Source ↗</a>':'';
  panel.innerHTML='<h2>Thesis & catalysts</h2><p class="stock-note">Research hypothesis, evidence and review log · no composite conviction score or automated buy/sell decision.</p>'+
  '<section class="thesis-section"><div class="section-kicker">01 / INVESTMENT THESIS</div><article class="thesis-hero"><div class="thesis-hero-head"><span>'+esc(s)+' · '+(custom.thesis?'PERSONAL THESIS':'PROPOSED RESEARCH THESIS')+'</span><button id="thesis-edit" class="stock-action">Edit thesis</button></div><h3>'+esc(active.title)+'</h3><p>'+esc(active.thesis)+'</p><div class="thesis-conditions"><div><strong>WHAT MUST GO RIGHT</strong><p>'+esc(active.positive)+'</p></div><div><strong>WHAT WOULD INVALIDATE THE THESIS</strong><p>'+esc(active.invalid)+'</p></div></div></article><div id="thesis-editor" hidden class="thesis-form"><label for="thesis-title">Title</label><input id="thesis-title" value="'+esc(active.title)+'"><label for="thesis-body">Investment thesis</label><textarea id="thesis-body">'+esc(active.thesis)+'</textarea><label for="thesis-positive">What must go right</label><textarea id="thesis-positive">'+esc(active.positive)+'</textarea><label for="thesis-invalid">Invalidation criteria</label><textarea id="thesis-invalid">'+esc(active.invalid)+'</textarea><div class="thesis-actions"><button id="thesis-save-edit" class="stock-action">Save thesis</button><button id="thesis-reset" class="stock-action">Restore proposed thesis</button></div><p id="thesis-edit-status" class="stock-note"></p></div></section>'+
- '<section class="thesis-section"><div class="section-kicker">02 / THESIS VALIDATION</div><h3>Is the evidence supporting the thesis?</h3><div class="thesis-checks">'+checks.map(c=>'<article class="thesis-check thesis-'+c.status+'"><div class="thesis-check-top"><strong>'+esc(c.name)+'</strong><span>'+esc(thesisStatus[c.status])+'</span></div><div class="thesis-metric">'+esc(c.value)+'</div><p>'+esc(c.condition)+'</p><div class="thesis-evidence">'+esc(c.detail)+'</div><small>'+esc(c.period)+sourceLink(c)+'</small></article>').join('')+'</div><p class="stock-note">These are evidence screens for the proposed company-specific research conditions, not a verdict on your edited thesis. Two consistent QoQ moves (2% relative or 0.75pp tolerance) take precedence when available; single YoY changes are labelled. Reported milestones are observations, not final approvals. Stale KPI snapshots remain unassessed.</p></section>'+
+ '<section class="thesis-section"><div class="section-kicker">02 / THESIS VALIDATION</div><h3>Is the evidence supporting the thesis?</h3><div class="thesis-checks">'+checks.map(c=>'<article class="thesis-check thesis-'+c.status+'"><div class="thesis-check-top"><strong>'+esc(c.name)+'</strong><span>'+esc(thesisStatus[c.status])+'</span></div><div class="thesis-metric">'+esc(c.value)+'</div><p>'+esc(c.condition)+'</p><div class="thesis-evidence">'+esc(c.detail)+'</div><small>'+esc(c.period)+sourceLink(c)+'</small></article>').join('')+'</div><p class="stock-note">These are evidence screens for the proposed company-specific research conditions, not a verdict on your edited thesis. Sustained directional thesis assessments require at least three comparable YoY observations; current adverse levels may warrant immediate attention but are not proof of a trend. Single favorable quarters do not establish thesis support. Reported milestones are observations, not final approvals. Stale KPI snapshots remain unassessed.</p></section>'+
  '<section class="thesis-section"><div class="section-kicker">03 / CATALYST WATCHLIST</div><h3>What could change the thesis?</h3><div class="catalyst-grid">'+cfg.catalysts.map(([name,what,cadence])=>'<article class="catalyst-card"><span class="catalyst-kind">WATCH ITEM · NO CONFIRMED DATE</span><h4>'+esc(name)+'</h4><p>'+esc(what)+'</p><small>'+esc(cadence)+'</small></article>').join('')+'</div><h4 class="thesis-subhead">Your dated catalysts</h4><div id="catalyst-list"></div><div class="thesis-form catalyst-form"><label for="cat-name">Event / development</label><input id="cat-name" placeholder="e.g. Quarterly results or licensing decision"><div class="thesis-form-row"><div><label for="cat-date">Expected or confirmed date (optional)</label><input id="cat-date" type="date"></div><div><label for="cat-status">Date status</label><select id="cat-status"><option value="Watch">Watch / anticipated</option><option value="Confirmed">Confirmed by source</option></select></div></div><label for="cat-source">Source URL (required for confirmed dates)</label><input id="cat-source" type="url" placeholder="https://…"><button id="cat-add" class="stock-action">Add catalyst</button><p id="cat-feedback" class="stock-note"></p></div></section>'+
  '<section class="thesis-section"><div class="section-kicker">04 / THESIS EVOLUTION</div><h3>Research journal</h3><p class="stock-note">Record a dated conclusion after each earnings release or material event. No historical conviction has been invented. Notes and customizations stay in this browser; they do not sync or upload to GitHub.</p><div class="thesis-form"><div class="thesis-form-row"><div><label for="thesis-conviction">Review outcome</label><select id="thesis-conviction">'+convictionOptions.map(o=>'<option>'+esc(o)+'</option>').join('')+'</select></div><div><label for="thesis-period">Reporting period or event date</label><input id="thesis-period" type="date" value="'+esc(q.period||'')+'"></div></div><label for="thesis">Research conclusion</label><textarea id="thesis" placeholder="What changed? What evidence supports or challenges the thesis? What will you monitor next?"></textarea><button class="stock-action" id="save">Save dated review + evidence snapshot</button><p id="save-status" class="stock-note"></p></div><div id="history"></div></section>'+
  '<details class="risk-method"><summary>Evidence & limitations</summary><p>Quantitative checks reuse the latest available standardized financials and the dated Business KPIs / Financial Risk snapshots. Disclosures are not a fully automated event feed. Catalyst dates are user-entered and not independently verified by this dashboard. Notes are private to the current browser, and clearing browser data removes them.</p>'+source+'</details>';
