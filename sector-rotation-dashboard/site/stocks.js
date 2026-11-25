@@ -11,7 +11,9 @@ const tabs=['Overview','Fundamentals','Financial risk','Business KPIs','Valuatio
 let data={stocks:{}},symbol='IBKR',tab=tabs[0],frequency='quarterly';
 const el=id=>document.getElementById(id);
 const fmt=(v,d=1)=>v==null||!Number.isFinite(v)?'—':v.toLocaleString('en-US',{maximumFractionDigits:d});
-const money=v=>v==null?'—':(v<0?'−':'')+'$'+fmt(Math.abs(v)>=1e9?Math.abs(v)/1e9:Math.abs(v)/1e6,2)+(Math.abs(v)>=1e9?'B':'M');
+const compactAmount=v=>fmt(v,Math.abs(v)>=5?0:1);
+const money=v=>!Number.isFinite(v)?'—':(v<0?'−':'')+'$'+(Math.abs(v)>=1e9?compactAmount(Math.abs(v)/1e9)+'B':Math.abs(v)>=1e6?compactAmount(Math.abs(v)/1e6)+'M':Math.abs(v)>=1e3?compactAmount(Math.abs(v)/1e3)+'K':fmt(Math.abs(v),0));
+const displayMoneyText=s=>String(s??'').replace(/\$([\d,]+(?:\.\d+)?)([BMK])\b/g,(_,n,u)=>'$'+compactAmount(Number(n.replaceAll(',','')))+u);
 const pct=v=>v==null?'—':fmt(v,1)+'%';
 const get=s=>data.stocks[s]||{quarterly:[],annual:[],quote:{},prices:[]};
 const latest=s=>get(s).quarterly[0]||{};
@@ -19,8 +21,8 @@ function previous(rows,latest){if(!latest.period)return {};const target=new Date
 function growth(a,b,k){return a[k]!=null&&b[k]>0?100*(a[k]/b[k]-1):null;}
 const yoy=(s,k)=>{const q=latest(s),b=previous(get(s).quarterly,q);return growth(q,{[k]:b[k]??get(s).prior_year?.[q.period]?.[k]},k);};
 const fields=[['revenue','Revenue'],['gross_profit','Gross profit'],['operating_profit','Operating profit'],['pretax','Pretax profit'],['net_income','Net income (common)'],['eps','Diluted EPS'],['gross_margin','Gross margin'],['operating_margin','Operating margin'],['pretax_margin','Pretax margin'],['ocf','Operating cash flow'],['capex','Capex'],['fcf','Free cash flow'],['sbc','Share-based compensation'],['shares','Diluted average shares'],['assets','Assets'],['equity','Stockholders equity'],['cash','Cash & short-term investments'],['debt','Total debt'],['receivables','Receivables'],['inventory','Inventory']];
-const value=(k,v)=>k.includes('margin')?pct(v):k==='eps'?(v==null?'—':'$'+fmt(v,2)):k==='shares'?(v==null?'—':fmt(v/1e6,1)+'M'):money(v);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const value=(k,v)=>k.includes('margin')?pct(v):k==='eps'?(v==null?'—':'$'+fmt(v,2)):k==='shares'?(v==null?'—':compactAmount(v/1e6)+'M'):money(v);
+const esc=s=>displayMoneyText(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function table(headers,rows){return '<div class="table-scroll"><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
 function box(title,body){return '<div class="stock-item"><h3>'+esc(title)+'</h3>'+body+'</div>';}
 function list(arr){return '<ul>'+arr.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';}
@@ -744,7 +746,7 @@ OKLO:{period:'2026-09-30',sources:[['Q3 2026 10-Q','https://www.sec.gov/Archives
 ['Commercial operation','Operating authorization and deployment date not verified here','Not assessed','—','Track construction and authorization separately.']
 ],insight:'For a pre-commercial business, progress through authorization, fuel fabrication, construction and binding customer commitments matters more than revenue growth. Announced pipeline is not equivalent to executable funded capacity.'}
 };
-function kpiFmt(r,v){if(!num(v))return '—';if(r.unit==='%')return pct(v);if(r.unit==='x')return fmt(v,2)+'x';if(r.unit.startsWith('$'))return '$'+fmt(v,3)+(r.unit.slice(1));return fmt(v,3)+(r.unit==='M'?'M':' '+r.unit);}
+function kpiFmt(r,v){if(!num(v))return '—';if(r.unit==='%')return pct(v);if(r.unit==='x')return fmt(v,2)+'x';if(['$B','$M','$K'].includes(r.unit))return '$'+compactAmount(v)+r.unit.slice(1);if(r.unit==='$')return '$'+fmt(v,2);return (r.unit==='M'?compactAmount(v):fmt(v,1))+(r.unit==='M'?'M':' '+r.unit);}
 function kpiDelta(r,v,old){if(!num(v)||!num(old))return null;return r.unit==='%'?v-old:old>0?100*(v/old-1):null;}
 function kpiDeltaText(r,v,old){const d=kpiDelta(r,v,old);return d==null?'—':(d>0?'+':'')+fmt(d,1)+(r.unit==='%'?'pp':'%');}
 function kpiTrend(r,i){
