@@ -24,7 +24,8 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'issues' || (github.event.issue.user.login == 'charmedvie' && github.actor == 'charmedvie' && startsWith(github.event.issue.title, 'Stock screening: '))
+    if: >-
+      github.event_name != 'issues' || (github.event.issue.user.login == 'charmedvie' && github.actor == 'charmedvie' && startsWith(github.event.issue.title, 'Stock screening: '))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
