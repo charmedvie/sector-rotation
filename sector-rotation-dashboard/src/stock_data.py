@@ -6,6 +6,7 @@ import math
 from urllib.request import Request, urlopen
 import pandas as pd
 from .valuation_data import historical_valuation
+from .screening_requests import fetch_requests, screening_profile
 
 PILOTS = ['IBKR','HOOD','AMZN','GOOGL','NVDA','KTOS','OKLO']
 PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT']
@@ -186,13 +187,24 @@ def generate(output):
     output=Path(output)
     payload={'generated_at':datetime.now(timezone.utc).isoformat(),'source':'Yahoo Finance via yfinance; compatible comparative quarters from SEC companyfacts when available. Standardized statements not independently reconciled.','stocks':{}}
     peer_ciks=safe(sec_ticker_ciks,{}) or {}
-    for symbol in PILOTS+PEERS:
-        t=yf.Ticker(symbol)
+    requests=safe(lambda:fetch_requests(peer_ciks),None) if peer_ciks else None
+    payload['screening_requests']=requests or {}
+    payload['screening_registry_available']=requests is not None
+    requested=[s for s,status in (requests or {}).items() if status=='requested' and s not in PILOTS]
+    full=set(PILOTS+requested)
+    for symbol in dict.fromkeys(PILOTS+PEERS+requested):
+        is_screening=symbol in requested
+        provider_symbol=symbol.replace('.', '-')
+        t=yf.Ticker(provider_symbol)
         q=extract([safe(lambda:t.quarterly_income_stmt),safe(lambda:t.quarterly_balance_sheet),safe(lambda:t.quarterly_cashflow)])
-        annual=extract([safe(lambda:t.income_stmt),safe(lambda:t.balance_sheet),safe(lambda:t.cashflow)]) if symbol in PILOTS else []
+        annual=extract([safe(lambda:t.income_stmt),safe(lambda:t.balance_sheet),safe(lambda:t.cashflow)]) if symbol in full else []
         info=safe(lambda:t.info,{}) or {}
-        h=safe(lambda:t.history(period='10y',auto_adjust=False,actions=True,timeout=25)) if symbol in PILOTS else None
-        if symbol in PILOTS and (h is None or h.empty): h=safe(lambda:t.history(period='1y',auto_adjust=False,actions=True,timeout=15))
+        if is_screening and (info.get('quoteType')!='EQUITY' or info.get('currency')!='USD' or info.get('financialCurrency')!='USD'):
+            payload['screening_requests'][symbol]='unsupported_or_unverified_currency'
+            if symbol not in PEERS: continue
+            is_screening=False
+        h=safe(lambda:t.history(period='10y',auto_adjust=False,actions=True,timeout=25)) if symbol in full else None
+        if symbol in full and (h is None or h.empty): h=safe(lambda:t.history(period='1y',auto_adjust=False,actions=True,timeout=15))
         prices=[]
         if h is not None and not h.empty and 'Close' in h:
             cutoff=pd.Timestamp(h.index[-1])-pd.DateOffset(years=1)
@@ -201,13 +213,15 @@ def generate(output):
         quote['currency']=info.get('currency')
         quote['financialCurrency']=info.get('financialCurrency')
         if prices: quote['lastClose']=prices[-1]['close']; quote['date']=prices[-1]['date']
-        cik=CIKS.get(symbol,peer_ciks.get(symbol))
+        cik=CIKS.get(symbol,peer_ciks.get(symbol) or peer_ciks.get(symbol.replace('-','.')) or peer_ciks.get(symbol.replace('.','-')))
         facts = safe(lambda:sec_facts(symbol,cik),{}) if cik is not None else {}
-        prior = safe(lambda:prior_year_comparatives(q,facts),{}) if facts and symbol in PILOTS else {}
+        prior = safe(lambda:prior_year_comparatives(q,facts),{}) if facts and symbol in full else {}
         peer_prior = safe(lambda:peer_comparatives(q,facts),{}) if facts else {}
-        quality_prior = safe(lambda:quality_comparatives(q,facts),{}) if facts and symbol in PILOTS else {}
-        valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in PILOTS else []
-        payload['stocks'][symbol]={'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
+        quality_prior = safe(lambda:quality_comparatives(q,facts),{}) if facts and symbol in full else {}
+        valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in full else []
+        profile=screening_profile(info,q)
+        if is_screening: payload['screening_requests'][symbol]='available' if q and prices else 'data_unavailable'
+        payload['stocks'][symbol]={'screening':is_screening,'metadata':{'name':info.get('shortName') or info.get('longName') or symbol,'sector':info.get('sector'),'industry':info.get('industry'),'exchange':info.get('exchange'),'cik':cik,'profile':profile,'currency':info.get('financialCurrency')},'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
         print(f'{symbol}: {len(q)} quarters, {len(annual)} years; valuation coverage '+str({k:sum(k in r for r in valuation) for k in ('price','eps','pe','pb','pfcf','fcf')}))
     output.parent.mkdir(parents=True,exist_ok=True)
     tmp=output.with_suffix('.tmp')

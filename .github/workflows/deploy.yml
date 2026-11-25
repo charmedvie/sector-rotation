@@ -7,11 +7,14 @@ on:
       - 'sector-rotation-dashboard/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
+  issues:
+    types: [opened, reopened, closed, edited]
   schedule:
     - cron: '17 23 * * 1-5'
 
 permissions:
   contents: read
+  issues: read
   pages: write
   id-token: write
 
@@ -21,6 +24,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'issues' || (github.event.issue.user.login == 'charmedvie' && github.actor == 'charmedvie' && startsWith(github.event.issue.title, 'Stock screening: '))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -40,6 +44,8 @@ jobs:
           node --check site/stocks.js
           node --test tests/test_stocks_ui.cjs
       - name: Fetch market data and calculate rotation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python -m src.generate_data --output site/data/rotation.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
