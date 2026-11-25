@@ -7,7 +7,7 @@ GOOGL:{name:'Alphabet',industry:'Search, advertising & cloud',question:'Can sear
 NVDA:{name:'NVIDIA',industry:'AI semiconductor infrastructure',question:'Can accelerated computing demand and margins remain durable?',peers:['AMD','AVGO'],kpis:['Data center compute and networking revenue','Gross margin and incremental margin','Customer concentration','Inventory and receivables','Purchase commitments and supply capacity','Export restrictions and customer financing'],risks:['Hyperscaler capex slowdown','Inventory and receivables outpacing revenue','Customer concentration and export controls'],sec:'1045810'},
 KTOS:{name:'Kratos Defense',industry:'Defence technology',question:'Can funded backlog turn into profitable production and cash flow?',peers:['AVAV','LHX'],kpis:['Organic and segment revenue growth','Funded versus unfunded backlog','Book-to-bill and contract awards','Segment margins and production ramp','Contract assets and working capital','Capex, SBC and capital raising'],risks:['Fixed-price contract overruns','Unfunded backlog and delayed awards','Cash conversion and financing'],sec:'1069258'},
 OKLO:{name:'Oklo',industry:'Advanced nuclear development',question:'Can licensing, deployment and financing converge before material dilution?',peers:['SMR','NNE'],kpis:['NRC licensing milestones','First deployment and construction readiness','Binding contracts versus nonbinding agreements','Contracted MW and fuel procurement','Capital cost per MW and funding commitments','Unrestricted cash, burn and runway'],risks:['Licensing and deployment delays','Nonbinding pipeline not converting','Funding gaps and equity dilution'],sec:'1849056'}};
-const tabs=['Overview','Fundamentals','Financial risk','Business Drivers','Valuation','Peers','Thesis & catalysts'];
+const tabs=['Overview','Fundamentals','Financial risk','Business Drivers','Peers','Thesis & catalysts'];
 let data={stocks:{}},symbol='IBKR',tab=tabs[0],frequency='quarterly';
 const el=id=>document.getElementById(id);
 const fmt=(v,d=1)=>v==null||!Number.isFinite(v)?'—':v.toLocaleString('en-US',{maximumFractionDigits:d});
@@ -64,7 +64,7 @@ function median(a){const b=a.filter(Number.isFinite).sort((x,y)=>x-y);return b.l
 function valuationContext(m,p,pre){
  const d=get(symbol),hist=valHistory(d),rows=valWindow(hist,5),last=rows.at(-1),st=valStats(rows,'pe',last?.pe);
  const pe=st?last.pe:p.trailingPE>0?p.trailingPE:null,peerMed=peerBaseline(symbol,[symbol,...peerGroups[symbol].map(r=>r[0])],'pe'),med=st?.median??peerMed;
- const label=st?'5Y median':'Peer median',action='<button class="stock-action" data-target="Valuation">Explore valuation ↗</button>',start='<div class="valuation-visual"><div class="tile-kicker">VALUATION CONTEXT</div>';
+ const label=st?'5Y median':'Peer median',action='<button class="stock-action" data-target="Fundamentals" data-section="valuation-table">Explore valuation ↗</button>',start='<div class="valuation-visual"><div class="tile-kicker">VALUATION CONTEXT</div>';
  if(pre)return start+'<strong>Milestone-based valuation</strong>'+action+'</div>';
  if(!num(pe)||pe<=0)return start+action+'</div>';
  if(!num(med)||med<=0)return start+'<strong>'+valMultiple(pe)+' trailing P/E</strong>'+action+'</div>';
@@ -79,7 +79,7 @@ function overviewInsights(s,d,q){
  for(const r of risk.map.filter(r=>['watch','high'].includes(r.status)))items.push({...finding(r.title,r.metric+' · '+r.conclusion,'Financial risk','caution'),rank:r.status==='high'?120:99,source:'risk'});
  for(const r of risk.extra.filter(r=>r.status==='Monitor'))items.push({...finding(r.title,r.metric+' · '+r.impact,'Financial risk','caution'),rank:99,source:'risk'});
  if(q.period===cfg.period){for(let i=0;i<drivers.length;i++){const b=drivers[i],h=driverHorizon(s,i,cfg,false);if(h.tone==='unknown')continue;items.push({...finding(b.headline,b.points[0]||driverGroups[s][i].watch,'Business Drivers',h.tone==='positive'?'positive':'neutral'),rank:h.tone==='positive'?95:86,source:'driver',evidence:h.label});}}
- const val=valuationSignal(s,d,5);if(val?.st)items.push({...finding(val.title,val.detail,'Valuation',val.tone),rank:83,source:'valuation'});
+ const val=valuationSignal(s,d,5);if(val?.st)items.push({...finding(val.title,val.detail,'Fundamentals',val.tone),rank:83,source:'valuation'});
  const checks=thesisConfig[s].checks.map(c=>thesisCheck(s,d,c)).filter(c=>c.status==='pressure');
  const independent=checks.filter(c=>!items.some(i=>i.title.toLowerCase().includes(c.name.toLowerCase())||i.detail.toLowerCase().includes(c.name.toLowerCase())));
  if(independent.length){const c=independent[0];items.push({...finding(c.name+' · thesis pressure',c.value+' · '+c.condition,'Thesis & catalysts','caution'),rank:97,source:'thesis'});}
@@ -103,10 +103,10 @@ function overviewPanel(panel,m,d,q,p,source){
  summaryTile('Profitability',profitLabel,broker(s)&&num(q.pretax_margin)?'Pretax margin '+pct(q.pretax_margin):num(margin)?'Operating margin '+pct(margin):'Margin unavailable','Fundamentals',tone(core))+
  summaryTile('Momentum',evidenceClass(ev),ev.count?ev.count+' comparable YoY periods':'History unavailable','Fundamentals',ev.kind==='sustained'||ev.kind==='structural'?ev.direction<0?'caution':ev.direction>0||ev.persistence>0?'positive':'neutral':'neutral')+
  summaryTile('Financial risk',riskLabel,riskDetail,'Financial risk',riskHigh||riskWatch?'caution':'neutral')+
- summaryTile('Valuation',pre?'Milestones':val?.st?val.st.premium>10?'Above history':val.st.premium< -10?'Below history':'Near history':pe>0?'Current P/E':'N/A',pe>0?fmt(pe)+'x trailing P/E':'P/E unavailable / not relevant','Valuation',val?.tone||'neutral')+'</div>'+
+ summaryTile('Valuation',pre?'Milestones':val?.st?val.st.premium>10?'Above history':val.st.premium< -10?'Below history':'Near history':pe>0?'Current P/E':'N/A',pe>0?fmt(pe)+'x trailing P/E':'P/E unavailable / not relevant','Fundamentals',val?.tone||'neutral')+'</div>'+
  '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><h2 id="attention-title">What deserves your attention</h2></div></div><div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+esc(f.target)+(f.evidence?' · '+esc(f.evidence):'')+'</span><strong>'+esc(f.title)+'</strong><small>'+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">No current material findings.</p>')+'</div><aside class="diligence"><div class="tile-kicker">THESIS PRESSURE / WATCH</div>'+list(analysis.checks.length?analysis.checks.slice(0,3).map(c=>c.name+' · '+c.value):m.risks.slice(0,3))+'<button class="stock-action" data-target="Thesis & catalysts">Review thesis ↗</button></aside></div></section>'+
  '<div class="valuation-section">'+valuationContext(m,p,pre)+'</div>';
- panel.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{tab=b.dataset.target;render();el('panel').scrollIntoView({block:'nearest'});});
+ panel.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{tab=b.dataset.target;render();(b.dataset.section&&el(b.dataset.section)||el('panel')).scrollIntoView({block:'nearest'});});
 }
 
 const broker=s=>['IBKR','HOOD'].includes(s);
@@ -292,9 +292,9 @@ function longTermCell(annual,k){
  return trendCell(text,cl,'Actual available fiscal year span; colour uses two latest annual comparisons, not the full-period change');
 }
 function detailedTable(rows,annualView,annualRows){
- const named=Object.fromEntries([...fields,...extraFields]);
- return '<div class="table-scroll"><table class="fund-table grouped-financials"><thead><tr>'+['Metric','Long-term trend','Latest YoY',...rows.map(r=>r.period)].map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead>'+
- financialGroups.map(([heading,keys])=>'<tbody><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">'+esc(heading)+'</th></tr>'+keys.map(k=>'<tr data-financial-field="'+esc(k)+'"><th scope="row">'+esc(named[k])+'</th>'+longTermCell(annualRows,k)+trendCell(changeText(rows[0]?.[k],rows[0]?periodBase(rows,rows[0],k,annualView):null,k),yoyColour(rows,k,annualView),'Single YoY comparison, independent of period trend')+rows.map((r,i)=>trendCell(fundValue(k,r[k]),comparableColor(get(symbol),rows,i,k,annualView),annualView?'Two consecutive annual changes':'Three comparable YoY periods; conflicting direction stays neutral')).join('')+'</tr>').join('')+'</tbody>').join('')+'</table></div>';
+ const named=Object.fromEntries([...fields,...extraFields]),valuation=valuationTableRows(symbol,get(symbol),rows);
+ return '<div class="table-scroll"><table class="fund-table grouped-financials"><thead><tr>'+['Metric','Long-term trend','Latest YoY / current',...rows.map(r=>r.period)].map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead>'+
+ financialGroups.map(([heading,keys])=>'<tbody><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">'+esc(heading)+'</th></tr>'+keys.map(k=>'<tr data-financial-field="'+esc(k)+'"><th scope="row">'+esc(named[k])+'</th>'+longTermCell(annualRows,k)+trendCell(changeText(rows[0]?.[k],rows[0]?periodBase(rows,rows[0],k,annualView):null,k),yoyColour(rows,k,annualView),'Single YoY comparison, independent of period trend')+rows.map((r,i)=>trendCell(fundValue(k,r[k]),comparableColor(get(symbol),rows,i,k,annualView),annualView?'Two consecutive annual changes':'Three comparable YoY periods; conflicting direction stays neutral')).join('')+'</tr>').join('')+'</tbody>').join('')+valuation+'</table></div>';
 }
 
 const qualityDisclosures={
@@ -417,10 +417,10 @@ function qualitySection(qrows,returnData=false){
  return (chosen.length?'<div class="fund-findings insight-grid">'+chosen.map(f=>'<article class="fund-finding insight-card '+f.evidence.tone+'" data-insight="'+esc(f.id)+'"><div class="fund-finding-top"><strong>'+esc(f.title)+'</strong><span class="evidence-label">'+esc(f.evidence.label)+'</span></div><div class="insight-number">'+esc(f.metric)+'</div><div class="insight-metric">'+esc(f.metricLabel)+'</div><ul class="insight-bullets">'+f.bullets.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul><div class="insight-conclusion">'+esc(f.conclusion)+'</div><div class="evidence-detail">'+esc(f.evidence.detail)+'</div>'+(f.url?'<a class="insight-source" href="'+esc(f.url)+'" target="_blank" rel="noopener">Disclosure ↗</a>':'')+'</article>').join('')+'</div>':'<p class="stock-note">No material insight can be established from the available comparable observations.</p>')+(missing.length?'<p class="stock-note insight-missing">Important data gaps: '+esc(missing.join(' · '))+'.</p>':'');
 }
 function fundamentalsPanel(panel,d,note,source){
- const qrows=deriveRows(d.quarterly),annual=deriveRows(d.annual,true),rows=frequency==='annual'?annual:qrows;
+ const qrows=deriveRows(d.quarterly),annual=deriveRows(d.annual,true),rows=frequency==='annual'?annual:qrows,vc=valuationCharts(d);
  panel.innerHTML='<h2>Fundamentals</h2><section class="fund-section"><h3>Key fundamental insights</h3>'+qualitySection(qrows)+'</section>'+
- '<section class="fund-section"><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<details class="risk-method"><summary>Financial definitions &amp; data</summary><p>Quarterly colours: consecutive quarterly movements; latest YoY is a separate comparison. Long-term C = CAGR; rates in pp. Annual colours use consecutive annual movements. ROE = TTM common earnings / average common equity. ROIC = after-tax operating profit / average invested capital. Missing or ambiguous values are neutral.</p>'+note+source+'</details>'+'</section>';
- el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};
+ '<section class="fund-section"><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<details class="risk-method"><summary>Financial definitions &amp; data</summary><p>Quarterly colours: consecutive quarterly movements; latest YoY is a separate comparison. Long-term C = CAGR; rates in pp. Annual colours use consecutive annual movements. ROE = TTM common earnings / average common equity. ROIC = after-tax operating profit / average invested capital. Missing or ambiguous values are neutral. Valuation: the current column uses latest market data; fiscal-date columns use the last available weekly close before or on each period end and only then-known filing information. Historical multiples use positive denominators; share counts approximate market cap. Long-term multiples compare the latest reconstructed value with its own available median (up to 5 years); valuation cells are neutral, not buy/sell signals.</p>'+note+source+'</details>'+'</section>'+vc.html;
+ el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};vc.bind(panel);
 }
 
 
@@ -1135,26 +1135,89 @@ function valuationSignal(s,d,years=5){
  const detail=a?(a.multiple>a.earn?'Re-rating contributed more than earnings growth; future returns depend on sustaining the premium.':a.earn>0&&a.multiple<0?'Earnings growth offset multiple compression.':a.earn>0?'Earnings growth has been an important contributor to returns.':'Earnings have not supported the full price change.'):'The historical multiple provides pricing context, not intrinsic value.';
  return {title,detail,tone:st&&st.premium>10?'caution':'neutral',st,a};
 }
-function valPanel(panel,m,d,p,source){
+
+// Market snapshots use the last available weekly close on or before the fiscal period end.
+// All denominators are filing-date aligned by the data generator; do not join later financial statements.
+const valTableSpecs={
+ pe:['Trailing P/E','multiple'],pb:['Price / book','multiple'],pfcf:['Price / FCF','multiple'],evsales:['EV / sales','multiple'],evebitda:['EV / EBITDA','multiple'],evop:['EV / operating profit','multiple'],ps:['Price / sales','multiple'],yield:['FCF yield','rate'],peg:['Trailing PEG','multiple'],cap:['Market cap','money'],ev:['Enterprise value','money'],cashadj:['Market cap less reported cash','money']
+};
+const valTableKeys={
+ IBKR:['pe','pb','ps','cap'],HOOD:['pe','pb','ps','cap'],
+ AMZN:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'],
+ GOOGL:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'],
+ NVDA:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'],
+ KTOS:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'],
+ OKLO:['pb','cap','ev','cashadj']
+};
+function valuationAt(history,date,maxAge=8){
+ if(!date||!history.length)return null;
+ let lo=0,hi=history.length;
+ while(lo<hi){const mid=(lo+hi)>>1;if(history[mid].date<=date)lo=mid+1;else hi=mid;}
+ const r=history[lo-1];return r&&(new Date(date)-new Date(r.date))/86400000<=maxAge?r:null;
+}
+function historicalValValue(k,r,hist){
+ if(!r)return null;
+ const mc=r.market_cap_proxy,positive=v=>num(v)&&v>0;
+ const aligned=(p,q,days=60)=>p&&q&&Math.abs(new Date(p)-new Date(q))/86400000<=days;
+ if(['pe','pb','pfcf','evsales','evebitda','evop'].includes(k))return positive(r[k])?r[k]:null;
+ if(k==='cap')return positive(mc)?mc:null;
+ if(k==='ps')return positive(mc)&&positive(r.revenue)&&aligned(r.shares_period,r.revenue_period)?mc/r.revenue:null;
+ if(k==='yield')return positive(mc)&&num(r.fcf)&&aligned(r.shares_period,r.fcf_period)?100*r.fcf/mc:null;
+ if(k==='peg'){
+  const date=new Date(r.date+'T00:00:00Z');date.setUTCFullYear(date.getUTCFullYear()-1);
+  const prior=valuationAt(hist,date.toISOString().slice(0,10),14);
+  if(!positive(r.pe)||!positive(prior?.eps)||!positive(r.eps))return null;
+  const growth=100*(r.eps/prior.eps-1);return growth>0?r.pe/growth:null;
+ }
+ return null;
+}
+function valuationTableFormat(k,v){return !num(v)?'—':valTableSpecs[k][1]==='money'?money(v):valTableSpecs[k][1]==='rate'?pct(v):valMultiple(v);}
+function valuationTableRows(s,d,rows){
+ const hist=valHistory(d),last=hist.at(-1),current=currentValMetrics(s,d,last),hrows=rows.map(r=>valuationAt(hist,r.period));
+ const five=valWindow(hist,5),keys=valTableKeys[s]||[];
+ const body=keys.map(k=>{
+  const vals=hrows.map(r=>historicalValValue(k,r,hist)),item=current[k],now=item?.[1],validCurrent=now&&!['Unavailable','—'].includes(now),latest=historicalValValue(k,last,hist);
+  if(!validCurrent&&!vals.some(num)&&!num(latest))return '';
+  const series=five.map(r=>({date:r.date,value:historicalValValue(k,r,hist)})).filter(r=>num(r.value));
+  const span=series.length?(new Date(series.at(-1).date)-new Date(series[0].date))/86400000/365.2425:0;
+  let benchmark='—',tip='Insufficient comparable history';
+  if(series.length>=8&&span>=.9&&num(latest)){
+   const median=peerMedian(series.map(r=>r.value)),period=span>=4.75?'5Y':fmt(span,1)+'Y';
+   if(valTableSpecs[k][1]==='rate'){benchmark=period+' '+((latest-median)>0?'+':'')+fmt(latest-median,1)+'pp';tip='Latest historical yield minus median; '+series.length+' observations, through '+last.date;}
+   else if(valTableSpecs[k][1]==='multiple'&&median>0){benchmark=period+' '+valSigned(100*(latest/median-1));tip='Latest reconstructed multiple versus '+period+' median '+valMultiple(median)+'; '+series.length+' observations, through '+last.date+'; not a fair-value signal.';}
+  }
+  const cells=vals.map((v,i)=>{
+   const r=hrows[i],den=k==='pe'?r?.eps:k==='pb'?r?.equity:k==='pfcf'?r?.fcf:null;
+   const display=num(v)?valuationTableFormat(k,v):num(den)&&den<=0?'N/A':'—';
+   return trendCell(display,'muted',r?'Market close '+r.date+'; financial information filed before this date. '+(r.asof?'Latest filing snapshot '+r.asof+'. ':'')+'Not a multiple using subsequently reported quarter-end results.':'No market observation on or before period end');
+  }).join('');
+  return '<tr data-valuation-field="'+esc(k)+'"><th scope="row">'+esc(valTableSpecs[k][0])+'</th>'+trendCell(benchmark,'muted',tip)+trendCell(validCurrent?now:'—','muted',(item?.[2]||'Current market value unavailable')+(d.quote?.date?' · close '+d.quote.date:''))+cells+'</tr>';
+ }).filter(Boolean);
+ return body.length?'<tbody id="valuation-table"><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">Valuation <small title="Long-term: latest reconstructed multiple versus available historical median, up to 5 years. Current: latest market quote. Period columns: last available market close at or before each period end, using information available then.">ⓘ</small></th></tr>'+body.join('')+'</tbody>':'';
+}
+
+const valuationOpen={history:false,price:false};
+function valuationCharts(d){
  const hist=valHistory(d),rows=valWindow(hist,valuationYears),last=rows.at(-1),a=valAttribution(rows),metrics=symbol==='OKLO'?['pb']:['IBKR','HOOD','GOOGL'].includes(symbol)?['pe']:Object.keys(valuationKeys);
  const usable=metrics.filter(k=>valStats(rows,k,last?.[k]));if(usable.length&&!usable.includes(valuationMetric))valuationMetric=usable[0];
  const stat=valStats(rows,valuationMetric,last?.[valuationMetric]),short=valStats(valWindow(hist,1),valuationMetric,last?.[valuationMetric]),long=valStats(valWindow(hist,5),valuationMetric,last?.[valuationMetric]);
  const indexFields=[['price','Share price'],['eps','TTM diluted EPS'],['op','TTM operating profit']],active=indexFields.filter(([k])=>rows.filter(r=>num(r[k])&&r[k]>0).length>=8),base=rows.find(r=>active.every(([k])=>num(r[k])&&r[k]>0)),indexRows=base?rows.filter(r=>r.date>=base.date):[],traces=base?active.map(([k,n])=>({name:n,x:indexRows.map(r=>r.date),y:indexRows.map(r=>num(r[k])?100*r[k]/base[k]:null),mode:'lines',connectgaps:false})):[];
- const indexHas=traces.length>=2&&indexRows.length>=8&&traces.every(t=>t.y.filter(num).length>=8),current=valCurrent(symbol,d,last),signal=valuationSignal(symbol,d,valuationYears);
+ const indexHas=traces.length>=2&&indexRows.length>=8&&traces.every(t=>t.y.filter(num).length>=8);
  const options=[1,3,5,10].map(n=>'<button data-val-years="'+n+'" aria-pressed="'+(n===valuationYears)+'">'+n+'Y</button>').join('');
  // Preserve the period controls if any history window can produce a valid chart.
  const anyHistory=[1,3,5,10].some(y=>{const w=valWindow(hist,y),l=w.at(-1);return metrics.some(k=>valStats(w,k,l?.[k]))||!!valAttribution(w)||indexFields.filter(([k])=>w.filter(r=>num(r[k])&&r[k]>0).length>=8).length>=2;});
- panel.innerHTML='<h2>Valuation</h2>'+
- (signal?'<div class="kpi-insight valuation-brief"><strong>'+esc(signal.title)+'</strong><p>'+esc(signal.detail)+'</p></div>':'')+
- (anyHistory?'<div class="val-toolbar"><span>'+esc(rows[0]?.date||'')+' → '+esc(last?.date||'')+'</span><div class="val-periods">'+options+'</div></div>':'')+
- (usable.length?'<section class="val-section"><div class="val-range-head"><h3>Historical valuation</h3><label>Multiple <select id="val-metric">'+usable.map(k=>'<option value="'+k+'">'+esc(valuationKeys[k])+'</option>').join('')+'</select></label></div><div class="val-ranges">'+usable.map(k=>valRange(k,rows,last)).join('')+'</div><div id="val-multiple-chart" class="stock-chart"></div><div class="val-current val-summary">'+[['vs 1Y median',short?valSigned(short.premium):null],['vs 5Y median',long?valSigned(long.premium):null]].filter(x=>x[1]!==null).map(([n,v])=>'<article><small>'+esc(n)+'</small><strong>'+esc(v)+'</strong></article>').join('')+'</div></section>':'')+
- (indexHas||a?'<section class="val-section"><h3>Price vs fundamentals</h3>'+(indexHas?'<div id="val-index-chart" class="stock-chart" title="Indexed to 100 at '+esc(base.date)+'; price excludes dividends."></div>':'')+(a?valAttributionHtml(a):'')+'</section>':'')+
- (current?'<section class="val-section"><h3>Current valuation snapshot</h3>'+current+'</section>':'')+
- '<details class="risk-method"><summary>Valuation definitions &amp; data</summary><p>Weekly split-adjusted closes; SEC filings enter on the next trading date. Interim EPS may use annual + current YTD − prior YTD. P/B and P/FCF use nearby disclosed share counts. Only positive denominators are used for multiples. Current estimates and filing-date multiples can differ. Price return excludes dividends; multiple contribution includes interaction.</p>'+source+'</details>';
+ const anyChart=usable.length||indexHas||a;
+ const html=anyChart?'<section class="fund-section valuation-charts"><h3>Valuation history</h3><div class="val-toolbar"><span>'+esc(rows[0]?.date||'')+' → '+esc(last?.date||'')+'</span><div class="val-periods">'+options+'</div></div>'+
+ (usable.length?'<details id="val-history-details" class="risk-method"'+(valuationOpen.history?' open':'')+'><summary>Historical multiples</summary><div class="val-range-head"><label>Multiple <select id="val-metric">'+usable.map(k=>'<option value="'+k+'">'+esc(valuationKeys[k])+'</option>').join('')+'</select></label></div><div id="val-multiple-chart" class="stock-chart"></div></details>':'')+
+ (indexHas||a?'<details id="val-price-details" class="risk-method"'+(valuationOpen.price?' open':'')+'><summary>Price vs fundamentals</summary>'+(indexHas?'<div id="val-index-chart" class="stock-chart" title="Indexed to 100 at '+esc(base.date)+'; price excludes dividends."></div>':'')+(a?valAttributionHtml(a):'')+'</details>':'')+'</section>':'';
+ return {html,bind(panel){
  panel.querySelectorAll('[data-val-years]').forEach(b=>b.onclick=()=>{valuationYears=Number(b.dataset.valYears);render();});
  if(usable.length){el('val-metric').value=valuationMetric;el('val-metric').onchange=e=>{valuationMetric=e.target.value;render();};}
- if(indexHas)chart('val-index-chart',traces,'Indexed · 100');
- if(stat&&usable.length)chart('val-multiple-chart',[{name:valuationKeys[valuationMetric],x:rows.map(r=>r.date),y:rows.map(r=>num(r[valuationMetric])?r[valuationMetric]:null),mode:'lines',connectgaps:false},{name:'Selected-window median',x:rows.map(r=>r.date),y:rows.map(()=>stat.median),mode:'lines',line:{dash:'dot',color:'#a8b9ce'}}],'Multiple');
+ const drawPrice=()=>{if(indexHas)chart('val-index-chart',traces,'Indexed · 100');};
+ const drawHistory=()=>{if(stat&&usable.length)chart('val-multiple-chart',[{name:valuationKeys[valuationMetric],x:rows.map(r=>r.date),y:rows.map(r=>num(r[valuationMetric])?r[valuationMetric]:null),mode:'lines',connectgaps:false},{name:'Selected-window median',x:rows.map(r=>r.date),y:rows.map(()=>stat.median),mode:'lines',line:{dash:'dot',color:'#a8b9ce'}}],'Multiple');};
+ if(usable.length){const x=el('val-history-details');x.ontoggle=()=>{valuationOpen.history=x.open;if(x.open)drawHistory();};if(valuationOpen.history)drawHistory();}
+ if(indexHas||a){const x=el('val-price-details');x.ontoggle=()=>{valuationOpen.price=x.open;if(x.open)drawPrice();};if(valuationOpen.price)drawPrice();}
+ }};
 }
 
 const peerGroups={
@@ -1516,7 +1579,6 @@ if(tab==='Overview'){overviewPanel(panel,m,d,q,p,source);}
 else if(tab==='Fundamentals'){fundamentalsPanel(panel,d,note,source);}
 else if(tab==='Financial risk'){riskPanel(panel,m,d,q,note,source);}
 else if(tab==='Business Drivers'){kpiPanel(panel,m,d,source);}
-else if(tab==='Valuation'){valPanel(panel,m,d,p,source);}
 else if(tab==='Peers'){peerPanel(panel,m,d,source);}
 else if(tab==='Thesis & catalysts'){thesisPanel(panel,m,d,source);}
 }
