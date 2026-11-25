@@ -340,6 +340,120 @@ function riskPanel(panel,m,d,q,note,source){
  stress.bind();
 }
 
+
+// Reviewed company disclosures: values in reporting units shown in labels, oldest to newest.
+// Array: Q4 / Q1 / Q2 / Q3, then comparable prior-year Q3. Null is never estimated.
+const kpiRow=(id,label,unit,kind,values,why,src=0)=>({id,label,unit,kind,values,why,src});
+const kpiData={
+IBKR:{period:'2026-09-30',sources:[['Q3 2026 10-Q','https://www.sec.gov/Archives/edgar/data/1381197/000138119726000163/ibkr-20260930.htm']],rows:[
+kpiRow('accounts','Customer accounts','M','up',[null,null,5.185,5.576,4.127],'Scale of the customer franchise.'),
+kpiRow('equity','Customer equity','$B','up',[null,null,930,965,758],'Client assets also move with markets.'),
+kpiRow('darts','Daily average revenue trades','M','up',[null,null,4.824,4.273,3.616],'Trading engagement; can be cyclical.'),
+kpiRow('comm','Commissions','$M','up',[null,null,null,602,537],'Trading revenue, including passed-through regulatory fees.'),
+kpiRow('perOrder','Commission per cleared order','$','context',[null,null,null,2.59,2.70],'Mix and order size affect monetisation.'),
+kpiRow('loans','Average margin loans','$B','watch',[null,null,null,104.032,70.805],'Lending demand and collateral exposure.'),
+kpiRow('nii','Net interest income','$M','up',[null,null,null,1154,null],'Interest monetisation of client balances.'),
+kpiRow('nim','Net interest margin','%','up',[null,null,null,1.99,2.16],'Yield on interest-earning balances.'),
+kpiRow('deposits','Net client deposits','$B','up',[null,null,null,null,null],'Not yet extracted on a comparable quarterly basis.')
+],core:['accounts','equity','darts','nim'],compare:['accounts','darts','comm','loans'],mix:{total:1914,unit:'$M',items:[['Net interest income',1154],['Commissions',602],['Other net revenue',158]],note:'Other net revenue is the residual. Commission revenue includes certain passed-through fees.'},insight:'Account growth materially exceeds commission growth, while net interest margin declined year over year. This warrants monitoring engagement, commission per order and customer balance mix; it does not establish weakening customer lifetime value.'},
+HOOD:{period:'2026-09-30',sources:[['Q3 2026 earnings release','https://investors.robinhood.com/news-releases/news-release-details/robinhood-reports-third-quarter-2026-results'],['Q2 2026 earnings release','https://investors.robinhood.com/news-releases/news-release-details/robinhood-reports-second-quarter-2026-results']],rows:[
+kpiRow('customers','Funded customers','M','up',[null,null,28.4,28.7,26.8],'Customer base; WonderFi included from June 2026.'),
+kpiRow('assets','Total platform assets','$B','up',[null,null,368.7,396,null],'Includes market movements and acquired platform assets.'),
+kpiRow('deposits','Net deposits','$B','up',[null,null,21.7,15.7,null],'Metric scope expanded in 2026; comparisons are not entirely organic.'),
+kpiRow('depositRate','Annualised net deposit rate','%','up',[null,null,28,17,29],'Relative to prior-quarter platform assets.'),
+kpiRow('gold','Gold subscribers','M','up',[null,null,4.84,5.18,3.88],'Paid subscription adoption.'),
+kpiRow('arpu','Annualised ARPU','$','up',[null,null,187,200,191],'Company-defined annualised revenue per funded customer.'),
+kpiRow('trans','Transaction revenue','$M','up',[null,null,776,867,730],'Trading monetisation.'),
+kpiRow('nii','Net interest revenue','$M','up',[null,null,389,415,456],'Interest-related monetisation.'),
+kpiRow('goldCard','Gold Card customers','M','up',[null,null,null,1.3,null],'Card adoption, not a credit-quality metric.')
+],core:['customers','deposits','gold','arpu'],compare:['customers','gold','arpu','trans','nii'],mix:{total:1424,unit:'$M',items:[['Transaction revenue',867],['Net interest revenue',415],['Other revenue',142]],note:'Transactions include options, equities, crypto and event contracts; categories shown do not overlap.'},insight:'Gold adoption and ARPU are rising year over year, but net deposits slowed sequentially and interest revenue fell versus last year. Track organic customer acquisition and credit economics alongside monetisation.'},
+AMZN:{period:'2026-09-30',sources:[['Q3 2026 supplemental business metrics','https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/'],['Q3 2026 10-Q · segment assets','https://www.sec.gov/Archives/edgar/data/1018724/000101872426000040/amzn-20260930.htm']],rows:[
+kpiRow('aws','AWS revenue','$B','up',[35.579,37.587,42.232,45.984,33.006],'Cloud scale and demand.'),
+kpiRow('awsGrowth','AWS revenue growth ex-FX','%','up',[24,28,37,39,20],'Reported constant-currency YoY growth.'),
+kpiRow('awsProfit','AWS operating income','$B','up',[12.465,14.161,16.621,17.773,11.434],'Cloud profit generation.'),
+kpiRow('awsMargin','AWS operating margin','%','up',[35,37.7,39.4,38.7,34.6],'Cloud segment profitability.'),
+kpiRow('assets','AWS segment assets','$B','context',[252.588,null,null,419.594,null],'Assets include leases, receivables and property; expansion is not itself deterioration.',1),
+kpiRow('assetReturn','AWS profit / average assets proxy','%','up',[null,null,null,100*61.020/((252.588+419.594)/2),null],'TTM operating profit / average Dec 2025 and Sep 2026 segment assets; not full-year average ROIC.',1),
+kpiRow('naMargin','North America operating margin','%','up',[9,7.9,7.9,7.7,4.5],'Regional profitability.'),
+kpiRow('intlMargin','International operating margin','%','up',[2.1,3.6,4.1,3.7,2.9],'Regional profitability.'),
+kpiRow('ads','Advertising services revenue','$B','up',[21.317,17.243,19.809,19.637,17.703],'Advertising is included in geographic segments; do not add to segment revenue.'),
+kpiRow('seller','Third-party seller services','$B','up',[52.816,41.578,46.780,46.492,42.486],'Marketplace monetisation; included in geographic segments.')
+],core:['awsGrowth','awsMargin','assetReturn','ads'],compare:['aws','awsProfit','ads','seller'],mix:{total:201.944,unit:'$B',items:[['North America',112.852],['International',43.108],['AWS',45.984]],note:'Reported segment net sales; advertising and seller services overlap geographic segments and are not added.'},insight:'AWS growth and operating income increased, but the latest AWS margin eased sequentially. Segment assets expanded substantially since December; the key question is whether incremental cloud profit and cash generation keep pace with infrastructure investment.'},
+GOOGL:{period:'2026-09-30',sources:[['Q3 2026 earnings release (SEC)','https://www.sec.gov/Archives/edgar/data/1652044/000165204426000080/googexhibit991q32026.htm'],['Q3 2026 earnings call','https://abc.xyz/investor/events/event-details/2026/2026-Q3-Earnings-Call-2026-Ujou16CTw9/default.aspx']],rows:[
+kpiRow('search','Search & other revenue','$B','up',[null,null,null,63.350,56.567],'Core search monetisation.'),
+kpiRow('youtube','YouTube advertising','$B','up',[null,null,null,11.207,10.261],'Video advertising revenue, excluding subscriptions.'),
+kpiRow('cloud','Cloud revenue','$B','up',[null,null,null,30.709,15.157],'Cloud and TPU systems revenue.'),
+kpiRow('cloudMargin','Cloud operating margin','%','up',[null,null,35.6,100*11.121/30.709,100*3.594/15.157],'Segment operating income divided by segment revenue.',1),
+kpiRow('backlog','Cloud backlog','$B','up',[null,null,null,561,null],'Reported contract backlog; recognition timing and mix matter.',1),
+kpiRow('servicesMargin','Services operating margin','%','up',[null,null,null,100*39.157/96.302,100*33.527/87.052],'Services segment profitability.'),
+kpiRow('tac','TAC / advertising revenue','%','down',[null,null,null,100*16.366/82.012,100*14.876/74.182],'Distribution and traffic cost intensity.'),
+kpiRow('subs','Subscriptions, platforms & devices','$B','up',[null,null,null,14.290,12.870],'Non-advertising services revenue.')
+],core:['search','cloud','cloudMargin','backlog'],compare:['search','youtube','cloud','subs'],mix:{total:127.577,unit:'$B',items:[['Search & other',63.350],['YouTube ads',11.207],['Network',7.455],['Subscriptions, platforms & devices',14.290],['Cloud',30.709],['Other Bets / hedging',.566]],note:'Non-overlapping revenue categories; Other Bets and hedging combined.'},insight:'Cloud revenue more than doubled year over year, with substantially higher segment margins. Search remains the largest revenue driver; monitor Search monetisation and traffic costs alongside Cloud backlog conversion.'},
+NVDA:{period:'2026-10-25',periods:['Q4 FY26','Q1 FY27','Q2 FY27','Q3 FY27'],sources:[['Q3 FY2027 earnings release','https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2027/'],['Q3 FY2027 revenue by market historical series','https://s201.q4cdn.com/141608511/files/doc_financials/2027/Q327/Rev-by-Mkt-Qtrly-Trend-Q327.pdf']],rows:[
+kpiRow('dc','Data Center revenue','$B','up',[62.314,75.246,89.023,107.610,51.215],'Market-platform revenue, including compute and networking.',1),
+kpiRow('compute','Compute & Networking segment revenue','$B','up',[null,null,88.3,106.0,50.9],'Reporting segment, not solely Data Center compute.'),
+kpiRow('graphics','Graphics segment revenue','$B','up',[null,null,7.9,9.8,6.1],'Reporting segment revenue.'),
+kpiRow('dcShare','Data Center share of sales','%','context',[null,null,100*89.023/96.2,100*107.610/115.8,100*51.215/57.0],'Market concentration proxy; not customer concentration.'),
+kpiRow('total','Total revenue','$B','up',[null,null,96.2,115.8,57.0],'Reported quarterly revenue rounded to billions.'),
+kpiRow('dcCompute','Data Center compute revenue','$B','up',[null,null,null,null,null],'Separate compute/networking breakout not yet extracted.'),
+kpiRow('turnover','Inventory turnover','x','up',[null,null,null,null,null],'Requires consistent average inventory and cost of sales.'),
+kpiRow('customer','Largest customer share','%','watch',[null,null,null,null,null],'Requires verified customer concentration disclosures.')
+],core:['dc','compute','dcShare','graphics'],compare:['dc','compute','graphics'],mix:{total:115.8,unit:'$B',items:[['Data Center',107.610],['Other market platforms (residual)',8.190]],note:'Market-platform split using rounded total; Compute & Networking is a separate reporting dimension and is not added.'},insight:'Data Center revenue grew strongly across four disclosed quarters and represents most of sales. That scale increases exposure to enterprise AI investment; separate compute/networking mix and customer concentration still need filing extraction.'},
+KTOS:{period:'2026-09-27',sources:[['Q3 2026 earnings release','https://www.sec.gov/Archives/edgar/data/1069258/000106925826000085/ktos202609278kexhibit991.htm']],rows:[
+kpiRow('backlog','Total backlog','$B','up',[null,null,2.0846,2.650,null],'Includes both funded and unfunded orders; Q2 sums disclosed segments.'),
+kpiRow('funded','Funded backlog','$B','up',[null,null,null,2.067,null],'Funded orders are not yet recognized revenue.'),
+kpiRow('fundedShare','Funded share of backlog','%','up',[null,null,null,100*2.067/2.650,null],'Funded backlog / total backlog.'),
+kpiRow('book','Quarterly book-to-bill','x','up',[null,null,null,2.2,null],'Bookings relative to sales; timing can be lumpy.'),
+kpiRow('bookTTM','TTM book-to-bill','x','up',[null,null,null,1.6,null],'More stable demand-to-sales comparison.'),
+kpiRow('organic','Organic revenue growth','%','up',[null,null,null,23.2,null],'Company-defined organic growth.'),
+kpiRow('kgs','Government Solutions backlog','$B','up',[null,null,1.710,2.292,null],'Segment backlog.'),
+kpiRow('kus','Unmanned Systems backlog','$B','up',[null,null,.3746,.3574,null],'Segment backlog.')
+],core:['backlog','fundedShare','book','organic'],compare:[],mix:{title:'Backlog funding mix',total:2.6499,unit:'$B',items:[['Funded',2.067],['Unfunded',.5829]],note:'Funding mix is not revenue mix or a guarantee of conversion.'},insight:'Book-to-bill above one and a higher total backlog indicate strong order intake, but Unmanned Systems backlog declined sequentially. Monitor funded order conversion, production margins and schedule execution.'},
+OKLO:{period:'2026-09-30',sources:[['Q3 2026 10-Q','https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm']],rows:[],core:[],compare:[],milestones:[
+['Aurora-ID site','Non-nuclear construction approved; groundbreaking','Reported milestone','Sep 2025','Physical buildout, not operating authorization.'],
+['DOE agreement','Other Transaction Agreement executed','Reported milestone','Feb 2026','Agreement is not commercial operating approval.'],
+['Nuclear safety design','DOE Nuclear Safety Design Agreement approved','Reported milestone','Feb 2026','Design-stage authorization.'],
+['NRC design criteria','Principal Design Criteria report approved','Reported milestone','Apr 2026','Not a combined license.'],
+['Preliminary safety analysis','Preliminary Documented Safety Analysis approved','Reported milestone','Jun 2026','Additional authorization steps remain.'],
+['Fuel readiness','Five metric tons of HALEU awarded for Idaho','Reported award','As of Q3 2026','Award does not establish fabricated fuel readiness.'],
+['Commercial pipeline','12 GW Switch master power agreement; other nonbinding LOIs','Preliminary agreements','As of Q3 2026','Not equivalent to 12 GW of funded, binding projects.'],
+['Binding contracted capacity','Not extracted','Not assessed','—','Verify binding PPAs and committed MW separately.'],
+['Commercial operation','Operating authorization and deployment date not verified here','Not assessed','—','Track construction and authorization separately.']
+],insight:'For a pre-commercial business, progress through authorization, fuel fabrication, construction and binding customer commitments matters more than revenue growth. Announced pipeline is not equivalent to executable funded capacity.'}
+};
+function kpiFmt(r,v){if(!num(v))return '—';if(r.unit==='%')return pct(v);if(r.unit==='x')return fmt(v,2)+'x';if(r.unit.startsWith('$'))return '$'+fmt(v,3)+(r.unit.slice(1));return fmt(v,3)+(r.unit==='M'?'M':' '+r.unit);}
+function kpiDelta(r,v,old){if(!num(v)||!num(old))return null;return r.unit==='%'?v-old:old>0?100*(v/old-1):null;}
+function kpiDeltaText(r,v,old){const d=kpiDelta(r,v,old);return d==null?'—':(d>0?'+':'')+fmt(d,1)+(r.unit==='%'?'pp':'%');}
+function kpiTrend(r,i){
+ if(i<2)return 'muted';const [a,b,c]=r.values.slice(i-2,i+1);if(![a,b,c].every(num))return 'muted';
+ const tol=(x)=>r.unit==='%'?.75:Math.max(Math.abs(x)*.02,1e-9);
+ const dir=(x,y)=>Math.abs(x-y)<=tol(y)?0:Math.sign(x-y),x=dir(b,a),y=dir(c,b);
+ if(!x||x!==y)return 'muted';if(r.kind==='watch')return y>0?'investigate':'muted';if(r.kind==='context')return 'muted';return (r.kind==='down'?-y:y)>0?'good':'bad';
+}
+const kpiColors=['#6ba2c7','#70d5bd','#e4b575','#a99bd7','#db8c9c','#708399'];
+function kpiMix(m){
+ const parts=m.items.filter(x=>num(x[1])&&x[1]>=0),total=parts.reduce((a,x)=>a+x[1],0);
+ if(!total)return '';
+ let start=0;const gradient=parts.map((x,i)=>{const a=start;start+=100*x[1]/total;return kpiColors[i%kpiColors.length]+' '+a+'% '+start+'%';}).join(',');
+ return '<div class="kpi-mix"><div class="kpi-donut" style="background:conic-gradient('+gradient+')"><div><strong>'+esc(kpiFmt({unit:m.unit},m.total))+'</strong><small>'+esc(m.title?'Backlog':'Revenue')+'</small></div></div><div class="kpi-mix-legend">'+parts.map((x,i)=>'<div><i style="background:'+kpiColors[i%kpiColors.length]+'"></i><span>'+esc(x[0])+'</span><b>'+esc(kpiFmt({unit:m.unit},x[1]))+'</b><small>'+pct(100*x[1]/total)+'</small></div>').join('')+'</div></div><p class="stock-note">'+esc(m.note)+'</p>';
+}
+function kpiGrowthBars(rows){
+ const xs=rows.map(r=>({label:r.label,value:kpiDelta(r,r.values[3],r.values[4])})).filter(x=>num(x.value));if(!xs.length)return '<p class="stock-note">Comparable prior-year growth not yet available.</p>';
+ const max=Math.max(1,...xs.map(x=>Math.abs(x.value)));
+ return '<div class="kpi-growth">'+xs.map(x=>'<div><div class="risk-bar-label"><span>'+esc(x.label)+'</span><strong>'+esc(signed(x.value))+'</strong></div><div class="kpi-signed-track"><i></i><span class="'+(x.value<0?'negative':'positive')+'" style="width:'+Math.abs(x.value)/max*50+'%"></span></div></div>').join('')+'</div>';
+}
+function kpiPanel(panel,m,d,source){
+ const cfg=kpiData[symbol],rows=cfg.rows,labels=cfg.periods||['Q4 2025','Q1 2026','Q2 2026','Q3 2026'],by=id=>rows.find(r=>r.id===id),latestPeriod=d.quarterly?.[0]?.period,stale=latestPeriod&&latestPeriod>cfg.period;
+ const card=r=>'<article class="kpi-tile"><div>'+esc(r.label)+'</div><strong class="trend-'+kpiTrend(r,3)+'">'+esc(kpiFmt(r,r.values[3]))+'</strong><small>YoY '+esc(kpiDeltaText(r,r.values[3],r.values[4]))+' · QoQ '+esc(kpiDeltaText(r,r.values[3],r.values[2]))+'</small><p>'+esc(r.why)+'</p></article>';
+ const milestone=cfg.milestones;
+ const foot=cfg.sources.map(([n,url],i)=>'<a href="'+esc(url)+'" target="_blank" rel="noopener">['+(i+1)+'] '+esc(n)+' ↗</a>').join(' · ');
+ panel.innerHTML='<h2>Business KPIs</h2><p class="stock-note">Reviewed operational disclosure snapshot · quarter ended '+esc(cfg.period)+(stale?' · newer financial quarter exists; operational data has not yet been refreshed':'')+' · not a live filing feed</p>'+
+ '<section class="kpi-section"><div class="section-kicker">01 / CORE BUSINESS DRIVERS</div><h3>'+esc(milestone?'Execution milestones':'Business performance')+'</h3>'+(milestone?'<div class="kpi-milestones">'+milestone.slice(0,6).map(x=>'<article class="kpi-tile"><div>'+esc(x[0])+'</div><strong class="kpi-milestone-title">'+esc(x[1])+'</strong><small>'+esc(x[3])+' · '+esc(x[2])+'</small><p>'+esc(x[4])+'</p></article>').join('')+'</div>':'<div class="kpi-tiles">'+cfg.core.map(id=>card(by(id))).join('')+'</div>')+'</section>'+
+ '<section class="kpi-section"><div class="section-kicker">02 / BUSINESS ECONOMICS</div><h3>'+esc(milestone?'Commercial readiness':cfg.mix.title||'Revenue engine')+'</h3>'+(milestone?'<div class="kpi-milestones">'+milestone.slice(6).map(x=>'<article class="kpi-tile"><div>'+esc(x[0])+'</div><strong class="kpi-milestone-title">'+esc(x[1])+'</strong><small>'+esc(x[3])+' · '+esc(x[2])+'</small><p>'+esc(x[4])+'</p></article>').join('')+'</div>':'<div class="kpi-economics"><div>'+kpiMix(cfg.mix)+'</div>'+(cfg.compare.length?'<div><div class="section-kicker">YOY GROWTH COMPARISON</div>'+kpiGrowthBars(cfg.compare.map(by))+'</div>':'<div><div class="section-kicker">DEMAND & EXECUTION</div>'+card(by('bookTTM'))+card(by('funded'))+'</div>')+'</div>')+'<div class="kpi-insight"><strong>What this means</strong><p>'+esc(cfg.insight)+'</p></div></section>'+
+ '<section class="kpi-section"><div class="section-kicker">03 / OPERATIONAL MOMENTUM</div><h3>'+esc(milestone?'Milestone tracker':'Four-quarter operating trends')+'</h3>'+(milestone?table(['Metric / milestone','Reported observation','Status','Timing','What to verify'],milestone):'<div class="table-scroll"><table class="fund-table kpi-table"><thead><tr>'+['KPI',...labels,'Latest YoY'].map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr><th scope="row" title="'+esc(r.why)+'">'+esc(r.label)+' <sup>['+(r.src+1)+']</sup></th>'+r.values.slice(0,4).map((v,i)=>trendCell(kpiFmt(r,v),kpiTrend(r,i),'Two successive quarterly movements; metric-specific direction')).join('')+trendCell(kpiDeltaText(r,r.values[3],r.values[4]),'muted','Year-over-year change; percentage points for percentage metrics')+'</tr>').join('')+'</tbody></table></div><p class="stock-note">Green/red requires two successive movements beyond 2% relative or 0.75pp for percentage metrics. Higher margin lending/concentration can warrant investigation, not automatic improvement. Missing history remains grey; quarter-to-quarter seasonality and definition changes can affect trends.</p>')+'</section>'+
+ '<details class="risk-method"><summary>Sources & methodology</summary><p>'+foot+'</p><p>Reviewed snapshot; updates require new filing extraction. Calculated ratios and residuals are identified in the metric descriptions; unavailable values are not estimated. Historical quarter labels are fiscal quarters for NVIDIA.</p>'+source+'</details>';
+}
+
 function render(){controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
 el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry;el('question').textContent=m.question;el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
@@ -351,7 +465,7 @@ panel.classList.remove('overview-panel');
 if(tab==='Overview'){overviewPanel(panel,m,d,q,p,source);}
 else if(tab==='Fundamentals'){fundamentalsPanel(panel,d,note,source);}
 else if(tab==='Financial risk'){riskPanel(panel,m,d,q,note,source);}
-else if(tab==='Business KPIs'){panel.innerHTML='<h2>Company-specific intelligence</h2><p class="stock-note">Diligence framework. These operating KPIs require filing extraction; values have not yet been populated.</p>'+table(['Metric / disclosure','Status'],m.kpis.map(k=>[k,'Needs filing extraction']))+source+(symbol==='OKLO'?'<p><a href="https://www.nrc.gov/reactors/new-reactors/advanced.html" target="_blank" rel="noopener">NRC advanced reactors ↗</a></p>':'');}
+else if(tab==='Business KPIs'){kpiPanel(panel,m,d,source);}
 else if(tab==='Valuation'){panel.innerHTML='<h2>Valuation</h2>'+table(['Metric','Current provider value'],[['Trailing P/E',fmt(p.trailingPE)],['Price/book',fmt(p.priceToBook)],['EV/revenue',fmt(p.enterpriseToRevenue)],['EV/EBITDA',fmt(p.enterpriseToEbitda)],['Market cap',money(p.marketCap)],['Enterprise value',money(p.enterpriseValue)],['Trailing EPS',fmt(p.trailingEps,2)]])+'<p class="stock-note">Current provider multiples only. Historical point-in-time multiples require filing dates and split-consistent earnings; not estimated here. Negative earnings make P/E unsuitable.</p>'+source;}
 else if(tab==='Peers'){panel.innerHTML='<h2>Competitive comparison</h2>'+table(['Ticker','Period','Revenue YoY','Operating margin','Pretax margin','EPS YoY','P/E'],[symbol,...m.peers].map(s=>[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(latest(s).pretax_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)]))+'<p class="stock-note">Latest available fiscal quarters may differ. Segment-level and accounting differences limit direct comparison.</p>';}
 else if(tab==='Technical'){const a=d.prices||[];const sma=(n,i)=>i+1<n?null:a.slice(i+1-n,i+1).reduce((v,r)=>v+r.close,0)/n;panel.innerHTML='<h2>Price & timing</h2><div id="price-chart" class="stock-chart"></div>'+table(['Last close date','Close','SMA50','SMA200'],[[p.date||'—',fmt(p.lastClose,2),fmt(sma(50,a.length-1),2),fmt(sma(200,a.length-1),2)]])+'<p class="stock-note">Historical close series as provided; moving averages are simple averages, not your custom TradingView signals. Custom signal integration pending.</p>';chart('price-chart',[{name:'Close',x:a.map(r=>r.date),y:a.map(r=>r.close),mode:'lines'},...([50,200].map(n=>({name:'SMA '+n,x:a.map(r=>r.date),y:a.map((r,i)=>sma(n,i)),mode:'lines'})))],'USD');}
