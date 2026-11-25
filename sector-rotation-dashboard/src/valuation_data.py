@@ -10,11 +10,12 @@ import pandas as pd
 FLOW_TAGS = {
     'eps': ('EarningsPerShareDiluted',),
     'op': ('OperatingIncomeLoss',),
+    'revenue': ('RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet'),
     'ocf': ('NetCashProvidedByUsedInOperatingActivities',),
-    'capex': ('PaymentsToAcquirePropertyPlantAndEquipment',),
+    'capex': ('PaymentsToAcquirePropertyPlantAndEquipment','PaymentsToAcquireProductiveAssets'),
 }
 BAL_TAGS = {'equity': ('StockholdersEquity',), 'shares': ('CommonStockSharesOutstanding',)}
-SINGLE_CLASS = {'AMZN','NVDA','KTOS'}
+SINGLE_CLASS = {'AMZN','NVDA','KTOS','OKLO'}
 
 def _day(x):
     return date.fromisoformat(str(x)[:10])
@@ -25,6 +26,7 @@ def _finite(x):
 def _records(facts, tags, unit, flow):
     out=[]
     for tag in tags:
+        tagged=[]
         for r in facts.get(tag,{}).get('units',{}).get(unit,[]):
             if r.get('form') not in ('10-K','10-Q','10-K/A','10-Q/A') or not r.get('filed') or not r.get('end') or not _finite(r.get('val')):
                 continue
@@ -36,7 +38,11 @@ def _records(facts, tags, unit, flow):
             except ValueError:
                 continue
             if filed < end: continue
-            out.append((filed,end,start,float(r['val']),r.get('accn',''),r['form']))
+            tagged.append((filed,end,start,float(r['val']),r.get('accn',''),r['form']))
+        # Use a single consistent taxonomy concept, not a mixture of scopes.
+        if tagged:
+            out=tagged
+            break
     return sorted(out,key=lambda r:(r[0],r[1]))
 
 def _split_factor(filed, splits):
@@ -80,6 +86,9 @@ def _snapshot(records, asof, key, splits):
     if not fy: return None,end
     full=max(fy,key=lambda r:r[0])
     comparables=[r for r in known if r[4]==current[4] and r[1]<end and 345<=(end-r[1]).days<=385 and abs(_duration(r)-_duration(current))<=10]
+    if not comparables:
+        # Older published comparative of the same concept and duration, known as of this date.
+        comparables=[r for r in known if r[1]<end and 345<=(end-r[1]).days<=385 and abs(_duration(r)-_duration(current))<=10]
     if not comparables: return None,end
     prior=max(comparables,key=lambda r:r[0])
     return _adjust(full,key,splits)+_adjust(current,key,splits)-_adjust(prior,key,splits),end
@@ -89,6 +98,10 @@ def historical_valuation(symbol,facts,history):
     records={k:_records(facts,t,'USD/shares' if k=='eps' else 'USD',True) for k,t in FLOW_TAGS.items()}
     if symbol in SINGLE_CLASS:
         records.update({k:_records(facts,t,'shares' if k=='shares' else 'USD',False) for k,t in BAL_TAGS.items()})
+        # Cover-page counts are separately tagged and often dated after fiscal period-end.
+        # Only use undimensioned companyfacts for single-class issuers.
+        records['shares']+=_records(facts,('EntityCommonStockSharesOutstanding',),'shares',False)
+        records['shares'].sort(key=lambda r:(r[0],r[1]))
     splits=[(_day(d),float(v)) for d,v in history.get('Stock Splits',pd.Series(dtype=float)).items() if _finite(v) and v>0]
     dates=sorted({r[0] for rec in records.values() for r in rec})
     snapshots=[]
@@ -112,16 +125,26 @@ def historical_valuation(symbol,facts,history):
                 v,e=vals.get(k,(None,None))
                 return v if e and (day-e).days<=180 and _finite(v) else None
             eps,op=val('eps'),val('op')
-            if eps is not None:
-                r['eps']=eps
-                if eps>0: r['pe']=close/eps
-            if op is not None: r['op']=op
+            for k in ('eps','op','revenue','ocf','capex','equity','shares'):
+                v=val(k)
+                if v is not None:
+                    r[k]=v
+                    r[k+'_period']=vals[k][1].isoformat()
+            if eps is not None and eps>0:
+                r['pe']=close/eps
             equity,shares,ocf,capex=map(val,('equity','shares','ocf','capex'))
-            # Require the same balance-sheet date for the share count and book equity.
-            same_balance=vals.get('equity',(None,None))[1]==vals.get('shares',(None,None))[1]
-            if shares is not None and shares>0 and same_balance:
-                if equity is not None and equity>0: r['pb']=close*shares/equity
-                if ocf is not None and capex is not None and vals['ocf'][1]==vals['capex'][1] and ocf-capex>0:
-                    r['pfcf']=close*shares/(ocf-capex)
+            eq_end,sh_end=vals.get('equity',(None,None))[1],vals.get('shares',(None,None))[1]
+            ocf_end,capex_end=vals.get('ocf',(None,None))[1],vals.get('capex',(None,None))[1]
+            if ocf is not None and capex is not None and ocf_end==capex_end:
+                r['fcf']=ocf-capex
+                r['fcf_period']=ocf_end.isoformat()
+            # Same or nearby disclosed counts are valid approximations, not exact daily market cap.
+            # Both facts must have been filed before the price observation.
+            if shares is not None and shares>0 and sh_end:
+                r['market_cap_proxy']=close*shares
+                if equity is not None and equity>0 and eq_end and abs((eq_end-sh_end).days)<=60:
+                    r['pb']=close*shares/equity
+                if r.get('fcf',0)>0 and ocf_end and abs((ocf_end-sh_end).days)<=60:
+                    r['pfcf']=close*shares/r['fcf']
         result.append(r)
     return result

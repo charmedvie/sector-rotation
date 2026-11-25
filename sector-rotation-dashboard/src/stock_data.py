@@ -71,7 +71,8 @@ def sec_facts(symbol, cik=None):
     req=Request(f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json',
         headers={'User-Agent':'Stock Intelligence Lab https://github.com/charmedvie/sector-rotation','Accept':'application/json'})
     with urlopen(req, timeout=12) as res:
-        return json.load(res).get('facts',{}).get('us-gaap',{})
+        facts=json.load(res).get('facts',{})
+        return {**facts.get('us-gaap',{}), **{k:v for k,v in facts.get('dei',{}).items() if k=='EntityCommonStockSharesOutstanding'}}
 
 def quarterly_facts(facts, tag, field):
     units=facts.get(tag,{}).get('units',{})
@@ -196,7 +197,7 @@ def generate(output):
         if h is not None and not h.empty and 'Close' in h:
             cutoff=pd.Timestamp(h.index[-1])-pd.DateOffset(years=1)
             prices=[{'date':pd.Timestamp(d).date().isoformat(),'close':number(v)} for d,v in h['Close'].items() if d>=cutoff and number(v) is not None]
-        quote={k:number(info.get(k)) for k in ['trailingPE','priceToBook','enterpriseToRevenue','enterpriseToEbitda','priceToSalesTrailing12Months','marketCap','enterpriseValue','trailingEps']}
+        quote={k:number(info.get(k)) for k in ['trailingPE','priceToBook','enterpriseToRevenue','enterpriseToEbitda','priceToSalesTrailing12Months','marketCap','enterpriseValue','trailingEps','sharesOutstanding']}
         quote['currency']=info.get('currency')
         quote['financialCurrency']=info.get('financialCurrency')
         if prices: quote['lastClose']=prices[-1]['close']; quote['date']=prices[-1]['date']
@@ -207,7 +208,7 @@ def generate(output):
         quality_prior = safe(lambda:quality_comparatives(q,facts),{}) if facts and symbol in PILOTS else {}
         valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in PILOTS else []
         payload['stocks'][symbol]={'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
-        print(f'{symbol}: {len(q)} quarters, {len(annual)} years')
+        print(f'{symbol}: {len(q)} quarters, {len(annual)} years; valuation coverage '+str({k:sum(k in r for r in valuation) for k in ('price','eps','pe','pb','pfcf','fcf')}))
     output.parent.mkdir(parents=True,exist_ok=True)
     tmp=output.with_suffix('.tmp')
     tmp.write_text(json.dumps(payload,allow_nan=False,separators=(',',':')),encoding='utf-8')
