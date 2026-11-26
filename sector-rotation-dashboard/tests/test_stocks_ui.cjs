@@ -174,3 +174,19 @@ test('every watchlist company shows reviewed ownership records and manager sampl
  assert.match(page,/Prior quarter/);
  assert.match(page,/Market-wide 13F comparison has yet to be compiled/);
 });
+
+test('published peers are searchable during a registry outage without joining the watchlist',()=>{
+ const {ctx,nodes}=load();
+ vm.runInContext(`
+  data={screening_registry_available:false,stocks:{SCHW:{
+   metadata:{name:'Charles Schwab',currency:'USD',profile:'financial'},
+   quote:{currency:'USD'},quarterly:[{period:'2026-09-30'}]
+  }}};
+  registerScreeningStocks();
+  el('ticker-search').value='schw';
+  tickerSearch();
+ `,ctx);
+ assert.match(nodes.get('company').textContent,/SCHW · Charles Schwab/);
+ assert.doesNotMatch(nodes.get('watchlist').innerHTML,/data-symbol="SCHW"/);
+ assert.equal(nodes.get('ticker-feedback').textContent,'');
+});

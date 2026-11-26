@@ -23,14 +23,19 @@ const screeningProfiles={
  real_estate:['Real estate / REIT',['liquidity','shortterm'],['FFO/AFFO and property NOI','Occupancy','Debt maturities']],
  unclassified:['Unclassified business',[],['Business model and relevant metrics','Operating drivers and risk disclosures']]
 };
-const screeningTickers=new Set(),profileOf=s=>get(s).metadata?.profile||'unclassified',isScreening=s=>screeningTickers.has(s);
+const screeningTickers=new Set(),lookupOnlyTickers=new Set(),profileOf=s=>get(s).metadata?.profile||'unclassified',isScreening=s=>screeningTickers.has(s);
 const restrictedProfile=s=>isScreening(s)&&['financial','bank','insurance','real_estate','unclassified'].includes(profileOf(s));
 const precommercial=s=>s==='OKLO'||isScreening(s)&&profileOf(s)==='precommercial';
 function screeningTabs(s){return !isScreening(s)?tabs:['Overview','Fundamentals','Financial risk',...(peerGroups[s]?.length>=2?['Peers']:[])];}
 function registerScreeningStocks(){
  for(const [s,d] of Object.entries(data.stocks||{})){
-  if(!d.screening||data.screening_requests?.[s]!=='available'||Object.prototype.hasOwnProperty.call(M,s)||!/^[A-Z][A-Z0-9.-]{0,9}$/.test(s))continue;
-  const meta=d.metadata||{},profile=screeningProfiles[meta.profile]||screeningProfiles.unclassified;
+  if(Object.hasOwn(M,s)||!/^[A-Z][A-Z0-9.-]{0,9}$/.test(s))continue;
+  const meta=d.metadata||{};
+  const approved=d.screening&&data.screening_requests?.[s]==='available';
+  const publishedPeer=!d.screening&&d.quarterly?.length&&meta.currency==='USD'&&d.quote?.currency==='USD';
+  if(!approved&&!publishedPeer)continue;
+  if(!approved)lookupOnlyTickers.add(s);
+  const profile=screeningProfiles[meta.profile]||screeningProfiles.unclassified;
   screeningTickers.add(s);M[s]={name:meta.name||s,industry:meta.industry||profile[0],question:'',peers:[],risks:[],sec:meta.cik||'',kpis:profile[2]};
   const names={liquidity:'Debt and financing exposure',coverage:'Interest service coverage',shortterm:'Short-term obligation coverage',inventory:'Inventory exposure',receivables:'Receivables exposure',shares:'Share dilution',capex:'Capital spending',runway:'Historical cash runway proxy',capital:'Regulatory capital'};
   exposureDimensions[s]=profile[1].map(id=>[id,names[id]]);
@@ -59,7 +64,8 @@ function tickerSearch(){
  if(Object.prototype.hasOwnProperty.call(M,s)){feedback.textContent='';select(s);return;}
  const status=data.screening_requests?.[s];
  if(status){feedback.textContent=({requested:'Requested; data has not been published yet.',data_unavailable:'Requested; provider data is currently incomplete.',not_in_sec_directory:'Ticker not found in the SEC company directory.',unsupported_or_unverified_currency:'USD equity and statement currency could not be verified.',request_limit:'Screening limit reached. Close an older ticker request before adding another.'})[status]||'Request registered.';return;}
- feedback.innerHTML=(data.screening_registry_available===false?'Ticker registry temporarily unavailable. ':'Not loaded yet. ')+'<a href="'+esc(tickerRequestUrl(s))+'" target="_blank" rel="noopener">Request '+esc(s)+' on GitHub ↗</a><small> Submit the prefilled public issue while signed in as the repository owner. Reload after deployment.</small>';
+ if(data.screening_registry_available===false){feedback.textContent='This ticker is outside the published screening data. The request registry is temporarily unavailable.';return;}
+ feedback.innerHTML='This ticker is outside the published screening data. '+'<a href="'+esc(tickerRequestUrl(s))+'" target="_blank" rel="noopener">Request '+esc(s)+' on GitHub ↗</a><small> Submit the prefilled public issue while signed in as the repository owner. Reload after deployment.</small>';
 }
 
 let data={stocks:{}},symbol='IBKR',tab=tabs[0],frequency='quarterly';
@@ -133,7 +139,7 @@ function table(headers,rows){return '<div class="table-scroll"><table><thead><tr
 function box(title,body){return '<div class="stock-item"><h3>'+esc(title)+'</h3>'+body+'</div>';}
 function list(arr){return '<ul>'+arr.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';}
 function chart(id,traces,ytitle){if(!window.Plotly)return;Plotly.react(id,traces,{paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#b7c6db'},margin:{l:64,r:18,t:18,b:45},legend:{orientation:'h'},xaxis:{gridcolor:'#28364a'},yaxis:{title:ytitle,gridcolor:'#28364a'},hovermode:'x unified'},{responsive:true,displayModeBar:false});}
-function controls(){el('watchlist').innerHTML=Object.keys(M).map(s=>'<button aria-pressed="'+(s===symbol)+'" data-symbol="'+s+'">'+s+'</button>').join('');el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=screeningTabs(symbol).map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}
+function controls(){el('watchlist').innerHTML=Object.keys(M).filter(s=>!lookupOnlyTickers.has(s)).map(s=>'<button aria-pressed="'+(s===symbol)+'" data-symbol="'+s+'">'+s+'</button>').join('');el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=screeningTabs(symbol).map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}
 function select(s){if(!Object.prototype.hasOwnProperty.call(M,s))return;symbol=s;tab='Overview';location.hash=s;render();}
 function spark(values,color='#8caee1'){
  const valid=values.filter(Number.isFinite);if(valid.length<2)return '<div class="spark-empty">Insufficient history</div>';
