@@ -291,9 +291,9 @@
     "AVGO": {
       "date": "2026-11-26",
       "source": "https://investors.broadcom.com/news-releases/news-release-details/broadcom-inc-announces-third-quarter-fiscal-year-2026-financial",
-      "thesis": "Broadcom can capture more value per AI deployment by supplying workload-optimised custom accelerators and networking across both GPU and ASIC architectures. Google TPUs, Meta MTIA, OpenAI and Anthropic programs create growth opportunities as inference economics favour specialised chips; these programs are not all at the same stage of commercial deployment. VMware and other infrastructure software provide recurring cash generation and diversification. The thesis depends on customer programs reaching volume, durable software renewals, and AI demand translating into cash rather than increasing credit exposure. Higher rates and economic weakness can slow hyperscaler investment and make financing-dependent AI customers less able to pay; Broadcom's own leverage and contingent customer financing obligations amplify this risk.",
-      "confirmation": "Q4 comes in near or above management’s $21.7 billion AI sales and 66% adjusted operating margin outlook. In FY2027, look for more than one customer program to reach volume, sustained software growth, and free cash flow that keeps pace with operating profit. Confirm customer diversification, independently funded deployments, stable or improving cash conversion, and falling net leverage without increased risk-adjusted customer financing exposure.",
-      "invalidation": "Repeated deployment delays, weaker software renewals, or deteriorating margins and cash conversion despite AI sales growth. Rising customer lease exposure would also weaken the thesis if the extra risk absorbs cash as shipments scale. Thesis weakens materially if hyperscalers cut capex, customers insource custom silicon, AI developers struggle to monetise compute, or guarantees/loans grow faster than cash generation.",
+      "thesis": "Broadcom sells custom AI chips and the networking that connects them. VMware adds a second source of cash.",
+      "confirmation": "More customers ship at scale. Cash flow holds and leverage falls.",
+      "invalidation": "Chip rollouts or renewals slip. AI spending slows or customer financing weighs on cash.",
       "drivers": [
         [
           "Custom AI accelerators and networking",
@@ -366,53 +366,53 @@
       ],
       "catalysts": [
         [
-          "Dec 9, 2026 · Fiscal Q4 earnings confirmed",
-          "Compare reported results with guidance of $34.8 billion total revenue, $21.7 billion AI semiconductor revenue and 66% adjusted operating margin. Check free cash flow and FY2027 shipment commentary.",
+          "Dec 9 · Q4 earnings",
+          "Guidance • $34.8 billion sales · $21.7 billion AI sales · 66% adjusted operating margin.",
           "https://investors.broadcom.com/news-releases/news-release-details/broadcom-inc-announce-fourth-quarter-and-fiscal-year-2026"
         ],
         [
-          "2027 · Anthropic compute deliveries targeted",
-          "The $63 billion financing structure supports purchases of Broadcom accelerators and networking systems for lease to Anthropic. Watch for first deliveries and updates on Broadcom’s residual-value support.",
+          "2027 target · Anthropic deliveries",
+          "First shipments under the $63 billion financing structure.",
           "https://investors.broadcom.com/news-releases/news-release-details/bank-america-blackstone-citi-and-morgan-stanley-announce"
         ],
         [
-          "OpenAI Jalapeño · Deployment watch",
-          "The June unveiling confirmed engineering samples were running. The original plan targeted initial rack deployments in the second half of 2026. Look for a dated production shipment or customer deployment update.",
+          "Deployment watch · OpenAI Jalapeño",
+          "First confirmed production shipment.",
           "https://investors.broadcom.com/news-releases/news-release-details/openai-and-broadcom-announce-strategic-collaboration-deploy-10"
         ],
         [
-          "VMware · Next reporting update",
-          "Track infrastructure software growth against the Q3 baseline of 29% and look for VMware Cloud Foundation renewals and paid production deployments of Private AI Cloud.",
+          "Next report · VMware renewals",
+          "Renewals and software growth versus Q3’s 29%.",
           "https://investors.broadcom.com/news-releases/news-release-details/broadcom-introduces-vmware-private-ai-cloud-enabling-enterprises"
         ],
         [
-          "Next filing · AI rack lease exposure",
-          "Check whether maximum backstop exposure rises as racks deploy, and watch for any payments, revised terms or changes to the accounting disclosure.",
+          "Next filing · AI rack lease risk",
+          "Changes to the roughly $29 billion maximum backstop.",
           "https://investors.broadcom.com/static-files/96641754-401f-4090-a4ab-210728c83a28"
         ],
         [
-          "Google and Meta · Custom silicon adoption",
-          "Positive: new volume shipments, repeat designs and expanding networking attach. Negative: delays, customer insourcing, lost designs or pricing pressure. Google and Meta agreements establish programs, not guaranteed revenue.",
+          "Shipment watch · Google and Meta",
+          "Volume shipments, repeat designs and networking sales.",
           "https://investors.broadcom.com/static-files/c906d370-921b-4bc2-bb7b-57877dfcf1ae"
         ],
         [
-          "Quarterly · Hyperscaler capex and AI returns",
-          "Positive: sustained AI capex backed by monetisation and operating cash flow. Negative: project cancellations, declining AI capex guidance, weak utilisation or capex growth persistently outpacing returns.",
+          "Quarterly · AI spending",
+          "Hyperscaler spending plans, project delays and returns on AI investment.",
           "https://investors.broadcom.com/static-files/96641754-401f-4090-a4ab-210728c83a28"
         ],
         [
-          "Quarterly · Anthropic financing and credit exposure",
-          "Positive: independently funded deployments, stronger customer liquidity and limited Broadcom draws or guarantees. Negative: increasing drawn balances, expanded guarantees, payment delays or impairment. Reconcile the note facility and lease structures before aggregating exposure.",
+          "Quarterly · Anthropic credit",
+          "Note facility draws, guarantees and late payments.",
           "https://www.jpmorgan.com/content/dam/jpm/securities/documents/deal-docs/2026/Anthropic%20PBC%20IPO%20Prelim.pdf"
         ],
         [
-          "Quarterly · Customer concentration and balance sheet",
-          "Track top-five end-customer share versus Q3 55%, direct distributor share separately, net debt/EBITDA, interest coverage and FCF margin versus Q3 46%. Positive: diversification and deleveraging; negative: rising concentration, leverage or falling cash conversion.",
+          "Quarterly · Concentration and cash",
+          "Top-five customer share versus 55%. Free cash flow margin versus 46%.",
           "https://investors.broadcom.com/static-files/96641754-401f-4090-a4ab-210728c83a28"
         ],
         [
-          "Nov 2026 · Anthropic IPO and strategic investment",
-          "SEC filing confirms IPO closing and concurrent private placement including Broadcom; track actual customer cash resources, cash burn and financing draws rather than assuming an IPO removes credit risk.",
+          "Nov 2026 · Anthropic IPO closed",
+          "Watch post-IPO cash burn and financing draws.",
           "https://www.sec.gov/Archives/edgar/data/2130357/000162828026075973/ant-20261119.htm"
         ]
       ]
