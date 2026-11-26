@@ -10,15 +10,6 @@
     "Index": [
       "DOW"
     ],
-    "P1": [
-      "AAPL",
-      "AMZN",
-      "GOOG",
-      "IBKR",
-      "KO",
-      "NVDA",
-      "BMNR"
-    ],
     "Stablish": [
       "AAPL",
       "AMD",
@@ -92,10 +83,6 @@
     "NVDA": {
       "name": "NVIDIA Corporation",
       "symbol": "NASDAQ:NVDA"
-    },
-    "BMNR": {
-      "name": "BitMine Immersion Technologies Inc",
-      "symbol": "NYSE:BMNR"
     },
     "AMD": {
       "name": "Advanced Micro Devices, Inc.",
