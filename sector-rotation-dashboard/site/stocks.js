@@ -168,7 +168,7 @@ const latest=s=>get(s).quarterly[0]||{};
 function previous(rows,latest){if(!latest.period)return {};const target=new Date(latest.period+'T00:00:00Z');target.setUTCFullYear(target.getUTCFullYear()-1);return rows.find(r=>r.period!==latest.period&&Math.abs(new Date(r.period+'T00:00:00Z')-target)<12*86400000)||{};}
 function growth(a,b,k){return a[k]!=null&&b[k]>0?100*(a[k]/b[k]-1):null;}
 const yoy=(s,k)=>{const q=latest(s),b=previous(get(s).quarterly,q);return growth(q,{[k]:b[k]??get(s).prior_year?.[q.period]?.[k]},k);};
-const fields=[['revenue','Revenue'],['gross_profit','Gross profit'],['operating_profit','Operating profit'],['pretax','Pretax profit'],['net_income','Net income (common)'],['eps','Diluted EPS'],['gross_margin','Gross margin'],['operating_margin','Operating margin'],['pretax_margin','Pretax margin'],['ocf','Operating cash flow'],['capex','Capex'],['fcf','Free cash flow'],['sbc','Share-based compensation'],['shares','Diluted average shares'],['assets','Assets'],['equity','Stockholders equity'],['cash','Cash & short-term investments'],['debt','Total debt'],['receivables','Receivables'],['inventory','Inventory']];
+const fields=[['revenue','Revenue'],['gross_profit','Gross profit'],['operating_profit','Operating profit'],['net_income','Net income (common)'],['eps','Diluted EPS'],['gross_margin','Gross margin'],['operating_margin','Operating margin'],['ocf','Operating cash flow'],['capex','Capex'],['fcf','Free cash flow'],['assets','Assets'],['debt','Total debt'],['receivables','Receivables'],['inventory','Inventory']];
 const value=(k,v)=>k.includes('margin')?pct(v):k==='eps'?(v==null?'—':'$'+fmt(v,2)):k==='shares'?(v==null?'—':compactAmount(v/1e6)+'M'):money(v);
 const esc=s=>displayMoneyText(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function table(headers,rows){return '<div class="table-scroll"><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
@@ -373,7 +373,7 @@ function deriveRows(raw,annual=false){
  return out;
  });
 }
-const extraFields=[['roe','ROE (annual / TTM)'],['roic','ROIC (annual / TTM)'],['tax_rate','Effective tax rate'],['tax_expense','Income tax expense']];
+const extraFields=[['roe','ROE (annual / TTM)'],['roic','ROIC (annual / TTM)']];
 function fundValue(k,v){return isRate(k)?pct(v):value(k,v);}
 function trendCell(text,cl='muted',tooltip=''){return '<td class="trend-'+cl+'"'+(tooltip?' title="'+esc(tooltip)+'"':'')+'>'+esc(text)+'</td>';}
 
@@ -463,11 +463,10 @@ function comparableColor(d,rows,i,k,annual=false){
 }
 
 const financialGroups=[
- ['Growth & earnings',['revenue','gross_profit','operating_profit','pretax','net_income','eps']],
- ['Profitability & capital efficiency',['gross_margin','operating_margin','pretax_margin','roe','roic']],
+ ['Growth & earnings',['revenue','gross_profit','operating_profit','net_income','eps']],
+ ['Profitability & capital efficiency',['gross_margin','operating_margin','roe','roic']],
  ['Cash flow & investment',['ocf','capex','fcf']],
- ['Balance sheet & financial health',['assets','equity','cash','debt','receivables','inventory']],
- ['Shareholder dilution & tax',['sbc','shares','tax_rate','tax_expense']]
+ ['Balance sheet & financial health',['assets','debt','receivables','inventory']]
 ];
 function longTermCell(annual,k){
  const a=annual.find(r=>num(r[k])), candidates=a?annual.filter(r=>num(r[k])&&r.period<a.period&&(new Date(a.period)-new Date(r.period))/86400000<=1850):[],b=candidates.at(-1);
