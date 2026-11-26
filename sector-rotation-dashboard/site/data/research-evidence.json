@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-11-26",
+  "events": [
+    {
+      "id": "oklo-centrus-haleu-20261111",
+      "date": "2026-11-11",
+      "headline": "Definitive Centrus fuel contracts",
+      "fact": "Oklo signed multiyear HALEU supply agreements covering fuel for up to five Aurora powerhouses; deliveries from the Ohio plant are scheduled to start in 2029.",
+      "kind": "confirmed",
+      "materiality": "high",
+      "state": "active",
+      "structural": true,
+      "sources": [
+        {
+          "label": "SEC 8-K",
+          "url": "https://www.sec.gov/Archives/edgar/data/1849056/000184905626000055/oklo-20261111.htm"
+        },
+        {
+          "label": "Oklo announcement",
+          "url": "https://investor.oklo.com/news/news-details/2026/Oklo-Centrus-Secure-Fuel-Supply-for-Aurora-Powerhouse-Deployment-in-Ohio/default.aspx"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "OKLO",
+          "tab": "driver",
+          "key": "Fuel & physical deployment",
+          "title": "Fuel procurement becomes more concrete",
+          "tone": "positive",
+          "implication": "Definitive supply arrangements reduce procurement uncertainty; the delivery schedule, fabrication and project financing remain execution gates.",
+          "overview": true
+        },
+        {
+          "symbol": "OKLO",
+          "tab": "thesis",
+          "key": "Fuel readiness",
+          "title": "Fuel sourcing supports the thesis",
+          "tone": "positive",
+          "implication": "A binding fuel supply agreement is stronger evidence than a letter of intent; it is not delivered fuel or an operating license.",
+          "assessment": {
+            "status": "support",
+            "reason": "Definitive fuel supply contracts strengthen the fuel-procurement condition, not commercial readiness as a whole."
+          }
+        },
+        {
+          "symbol": "OKLO",
+          "tab": "risk",
+          "key": "runway",
+          "title": "Fuel procurement and financing",
+          "tone": "mixed",
+          "implication": "Fuel availability improves but contractual purchases may require funding. Payment amounts and their effect on project runway are not quantified; retain reported cash and burn figures."
+        }
+      ]
+    },
+    {
+      "id": "nvda-supply-20261117",
+      "date": "2026-11-17",
+      "headline": "Expanded supplier capacity commitments",
+      "fact": "NVIDIA announced further substrate and packaging capacity agreements, including multibillion-dollar support for SPIL and capacity expected to increase by mid-2029.",
+      "kind": "confirmed",
+      "materiality": "high",
+      "state": "active",
+      "structural": true,
+      "sources": [
+        {
+          "label": "NVIDIA investor release",
+          "url": "https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Expands-Commitments-With-Supply-Chain-Partners-to-Support-AI-Infrastructure-Buildout/default.aspx"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "NVDA",
+          "tab": "driver",
+          "key": "Customer mix & capacity execution",
+          "title": "Supply expansion supports production capacity",
+          "tone": "positive",
+          "implication": "Long-dated supply access could ease production constraints; contracted capacity is not realized sales."
+        },
+        {
+          "symbol": "NVDA",
+          "tab": "risk",
+          "key": "supplycommitments",
+          "title": "Supplier commitments and prepayments",
+          "tone": "mixed",
+          "implication": "Capacity security trades off against future commitments and capital at risk if customer demand disappoints. The incremental payment schedule is unquantified.",
+          "overview": true,
+          "assessment": {
+            "status": "watch",
+            "reason": "New multiyear supplier funding and commitments merit monitoring until timing and exposure are reconciled to filings."
+          }
+        },
+        {
+          "symbol": "NVDA",
+          "tab": "fundamental",
+          "key": "capex",
+          "title": "Supplier funding and cash conversion",
+          "tone": "mixed",
+          "implication": "Prepayments and supplier funding may affect future cash conversion; do not treat them as reported capex or add them to previously disclosed obligations without reconciliation."
+        },
+        {
+          "symbol": "NVDA",
+          "tab": "thesis",
+          "key": "Inventory exposure",
+          "title": "Demand and capacity alignment",
+          "tone": "mixed",
+          "implication": "Long-dated capacity increases the importance of matching supply with realized customer demand; it does not establish inventory impairment."
+        }
+      ]
+    },
+    {
+      "id": "amzn-minfy-20261125",
+      "date": "2026-11-25",
+      "headline": "AWS–Minfy collaboration extended to 2031",
+      "fact": "Minfy and AWS announced a five-year worldwide collaboration covering industry-specific AI solutions, with a target three times the previous agreement.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "AWS press release (25 Nov dateline)",
+          "url": "https://press.aboutamazon.com/aws/2026/11/minfy-and-aws-extend-their-strategic-collaboration-agreement-globally-to-2031-targeting-enterprise-transformation-through-ai-cloud-led-industry-platforms"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "AMZN",
+          "tab": "driver",
+          "key": "AWS demand & scalability",
+          "title": "Partner-led AWS demand",
+          "tone": "positive",
+          "implication": "The expanded scope supports enterprise AI adoption through partners, but commercial targets are not guaranteed AWS revenue or RPO."
+        },
+        {
+          "symbol": "AMZN",
+          "tab": "thesis",
+          "key": "AWS revenue growth",
+          "title": "AWS demand evidence",
+          "tone": "positive",
+          "implication": "Additional partner-channel activity is consistent with expanding demand; financial scale is not disclosed and sustained growth still requires reported evidence."
+        }
+      ]
+    },
+    {
+      "id": "googl-mlperf-20261118",
+      "date": "2026-11-18",
+      "headline": "Google Cloud publishes TPU and GPU training benchmarks",
+      "fact": "Google Cloud released MLPerf results for Ironwood TPUs and NVIDIA Blackwell accelerators across training workloads.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Google technical announcement",
+          "url": "https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/training-performance-benchmarks-tpus/"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "GOOGL",
+          "tab": "driver",
+          "key": "Cloud adoption & execution",
+          "title": "Custom silicon capability",
+          "tone": "positive",
+          "implication": "A broader accelerator portfolio can improve customer choice and differentiation; benchmark results alone do not establish revenue growth or unit economics."
+        },
+        {
+          "symbol": "NVDA",
+          "tab": "peer",
+          "key": "consolidated",
+          "title": "Customer-owned accelerator alternatives",
+          "tone": "mixed",
+          "implication": "Google's own TPU development illustrates substitution risk while Blackwell availability also indicates ongoing NVIDIA ecosystem participation. No lost orders are established."
+        },
+        {
+          "symbol": "AMZN",
+          "tab": "peer",
+          "key": "aws",
+          "title": "Competing cloud accelerator portfolio",
+          "tone": "neutral",
+          "implication": "Google's TPU and GPU portfolio reinforces competition in AI infrastructure; evaluate AWS Trainium demand and workload-level economics rather than infer market-share loss."
+        }
+      ]
+    }
+  ]
+}
