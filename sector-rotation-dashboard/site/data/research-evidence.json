@@ -183,6 +183,724 @@
           "implication": "Google's TPU and GPU portfolio reinforces competition in AI infrastructure; evaluate AWS Trainium demand and workload-level economics rather than infer market-share loss."
         }
       ]
+    },
+    {
+      "id": "ibkr-october-activity-2026-11-02",
+      "date": "2026-11-02",
+      "headline": "Accounts grew as daily trades fell year over year",
+      "fact": "October accounts rose 34%, daily revenue trades fell 4%, and margin balances rose 31% year over year.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://www.interactivebrokers.com/mkt/getFileNew.php?file=202610MetricsPressRelease.pdf"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "IBKR",
+          "tab": "thesis",
+          "key": "Customer franchise growth",
+          "title": "Accounts grew as daily trades fell year over year",
+          "tone": "positive",
+          "implication": "Account growth supports franchise scale. Track accompanying client equity and funding."
+        },
+        {
+          "symbol": "IBKR",
+          "tab": "thesis",
+          "key": "Trading monetisation",
+          "title": "Accounts grew as daily trades fell year over year",
+          "tone": "mixed",
+          "implication": "The gap between accounts and trading shows why new customer growth should be checked against activity and commissions."
+        },
+        {
+          "symbol": "IBKR",
+          "tab": "thesis",
+          "key": "Customer credit",
+          "title": "Accounts grew as daily trades fell year over year",
+          "tone": "neutral",
+          "implication": "Higher margin balances increase exposure. Compare the larger book with collateral coverage and reported losses."
+        }
+      ]
+    },
+    {
+      "id": "ibkr-q3-economics-2026-10-15",
+      "date": "2026-10-15",
+      "headline": "Q3 earnings and capital context",
+      "fact": "Commissions reached $602M, net interest income reached $1.154B, and the reported pretax margin fell one point to 78%. The 10-Q also reports subsidiary regulatory capital.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1381197/000138119726000154/ibkr-ex99_1.htm"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1381197/000138119726000163/ibkr-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "IBKR",
+          "tab": "thesis",
+          "key": "Core profitability",
+          "title": "Q3 earnings and capital context",
+          "tone": "mixed",
+          "implication": "Reported earnings grew with a slightly lower pretax margin. Track whether margin pressure persists."
+        },
+        {
+          "symbol": "IBKR",
+          "tab": "thesis",
+          "key": "Regulatory capital",
+          "title": "Q3 earnings and capital context",
+          "tone": "neutral",
+          "implication": "Assess each regulated subsidiary against its own requirement. The consolidated earnings figure cannot establish its buffer."
+        }
+      ]
+    },
+    {
+      "id": "ibkr-fed-minutes-2026-11-18",
+      "date": "2026-11-18",
+      "headline": "October FOMC minutes clarify rate risk",
+      "fact": "The October vote maintained the target at 3.75%–4.00%, with two members preferring an increase.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://www.federalreserve.gov/monetarypolicy/fomcminutes20261028.htm"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1381197/000138119726000163/ibkr-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "IBKR",
+          "tab": "thesis",
+          "key": "Interest economics",
+          "title": "October FOMC minutes clarify rate risk",
+          "tone": "neutral",
+          "implication": "Client balances, asset yields and deposit costs mediate how rate changes affect brokerage earnings."
+        }
+      ]
+    },
+    {
+      "id": "hood-october-activity-2026-11-12",
+      "date": "2026-11-12",
+      "headline": "October funding and engagement",
+      "fact": "Funded customers rose to 28.9M and October net deposits reached $15.1B. The November presentation identified about $6.5B from Trump Accounts in October.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://investors.robinhood.com/news-releases/news-release-details/robinhood-markets-inc-reports-october-2026-operating-data"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://investors.robinhood.com/static-files/72febcf6-0d7c-4a95-9c94-bc98c42b8284"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "HOOD",
+          "tab": "thesis",
+          "key": "Customer franchise",
+          "title": "October funding and engagement",
+          "tone": "positive",
+          "implication": "Customers increased by roughly 130,000 from September. Review how customer growth translates into recurring engagement."
+        },
+        {
+          "symbol": "HOOD",
+          "tab": "thesis",
+          "key": "Net deposits",
+          "title": "October funding and engagement",
+          "tone": "mixed",
+          "implication": "Separate the program contribution before extrapolating October asset gathering."
+        }
+      ]
+    },
+    {
+      "id": "hood-q3-economics-2026-10-27",
+      "date": "2026-10-27",
+      "headline": "Q3 monetisation and earnings bridge",
+      "fact": "Gold subscribers rose 34% to about 5.18M. Diluted EPS was $0.51 and adjusted EPS was $0.60, with reported earnings including unrealized investment losses.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://investors.robinhood.com/news-releases/news-release-details/robinhood-reports-third-quarter-2026-results"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "HOOD",
+          "tab": "thesis",
+          "key": "Gold adoption",
+          "title": "Q3 monetisation and earnings bridge",
+          "tone": "positive",
+          "implication": "Paid membership expanded materially year over year."
+        },
+        {
+          "symbol": "HOOD",
+          "tab": "thesis",
+          "key": "Revenue per customer",
+          "title": "Q3 monetisation and earnings bridge",
+          "tone": "mixed",
+          "implication": "The mix of subscriptions, trading and interest revenue matters for how repeatable per-customer monetisation is."
+        },
+        {
+          "symbol": "HOOD",
+          "tab": "thesis",
+          "key": "Earnings quality",
+          "title": "Q3 monetisation and earnings bridge",
+          "tone": "mixed",
+          "implication": "Review reported and adjusted earnings together and track core operating profit."
+        }
+      ]
+    },
+    {
+      "id": "hood-credit-aging-2026-10-28",
+      "date": "2026-10-28",
+      "headline": "Card portfolio aging",
+      "fact": "Past-due card receivables reached $102M on $1.841B of receivables, including loans on and off balance sheet.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1783879/000178387926000167/hood-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "HOOD",
+          "tab": "thesis",
+          "key": "Credit portfolio",
+          "title": "Card portfolio aging",
+          "tone": "mixed",
+          "implication": "The portfolio is both larger and more delinquent than at year-end 2025. Losses and recoveries will determine the financial impact."
+        }
+      ]
+    },
+    {
+      "id": "amzn-aws-q3-2026-10-29",
+      "date": "2026-10-29",
+      "headline": "AWS sales and operating profit grew",
+      "fact": "AWS sales were $46.0B and operating income $17.8B, up from $30.9B and $11.4B a year earlier.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000040/amzn-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "AMZN",
+          "tab": "thesis",
+          "key": "AWS revenue growth",
+          "title": "AWS sales and operating profit grew",
+          "tone": "positive",
+          "implication": "Demand accelerated year over year. Track growth as new capacity comes online."
+        },
+        {
+          "symbol": "AMZN",
+          "tab": "thesis",
+          "key": "AWS operating margin",
+          "title": "AWS sales and operating profit grew",
+          "tone": "positive",
+          "implication": "Segment operating margin was about 38.7%, above the year-ago level."
+        },
+        {
+          "symbol": "AMZN",
+          "tab": "thesis",
+          "key": "AWS capital productivity",
+          "title": "AWS sales and operating profit grew",
+          "tone": "mixed",
+          "implication": "Profit growth is a positive input. Compare it with incremental segment assets and depreciation before judging capital productivity."
+        }
+      ]
+    },
+    {
+      "id": "amzn-q3-investment-2026-10-29",
+      "date": "2026-10-29",
+      "headline": "AI infrastructure spending absorbed cash",
+      "fact": "Trailing operating cash flow reached $168.3B while Amazon-defined free cash flow swung from a $14.8B inflow to a $42.4B outflow.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000040/amzn-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "AMZN",
+          "tab": "thesis",
+          "key": "Cash flow and capex",
+          "title": "AI infrastructure spending absorbed cash",
+          "tone": "mixed",
+          "implication": "Cash from operations grew, but the larger investment programme more than absorbed that growth."
+        },
+        {
+          "symbol": "AMZN",
+          "tab": "thesis",
+          "key": "Debt and financing costs",
+          "title": "AI infrastructure spending absorbed cash",
+          "tone": "neutral",
+          "implication": "Track lease and financing obligations alongside cash capex before drawing a conclusion on the funding burden."
+        }
+      ]
+    },
+    {
+      "id": "amzn-q3-retail-2026-10-29",
+      "date": "2026-10-29",
+      "headline": "Both retail regions grew operating income",
+      "fact": "North America operating income was $8.7B and International operating income was $1.6B, both higher year over year.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "AMZN",
+          "tab": "thesis",
+          "key": "North America retail margin",
+          "title": "Both retail regions grew operating income",
+          "tone": "positive",
+          "implication": "Profit grew faster than sales. Track fulfilment and pricing through the holiday quarter."
+        },
+        {
+          "symbol": "AMZN",
+          "tab": "thesis",
+          "key": "International retail margin",
+          "title": "Both retail regions grew operating income",
+          "tone": "positive",
+          "implication": "Regional profitability improved. Assess persistence across multiple quarters and currency conditions."
+        }
+      ]
+    },
+    {
+      "id": "googl-q3-search-2026-10-28",
+      "date": "2026-10-28",
+      "headline": "Search revenue and traffic costs",
+      "fact": "Search and other revenue rose from $56.57B to $63.35B. Total traffic acquisition costs rose from $14.88B to $16.37B.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000080/googexhibit991q32026.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "GOOGL",
+          "tab": "thesis",
+          "key": "Search monetisation",
+          "title": "Search revenue and traffic costs",
+          "tone": "positive",
+          "implication": "Search revenue grew while management reported stronger commercial query growth. AI-specific monetisation remains undisclosed here."
+        },
+        {
+          "symbol": "GOOGL",
+          "tab": "thesis",
+          "key": "Traffic acquisition costs",
+          "title": "Search revenue and traffic costs",
+          "tone": "neutral",
+          "implication": "TAC was roughly 20% of Google advertising revenue in both quarters. Monitor mix and remedy implementation."
+        }
+      ]
+    },
+    {
+      "id": "googl-q3-cloud-2026-10-28",
+      "date": "2026-10-28",
+      "headline": "Cloud scale and reinvestment",
+      "fact": "Cloud reported $30.7B of revenue and $11.1B of operating income. Alphabet recorded $127.1B of operating cash flow and $132.0B of property and equipment purchases for the first nine months.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000080/googexhibit991q32026.htm"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "GOOGL",
+          "tab": "thesis",
+          "key": "Cloud growth",
+          "title": "Cloud scale and reinvestment",
+          "tone": "positive",
+          "implication": "Revenue more than doubled. Watch the conversion of contracted backlog into delivered and billed services."
+        },
+        {
+          "symbol": "GOOGL",
+          "tab": "thesis",
+          "key": "Cloud profitability",
+          "title": "Cloud scale and reinvestment",
+          "tone": "positive",
+          "implication": "Reported Cloud operating margin rose from about 23.7% to 36.2%. Check mix and shared costs when comparing returns."
+        },
+        {
+          "symbol": "GOOGL",
+          "tab": "thesis",
+          "key": "Free cash flow",
+          "title": "Cloud scale and reinvestment",
+          "tone": "mixed",
+          "implication": "Operating cash flow less property and equipment purchases was about −$4.8B for nine months versus +$48.7B a year earlier. This comparison is separate from the TTM cash-flow check."
+        }
+      ]
+    },
+    {
+      "id": "googl-search-remedies-2026-11-10",
+      "date": "2026-11-10",
+      "headline": "Search remedies remain in implementation",
+      "fact": "The plaintiffs submitted their third status report on enforcement of the search final judgment.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": true,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://www.justice.gov/atr/media/1474346/dl"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "GOOGL",
+          "tab": "thesis",
+          "key": "Distribution and remedies",
+          "title": "Search remedies remain in implementation",
+          "tone": "mixed",
+          "implication": "The court process remains material. Track actual changes to distribution terms and TAC before inferring an economic effect."
+        }
+      ]
+    },
+    {
+      "id": "nvda-q3-platform-2026-11-17",
+      "date": "2026-11-17",
+      "headline": "Data Center and Compute & Networking expanded",
+      "fact": "Data Center market-platform revenue increased 110% to $107.6B. Compute & Networking segment revenue rose 108% to $106.0B. GAAP gross margin was 74.8%.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "NVDA",
+          "tab": "thesis",
+          "key": "Data Center demand",
+          "title": "Data Center and Compute & Networking expanded",
+          "tone": "positive",
+          "implication": "Revenue growth and initial Rubin shipments support the demand assessment."
+        },
+        {
+          "symbol": "NVDA",
+          "tab": "thesis",
+          "key": "Compute and networking",
+          "title": "Data Center and Compute & Networking expanded",
+          "tone": "positive",
+          "implication": "The reporting segment grew strongly. It overlaps the Data Center market platform, so the totals should not be added."
+        },
+        {
+          "symbol": "NVDA",
+          "tab": "thesis",
+          "key": "Gross margin",
+          "title": "Data Center and Compute & Networking expanded",
+          "tone": "mixed",
+          "implication": "Q3 gross margin was 1.4 points above last year. Q4 guidance of 71%–72% points to lower near-term margin."
+        }
+      ]
+    },
+    {
+      "id": "nvda-q3-balance-2026-11-17",
+      "date": "2026-11-17",
+      "headline": "Inventory and customer exposure during the ramp",
+      "fact": "Inventory rose to $39.7B from $31.6B. Receivables were $81.0B, with DSO rising from 60 to 64 days and the top two direct customers making up 35% of receivables.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/supplementalfinancialinfor.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "NVDA",
+          "tab": "thesis",
+          "key": "Inventory exposure",
+          "title": "Inventory and customer exposure during the ramp",
+          "tone": "mixed",
+          "implication": "Inventory rose 26% sequentially against 20% revenue growth. Follow inventory conversion before inferring excess stock."
+        },
+        {
+          "symbol": "NVDA",
+          "tab": "thesis",
+          "key": "Receivables exposure",
+          "title": "Inventory and customer exposure during the ramp",
+          "tone": "mixed",
+          "implication": "Shipment timing and extended terms contributed to higher DSO. Monitor collection as sales scale."
+        },
+        {
+          "symbol": "NVDA",
+          "tab": "thesis",
+          "key": "Customer concentration",
+          "title": "Inventory and customer exposure during the ramp",
+          "tone": "mixed",
+          "implication": "Three direct buyers accounted for 36% of revenue. Ultimate customer demand may be distributed differently."
+        }
+      ]
+    },
+    {
+      "id": "ktos-q3-backlog-2026-11-05",
+      "date": "2026-11-05",
+      "headline": "Funded backlog grew, while funding mix declined",
+      "fact": "Total backlog increased year over year from $1.480B to $2.650B and funded backlog from $1.234B to $2.067B. Acquisitions added about $258M to the total increase. TTM book-to-bill was 1.6×.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.kratosdefense.com/static-files/b5d9c21a-303a-4527-90d2-4dcf75e4f75b"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://ir.kratosdefense.com/node/33171/pdf"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "KTOS",
+          "tab": "thesis",
+          "key": "Demand pipeline",
+          "title": "Funded backlog grew, while funding mix declined",
+          "tone": "positive",
+          "implication": "Backlog grew about 79% with a disclosed acquisition contribution. Track organic awards and recognised revenue."
+        },
+        {
+          "symbol": "KTOS",
+          "tab": "thesis",
+          "key": "Funded share of backlog",
+          "title": "Funded backlog grew, while funding mix declined",
+          "tone": "mixed",
+          "implication": "Funded dollars increased about 68%, but the funded share fell from about 83.4% to 78.0%."
+        },
+        {
+          "symbol": "KTOS",
+          "tab": "thesis",
+          "key": "TTM book-to-bill",
+          "title": "Funded backlog grew, while funding mix declined",
+          "tone": "positive",
+          "implication": "At 1.6×, bookings exceeded billings over a full year. Conversion and profitability still need checking."
+        }
+      ]
+    },
+    {
+      "id": "ktos-q3-cash-and-margin-2026-11-05",
+      "date": "2026-11-05",
+      "headline": "Revenue growth has yet to translate into quarterly cash profit",
+      "fact": "Kratos reported a $4.9M operating loss, $5.2M operating cash outflow and $30.2M capex. DSO was 125 days against 124 at year-end.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.kratosdefense.com/node/33171/pdf"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://ir.kratosdefense.com/static-files/b5d9c21a-303a-4527-90d2-4dcf75e4f75b"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "KTOS",
+          "tab": "thesis",
+          "key": "Operating margin",
+          "title": "Revenue growth has yet to translate into quarterly cash profit",
+          "tone": "mixed",
+          "implication": "Growth and improved adjusted EBITDA came alongside a GAAP operating loss. Separate segment execution from corporate costs."
+        },
+        {
+          "symbol": "KTOS",
+          "tab": "thesis",
+          "key": "Free cash flow",
+          "title": "Revenue growth has yet to translate into quarterly cash profit",
+          "tone": "mixed",
+          "implication": "The issuer reported a $29.4M quarterly free cash outflow after its adjustment for asset sales and grants. The TTM check uses the dashboard’s own definition."
+        },
+        {
+          "symbol": "KTOS",
+          "tab": "thesis",
+          "key": "Receivables exposure",
+          "title": "Revenue growth has yet to translate into quarterly cash profit",
+          "tone": "mixed",
+          "implication": "DSO was broadly unchanged, but higher receivables and billing milestones absorbed cash as revenue scaled."
+        }
+      ]
+    },
+    {
+      "id": "oklo-aurora-approval-2026-11-06",
+      "date": "2026-11-06",
+      "headline": "Aurora-ID remains on its own approval pathway",
+      "fact": "The Q3 filing describes site access, non-nuclear construction, and preliminary safety milestones at Aurora-ID.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": true,
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "OKLO",
+          "tab": "thesis",
+          "key": "Site and construction",
+          "title": "Aurora-ID remains on its own approval pathway",
+          "tone": "positive",
+          "implication": "Site and early works approvals help advance the project. Watch construction progress and procurement."
+        },
+        {
+          "symbol": "OKLO",
+          "tab": "thesis",
+          "key": "Design and safety authorization",
+          "title": "Aurora-ID remains on its own approval pathway",
+          "tone": "mixed",
+          "implication": "The preliminary safety milestones cover two of five DOE pathway steps described in the filing."
+        }
+      ]
+    },
+    {
+      "id": "oklo-groves-clearance-2026-11-11",
+      "date": "2026-11-11",
+      "headline": "Groves-1 clears a separate operating milestone",
+      "fact": "Oklo announced DOE clearance for Groves-1 research and demonstration operations.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": true,
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://investor.oklo.com/news/news-details/2026/Oklos-Groves-1-to-Begin-Research-and-Demonstration-Phase-after-being-Cleared-by-U-S--Department-of-Energy-for-Unrestricted-Operations/default.aspx"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "OKLO",
+          "tab": "thesis",
+          "key": "Commercial operation",
+          "title": "Groves-1 clears a separate operating milestone",
+          "tone": "neutral",
+          "implication": "Groves-1 is a separate facility. A commercial Aurora operating date or authorization remains unverified."
+        }
+      ]
+    },
+    {
+      "id": "oklo-meta-cash-2026-11-06",
+      "date": "2026-11-06",
+      "headline": "Meta fuel funding and corporate liquidity",
+      "fact": "The Q3 filing reports an initial Meta-funded fuel payment. Corporate cash and marketable debt securities were $3.13B, with $110.9M of operating cash used over nine months.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": true,
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "OKLO",
+          "tab": "thesis",
+          "key": "Binding customer capacity",
+          "title": "Meta fuel funding and corporate liquidity",
+          "tone": "mixed",
+          "implication": "A fuel-order credit advances the project. The disclosed 1.2 GW is a campus plan rather than verified fully financed capacity."
+        },
+        {
+          "symbol": "OKLO",
+          "tab": "thesis",
+          "key": "Cash runway",
+          "title": "Meta fuel funding and corporate liquidity",
+          "tone": "mixed",
+          "implication": "Liquidity supports near-term corporate operations. Capital spending and project financing requirements are separate from the operating cash-use figure."
+        }
+      ]
     }
   ],
   "catalysts": [
@@ -225,14 +943,18 @@
       "key": "Rate decisions",
       "date": "2026-10-28",
       "headline": "Fed kept rates unchanged",
-      "fact": "Two members preferred raising the target range by a quarter percentage point.",
+      "fact": "The Fed held rates in October. The November 18 release of the minutes showed two voters preferred a quarter-point increase.",
       "tone": "neutral",
-      "assessment": "The unchanged rate supports a relatively stable near-term interest income backdrop, subject to client balances and funding costs.",
+      "assessment": "The unchanged October rate supported near-term continuity. The next decision and client cash balances matter more for interest income than the October rate alone.",
       "state": "active",
       "sources": [
         {
           "label": "Primary source",
           "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20261028a.htm"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://www.federalreserve.gov/monetarypolicy/fomcminutes20261028.htm"
         }
       ],
       "metrics": [
@@ -252,31 +974,39 @@
       "symbol": "IBKR",
       "key": "Quarterly earnings",
       "date": "2026-10-15",
-      "headline": "Q3 2026 results",
-      "fact": "Interactive Brokers reported diluted earnings of $0.69 per share for Q3.",
+      "headline": "Q3 earnings rose as pretax margin edged lower",
+      "fact": "Diluted EPS rose to $0.69 from $0.59. Commissions rose 12% and net interest income rose 19%.",
       "tone": "positive",
-      "assessment": "Earnings rose year over year. Watch whether customer growth translates into sustained trading revenue.",
+      "assessment": "Stronger earnings support the franchise thesis. Pretax margin slipped from 79% to 78%, and higher interest income partly reflected larger margin loans and credit balances.",
       "state": "active",
       "sources": [
         {
-          "label": "Primary source",
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1381197/000138119726000154/ibkr-ex99_1.htm"
+        },
+        {
+          "label": "SEC filing",
           "url": "https://www.sec.gov/Archives/edgar/data/1381197/000138119726000163/ibkr-20260930.htm"
         }
       ],
+      "next": {
+        "label": "Q4 results in January 2027",
+        "status": "expected"
+      },
       "metrics": [
         [
           "Diluted EPS",
           "$0.69"
         ],
         [
-          "Diluted EPS YoY",
+          "EPS YoY",
           "+17%"
+        ],
+        [
+          "Pretax margin",
+          "78%"
         ]
-      ],
-      "next": {
-        "label": "Q4 results in January 2027",
-        "status": "expected"
-      }
+      ]
     },
     {
       "symbol": "HOOD",
@@ -286,7 +1016,7 @@
       "fact": "Net deposits were $15.7 billion, down from $20.4 billion in the year-earlier quarter.",
       "tone": "mixed",
       "assessment": "Funded-customer and Gold growth support franchise expansion, while net deposits slowed year over year.",
-      "state": "active",
+      "state": "superseded",
       "sources": [
         {
           "label": "Primary source",
@@ -312,10 +1042,10 @@
       "symbol": "KTOS",
       "key": "Production ramps",
       "date": "2026-11-05",
-      "headline": "Q3 results and book-to-bill",
-      "fact": "Kratos reported a 2.2× consolidated book-to-bill ratio and a $4.9 million operating loss.",
+      "headline": "Bookings outpaced billings, with uneven segment results",
+      "fact": "Q3 revenue rose 35.7% to $471.8M, while the company posted a $4.9M operating loss. Government Solutions operating income rose to $15.1M while Unmanned Systems moved to a $0.9M loss.",
       "tone": "mixed",
-      "assessment": "Orders outpaced billings. Follow delivery timing and margins as the backlog converts to revenue.",
+      "assessment": "Orders are expanding, but the quarterly operating loss and divergent segment results make conversion and margin the next tests.",
       "state": "active",
       "sources": [
         {
@@ -323,20 +1053,20 @@
           "url": "https://ir.kratosdefense.com/node/33171/pdf"
         }
       ],
+      "next": {
+        "label": "Q4 deliveries, segment operating margins and funded conversion",
+        "status": "expected"
+      },
       "metrics": [
         [
-          "Book-to-bill",
+          "Q3 book-to-bill",
           "2.2×"
         ],
         [
-          "Operating loss",
-          "$4.9M"
+          "TTM book-to-bill",
+          "1.6×"
         ]
-      ],
-      "next": {
-        "label": "Q4 results and delivery update",
-        "status": "expected"
-      }
+      ]
     },
     {
       "symbol": "AMZN",
@@ -345,58 +1075,100 @@
       "headline": "AWS–Minfy collaboration extended to 2031",
       "fact": "Minfy and AWS announced a five-year worldwide collaboration covering industry-specific AI solutions, with a target three times the previous agreement.",
       "tone": "positive",
-      "assessment": "The partnership supports demand for AWS AI infrastructure. Its impact on capacity needs and returns is unquantified.",
+      "assessment": "The partnership provides a demand signal. Company-wide free cash flow was a $42.4B outflow over the last 12 months as infrastructure spending rose. Watch whether incremental cloud profit and cash generation catch up.",
       "state": "active",
       "sources": [
         {
           "label": "AWS press release (25 Nov dateline)",
           "url": "https://press.aboutamazon.com/aws/2026/11/minfy-and-aws-extend-their-strategic-collaboration-agreement-globally-to-2031-targeting-enterprise-transformation-through-ai-cloud-led-industry-platforms"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/"
         }
       ],
       "next": {
         "label": "AWS capacity, capex and cloud profit update",
         "status": "expected"
-      }
+      },
+      "metrics": [
+        [
+          "Amazon TTM free cash flow",
+          "−$42.4B"
+        ]
+      ]
     },
     {
       "symbol": "GOOGL",
       "key": "Cloud backlog conversion",
       "date": "2026-11-18",
-      "headline": "Google Cloud publishes TPU and GPU training benchmarks",
-      "fact": "Google Cloud released MLPerf results for Ironwood TPUs and NVIDIA Blackwell accelerators across training workloads.",
+      "headline": "Cloud benchmarks add context to a larger backlog",
+      "fact": "Google Cloud published TPU and GPU training benchmark results. Q3 filings show $560.8B of Google Cloud backlog, $30.7B of quarterly revenue and $11.1B of operating income.",
       "tone": "positive",
-      "assessment": "Training benchmarks support Google Cloud’s case for offering customers a choice of accelerators. Reported revenue and operating income will help assess backlog conversion.",
+      "assessment": "Cloud growth and operating profit are stronger evidence than benchmarks. Watch capacity delivery, related-party commitments and hardware mix as backlog converts.",
       "state": "active",
       "sources": [
         {
-          "label": "Google technical announcement",
+          "label": "Primary source",
           "url": "https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/training-performance-benchmarks-tpus/"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000080/googexhibit991q32026.htm"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
         }
       ],
       "next": {
-        "label": "Quarterly Cloud revenue and operating income",
+        "label": "Q4 revenue and margins, with an updated remaining-performance-obligations disclosure",
         "status": "expected"
-      }
+      },
+      "metrics": [
+        [
+          "Cloud backlog",
+          "$560.8B"
+        ],
+        [
+          "Cloud operating income",
+          "$11.1B"
+        ]
+      ]
     },
     {
       "symbol": "NVDA",
       "key": "Architecture ramp",
       "date": "2026-11-17",
-      "headline": "Expanded supplier capacity commitments",
-      "fact": "NVIDIA announced further substrate and packaging capacity agreements, including multibillion-dollar support for SPIL and capacity expected to increase by mid-2029.",
+      "headline": "Rubin shipments began as Data Center revenue grew",
+      "fact": "NVIDIA reported Vera Rubin NVL72 shipments, $107.6B in Data Center sales and 74.8% GAAP gross margin.",
       "tone": "positive",
-      "assessment": "More packaging and substrate capacity could ease future supply constraints. Watch actual shipments and ramp margins.",
+      "assessment": "Shipments provide stronger evidence of the ramp than capacity commitments alone. Compare reported margin with Q4 guidance of 71%–72%.",
       "state": "active",
       "sources": [
         {
-          "label": "NVIDIA investor release",
-          "url": "https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Expands-Commitments-With-Supply-Chain-Partners-to-Support-AI-Infrastructure-Buildout/default.aspx"
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27pr.htm"
         }
       ],
       "next": {
-        "label": "Next shipment and gross-margin update",
+        "label": "Q4 gross margin, shipments and inventory conversion",
         "status": "expected"
-      }
+      },
+      "metrics": [
+        [
+          "Data Center revenue",
+          "$107.6B"
+        ],
+        [
+          "GAAP gross margin",
+          "74.8%"
+        ]
+      ]
     },
     {
       "symbol": "OKLO",
@@ -421,6 +1193,412 @@
         "label": "Fuel fabrication or construction milestone",
         "status": "expected"
       }
+    },
+    {
+      "symbol": "HOOD",
+      "key": "Quarterly operating metrics",
+      "date": "2026-11-12",
+      "headline": "October operating data follow the Q3 results",
+      "fact": "October funded customers reached 28.9M and net deposits were $15.1B, including roughly $6.5B of Trump Accounts contributions according to the November presentation.",
+      "tone": "mixed",
+      "assessment": "Customer growth continued. The deposit total includes a large contribution from one program, which limits its use as a recurring organic run rate.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://investors.robinhood.com/news-releases/news-release-details/robinhood-markets-inc-reports-october-2026-operating-data"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://investors.robinhood.com/static-files/72febcf6-0d7c-4a95-9c94-bc98c42b8284"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://investors.robinhood.com/news-releases/news-release-details/robinhood-reports-third-quarter-2026-results"
+        }
+      ],
+      "next": {
+        "label": "November operating metrics, then Q4 Gold and ARPU",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Funded customers",
+          "28.9M"
+        ],
+        [
+          "October net deposits",
+          "$15.1B"
+        ]
+      ]
+    },
+    {
+      "symbol": "HOOD",
+      "key": "Card portfolio seasoning",
+      "date": "2026-10-28",
+      "headline": "Card receivables and past-due balances rose",
+      "fact": "The 10-Q reports $1.841B of credit card receivables and $102M past due at September 30, compared with $1.040B and $49M at year-end 2025.",
+      "tone": "mixed",
+      "assessment": "Credit exposure grew and the past-due share rose from about 4.7% to 5.5%. Watch losses and provisioning as newer accounts age.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1783879/000178387926000167/hood-20260930.htm"
+        }
+      ],
+      "next": {
+        "label": "Q4 receivables, delinquencies and charge-offs",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Receivables",
+          "$1.84B"
+        ],
+        [
+          "Past due",
+          "$102M"
+        ]
+      ]
+    },
+    {
+      "symbol": "HOOD",
+      "key": "New product economics",
+      "date": "2026-11-12",
+      "headline": "Prediction volumes grew while crypto volumes fell",
+      "fact": "October event contracts reached 5.9B, up 136% year over year, while crypto notional volume fell 48% year over year.",
+      "tone": "mixed",
+      "assessment": "The newer product is gaining activity. Reported volumes alone leave net contribution and regulatory exposure unresolved.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://investors.robinhood.com/news-releases/news-release-details/robinhood-markets-inc-reports-october-2026-operating-data"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1783879/000178387926000167/hood-20260930.htm"
+        }
+      ],
+      "next": {
+        "label": "November product volumes and the next revenue breakdown",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Event contracts",
+          "5.9B"
+        ],
+        [
+          "Crypto notional YoY",
+          "−48%"
+        ]
+      ]
+    },
+    {
+      "symbol": "AMZN",
+      "key": "Quarterly AWS disclosures",
+      "date": "2026-10-29",
+      "headline": "AWS growth accelerated in Q3",
+      "fact": "AWS reported about $46.0B of sales and $17.8B of operating income. Sales rose 39.3% year over year.",
+      "tone": "positive",
+      "assessment": "Growth and segment profit support the cloud thesis. The next test is whether the capacity buildout sustains margin and improves returns on incremental capital.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000040/amzn-20260930.htm"
+        }
+      ],
+      "next": {
+        "label": "Q4 AWS revenue, segment margin and remaining performance obligations",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "AWS revenue",
+          "$46.0B"
+        ],
+        [
+          "AWS operating income",
+          "$17.8B"
+        ]
+      ]
+    },
+    {
+      "symbol": "AMZN",
+      "key": "Retail and advertising economics",
+      "date": "2026-10-29",
+      "headline": "Retail operating income and ads expanded",
+      "fact": "North America operating income rose to $8.7B from $4.8B and International to $1.6B from $1.2B. Advertising revenue rose 11% as reported.",
+      "tone": "positive",
+      "assessment": "Retail profitability improved across both regions. Compare holiday-period margins and normalise for the shift in Prime Day timing.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/"
+        }
+      ],
+      "next": {
+        "label": "Q4 holiday retail margins and advertising revenue",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "North America operating income",
+          "$8.7B"
+        ],
+        [
+          "Advertising sales",
+          "$19.6B"
+        ]
+      ]
+    },
+    {
+      "symbol": "GOOGL",
+      "key": "Search and AI monetisation",
+      "date": "2026-10-28",
+      "headline": "Search revenue grew in Q3",
+      "fact": "Search and other revenue rose about 12% to $63.35B. Management reported stronger query growth, including commercial queries.",
+      "tone": "positive",
+      "assessment": "Search revenue resilience supports the thesis. The disclosures do not quantify AI-specific revenue or unit serving costs.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000080/googexhibit991q32026.htm"
+        }
+      ],
+      "next": {
+        "label": "Q4 Search revenue, query commentary and traffic acquisition costs",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Search and other",
+          "$63.35B"
+        ],
+        [
+          "YoY",
+          "+12%"
+        ]
+      ]
+    },
+    {
+      "symbol": "GOOGL",
+      "key": "Antitrust and distribution",
+      "date": "2026-11-10",
+      "headline": "DOJ reports ongoing search-remedy implementation",
+      "fact": "The plaintiffs filed a third status report describing work under the final judgment, including Technical Committee setup and compliance implementation.",
+      "tone": "mixed",
+      "assessment": "The case remains relevant to distribution economics. The filing reports implementation activity rather than a measured impact on search traffic or revenue.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://www.justice.gov/atr/media/1474346/dl"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://www.justice.gov/atr/case/us-and-plaintiff-states-v-google-llc"
+        }
+      ],
+      "next": {
+        "label": "Next court filing or material remedy implementation update",
+        "status": "expected"
+      }
+    },
+    {
+      "symbol": "NVDA",
+      "key": "Customer AI spending",
+      "date": "2026-11-17",
+      "headline": "Hyperscale sales expanded 71%",
+      "fact": "NVIDIA reported $60.1B in hyperscale revenue, up 71% year over year. Three direct customers represented 14%, 11% and 11% of total revenue.",
+      "tone": "mixed",
+      "assessment": "Hyperscale demand is substantial. Concentration is meaningful and direct customers can be intermediaries, so the filing does not establish end-customer exposures.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/supplementalfinancialinfor.htm"
+        }
+      ],
+      "next": {
+        "label": "Hyperscaler earnings, AI capital spending and NVIDIA customer mix",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Hyperscale revenue",
+          "$60.1B"
+        ],
+        [
+          "Top 3 direct customers",
+          "36% of sales"
+        ]
+      ]
+    },
+    {
+      "symbol": "NVDA",
+      "key": "Export and supply restrictions",
+      "date": "2026-11-17",
+      "headline": "Q4 outlook excludes China Data Center compute",
+      "fact": "NVIDIA disclosed $2.4B of Data Center Hopper product shipments to China in Q3 and assumed zero China Data Center compute revenue in its Q4 outlook.",
+      "tone": "mixed",
+      "assessment": "The Q4 assumption limits reliance on China compute sales for that forecast. Track export disclosures and supply commitments alongside actual revenue.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm"
+        }
+      ],
+      "next": {
+        "label": "Next export-policy disclosure or Q4 shipment update",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Q3 China Hopper shipments",
+          "$2.4B"
+        ],
+        [
+          "Q4 China compute assumption",
+          "$0"
+        ]
+      ]
+    },
+    {
+      "symbol": "KTOS",
+      "key": "Contract awards",
+      "date": "2026-11-09",
+      "headline": "Gulf Space Technology awards gateway contract",
+      "fact": "Kratos announced a contract for THAICOM 10 ground infrastructure. The announcement did not give contract value.",
+      "tone": "positive",
+      "assessment": "The award provides evidence of Space and Satellite demand. Follow the next backlog disclosure for its financial contribution.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.kratosdefense.com/node/33186/pdf"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://ir.kratosdefense.com/static-files/b5d9c21a-303a-4527-90d2-4dcf75e4f75b"
+        }
+      ],
+      "next": {
+        "label": "New award values, funded backlog and conversion schedule",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Q3 total backlog",
+          "$2.65B"
+        ],
+        [
+          "Q3 funded backlog",
+          "$2.07B"
+        ]
+      ]
+    },
+    {
+      "symbol": "KTOS",
+      "key": "Capital requirements",
+      "date": "2026-11-05",
+      "headline": "Growth consumed working capital and capex",
+      "fact": "Q3 operating cash outflow was $5.2M and capex was $30.2M. The 10-Q reports approximately $1.35B in net equity-issuance proceeds over the first nine months.",
+      "tone": "mixed",
+      "assessment": "Equity proceeds add liquidity alongside dilution. Watch collections and inventory as production scales.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://ir.kratosdefense.com/node/33171/pdf"
+        },
+        {
+          "label": "Primary source",
+          "url": "https://ir.kratosdefense.com/static-files/b5d9c21a-303a-4527-90d2-4dcf75e4f75b"
+        }
+      ],
+      "next": {
+        "label": "Q4 operating cash flow, collections and capex",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Q3 issuer-defined FCF",
+          "−$29.4M"
+        ],
+        [
+          "9M equity proceeds",
+          "$1.35B"
+        ]
+      ]
+    },
+    {
+      "symbol": "OKLO",
+      "key": "Licensing decisions",
+      "date": "2026-11-11",
+      "headline": "Groves-1 cleared for research operations",
+      "fact": "Oklo reported DOE clearance for unrestricted operations of its Groves-1 research and demonstration reactor. Its Q3 filing describes the separate Aurora-ID approval pathway.",
+      "tone": "mixed",
+      "assessment": "The milestone demonstrates progress on Groves-1. Aurora-ID has separate commercial approvals still to track.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "Primary source",
+          "url": "https://investor.oklo.com/news/news-details/2026/Oklos-Groves-1-to-Begin-Research-and-Demonstration-Phase-after-being-Cleared-by-U-S--Department-of-Energy-for-Unrestricted-Operations/default.aspx"
+        },
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm"
+        }
+      ],
+      "next": {
+        "label": "Next documented Aurora-ID authorization or agency update",
+        "status": "expected"
+      }
+    },
+    {
+      "symbol": "OKLO",
+      "key": "Binding PPAs and financing",
+      "date": "2026-11-06",
+      "headline": "Meta fuel prepayment moved from escrow",
+      "fact": "The Q3 filing says initial Meta funding was paid directly to Centrus on November 2 as a credit toward fuel orders under the Ohio campus framework.",
+      "tone": "mixed",
+      "assessment": "Actual payment is stronger evidence than a framework announcement. The payment amount and fully funded, binding generating capacity remain unquantified in this disclosure.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "SEC filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm"
+        }
+      ],
+      "next": {
+        "label": "Binding project terms, disclosed committed capacity or further funding milestones",
+        "status": "expected"
+      },
+      "metrics": [
+        [
+          "Planned Ohio campus",
+          "1.2 GW"
+        ],
+        [
+          "Q3 cash and securities",
+          "$3.13B"
+        ]
+      ]
     }
   ],
   "ownership": {

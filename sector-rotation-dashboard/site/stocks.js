@@ -991,15 +991,21 @@ kpiRow('dcCompute','Data Center compute revenue','$B','up',[null,null,null,null,
 kpiRow('turnover','Inventory turnover','x','up',[null,null,null,null,null],'Requires consistent average inventory and cost of sales.'),
 kpiRow('customer','Largest customer share','%','watch',[null,null,null,null,null],'Requires verified customer concentration disclosures.')
 ],core:['dc','compute','dcShare','graphics'],compare:['dc','compute','graphics'],mix:{total:115.8,unit:'$B',items:[['Data Center',107.610],['Other market platforms (residual)',8.190]],note:'Market-platform split using rounded total; Compute & Networking is a separate reporting dimension and is not added.'},insight:'Data Center revenue grew strongly across four disclosed quarters and represents most of sales. That scale increases exposure to enterprise AI investment; separate compute/networking mix and customer concentration still need filing extraction.'},
-KTOS:{period:'2026-09-27',sources:[['Q3 2026 earnings release','https://www.sec.gov/Archives/edgar/data/1069258/000106925826000085/ktos202609278kexhibit991.htm']],rows:[
-kpiRow('backlog','Total backlog','$B','up',[null,null,2.0846,2.650,null],'Includes both funded and unfunded orders; Q2 sums disclosed segments.'),
-kpiRow('funded','Funded backlog','$B','up',[null,null,null,2.067,null],'Funded orders are not yet recognized revenue.'),
-kpiRow('fundedShare','Funded share of backlog','%','up',[null,null,null,100*2.067/2.650,null],'Funded backlog / total backlog.'),
-kpiRow('book','Quarterly book-to-bill','x','up',[null,null,null,2.2,null],'Bookings relative to sales; timing can be lumpy.'),
-kpiRow('bookTTM','TTM book-to-bill','x','up',[null,null,null,1.6,null],'More stable demand-to-sales comparison.'),
-kpiRow('organic','Organic revenue growth','%','up',[null,null,null,23.2,null],'Company-defined organic growth.'),
-kpiRow('kgs','Government Solutions backlog','$B','up',[null,null,1.710,2.292,null],'Segment backlog.'),
-kpiRow('kus','Unmanned Systems backlog','$B','up',[null,null,.3746,.3574,null],'Segment backlog.')
+KTOS:{period:'2026-09-27',sources:[
+ ['Q3 2026 10-Q','https://ir.kratosdefense.com/static-files/b5d9c21a-303a-4527-90d2-4dcf75e4f75b'],
+ ['Q3 2026 results','https://ir.kratosdefense.com/node/33171/pdf'],
+ ['Q2 2026 results','https://www.kratosdefense.com/newsroom/kratos-reports-second-quarter-2026-financial-results'],
+ ['Q1 2026 results','https://ir.kratosdefense.com/node/32621/pdf'],
+ ['Q4 2025 results','https://ir.kratosdefense.com/node/32181/pdf']
+],rows:[
+kpiRow('backlog','Total backlog','$B','up',[1.573,2.010,2.084,2.650,1.480],'Includes funded and unfunded orders. Q1 uses the figure reported in the original Q1 release.'),
+kpiRow('funded','Funded backlog','$B','up',[1.232,1.457,1.572,2.067,1.234],'Funded orders are not yet recognized revenue.'),
+kpiRow('fundedShare','Funded share of backlog','%','up',[100*1.232/1.573,100*1.457/2.010,100*1.572/2.084,100*2.067/2.650,100*1.234/1.480],'Funded backlog / total backlog. Q1 uses the original Q1 release.'),
+kpiRow('book','Quarterly book-to-bill','x','up',[1.3,1.6,1.1,2.2,null],'Bookings relative to sales; timing can be lumpy.',1),
+kpiRow('bookTTM','TTM book-to-bill','x','up',[1.1,1.2,1.3,1.6,null],'More stable demand-to-sales comparison.',1),
+kpiRow('organic','Organic revenue growth','%','up',[null,null,null,23.2,null],'Company-defined organic growth.',1),
+kpiRow('kgs','Government Solutions backlog','$B','up',[null,null,1.710,2.292,null],'Segment backlog.',1),
+kpiRow('kus','Unmanned Systems backlog','$B','up',[null,null,.3746,.3574,null],'Segment backlog.',1)
 ],core:['backlog','fundedShare','book','organic'],compare:[],mix:{title:'Backlog funding mix',total:2.6499,unit:'$B',items:[['Funded',2.067],['Unfunded',.5829]],note:'Funding mix is not revenue mix or a guarantee of conversion.'},insight:'Book-to-bill above one and a higher total backlog indicate strong order intake, but Unmanned Systems backlog declined sequentially. Monitor funded order conversion, production margins and schedule execution.'},
 OKLO:{period:'2026-09-30',sources:[['Q3 2026 10-Q','https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm']],rows:[],core:[],compare:[],milestones:[
 ['Aurora-ID site','Non-nuclear construction approved; groundbreaking','Reported milestone','Sep 2025','Physical buildout, not operating authorization.'],

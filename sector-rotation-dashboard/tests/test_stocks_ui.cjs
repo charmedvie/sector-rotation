@@ -83,7 +83,7 @@ test('the shipped catalyst evidence renders for all seven companies',()=>{
  ctx.payload=JSON.parse(fs.readFileSync('site/data/research-evidence.json','utf8'));
  assert.ok(vm.runInContext('setResearchEvidence(payload)',ctx));
  assert.equal(vm.runInContext('researchEvidence.catalysts.length',ctx),ctx.payload.catalysts.length);
- for(const {symbol,headline} of ctx.payload.catalysts){
+ for(const {symbol,headline} of ctx.payload.catalysts.filter(c=>c.state==='active')){
   ctx.ticker=symbol;
   vm.runInContext("symbol=ticker;tab='Thesis & catalysts';render()",ctx);
   assert.ok(nodes.get('panel').innerHTML.includes(headline),symbol);
@@ -135,4 +135,25 @@ test('Overview shows filing-backed ownership rows and excludes planned sales fro
  assert.match(page,/Global X Management/);
  assert.match(page,/5\.08%/);
  assert.match(page,/Comparable quarterly 13F holdings data unavailable/);
+});
+
+test('all configured catalyst and thesis cards have sourced research evidence',()=>{
+ const {ctx,nodes}=load();
+ ctx.payload=JSON.parse(fs.readFileSync('site/data/research-evidence.json','utf8'));
+ assert.ok(vm.runInContext('setResearchEvidence(payload)',ctx));
+ assert.equal(vm.runInContext('researchEvidence.events.length',ctx),ctx.payload.events.length);
+ vm.runInContext(`for(const [ticker,config] of Object.entries(thesisConfig)){
+  for(const [key] of config.catalysts){
+   const records=researchEvidence.catalysts.filter(c=>c.symbol===ticker&&c.key===key&&c.state==='active');
+   if(records.length!==1)throw Error(ticker+' catalyst '+key);
+  }
+  for(const [key] of config.checks){
+   if(!evidenceMatches(ticker,'thesis',key).length)throw Error(ticker+' thesis evidence '+key);
+  }
+ }`,ctx);
+ vm.runInContext("symbol='KTOS';tab='Thesis & catalysts';render()",ctx);
+ const page=nodes.get('panel').innerHTML;
+ assert.match(page,/Gulf Space Technology awards gateway contract/);
+ assert.match(page,/Growth consumed working capital and capex/);
+ assert.match(page,/funded share fell from about 83.4% to 78.0%/);
 });
