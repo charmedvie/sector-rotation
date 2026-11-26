@@ -134,7 +134,7 @@ test('Overview shows filing-backed ownership rows and excludes planned sales fro
  page=nodes.get('panel').innerHTML;
  assert.match(page,/Global X Management/);
  assert.match(page,/5\.08%/);
- assert.match(page,/Comparable quarterly 13F holdings data unavailable/);
+ assert.match(page,/Market-wide 13F comparison has yet to be compiled/);
 });
 
 test('all configured catalyst and thesis cards have sourced research evidence',()=>{
@@ -156,4 +156,21 @@ test('all configured catalyst and thesis cards have sourced research evidence',(
  assert.match(page,/Gulf Space Technology awards gateway contract/);
  assert.match(page,/Growth consumed working capital and capex/);
  assert.match(page,/funded share fell from about 83.4% to 78.0%/);
+});
+
+test('every watchlist company shows reviewed ownership records and manager samples remain scoped',()=>{
+ const {ctx,nodes}=load();
+ ctx.payload=JSON.parse(fs.readFileSync('site/data/research-evidence.json','utf8'));
+ vm.runInContext('setResearchEvidence(payload)',ctx);
+ for(const [ticker,snapshot] of Object.entries(ctx.payload.ownership)){
+  ctx.ticker=ticker;
+  vm.runInContext("symbol=ticker;render()",ctx);
+  assert.ok(nodes.get('panel').innerHTML.includes(snapshot.insiders[0].name));
+ }
+ assert.equal(Object.keys(ctx.payload.ownership).length,7);
+ vm.runInContext("symbol='KTOS';render()",ctx);
+ const page=nodes.get('panel').innerHTML;
+ assert.match(page,/\+581,876 shares/);
+ assert.match(page,/Prior quarter/);
+ assert.match(page,/Market-wide 13F comparison has yet to be compiled/);
 });

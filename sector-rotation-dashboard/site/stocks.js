@@ -204,14 +204,15 @@ function ownershipPanel(symbol){
   .sort((a,b)=>b.date.localeCompare(a.date)):[];
  const trades=rows(snapshot?.insiders,['buy','sell','planned','other']);
  const stakes=rows(snapshot?.stakes,['13D','13G']);
+ const positions=rows(snapshot?.managerPositions,['13F']);
  const labels={buy:'Discretionary purchase',sell:'Discretionary sale',planned:'Planned trade',other:'Other reported transaction'};
- const rowHtml=row=>'<div class="ownership-row"><div><strong>'+esc(row.name)+'</strong><small>'+esc((labels[row.kind]||'Schedule '+row.kind)+' · '+row.date)+'</small></div><strong class="ownership-value">'+esc(row.value)+'</strong><div class="ownership-detail">'+esc(row.detail)+' · <a href="'+esc(row.url)+'" target="_blank" rel="noopener noreferrer">'+(labels[row.kind]?'Form 4':'Filing')+' · '+esc(row.filed)+' ↗</a></div></div>';
+ const rowHtml=row=>'<div class="ownership-row"><div><strong>'+esc(row.name)+'</strong><small>'+esc((labels[row.kind]||(row.kind==='13F'?'Form 13F':'Schedule '+row.kind))+' · '+row.date)+'</small></div><strong class="ownership-value">'+esc(row.value)+'</strong><div class="ownership-detail">'+esc(row.detail)+' · <a href="'+esc(row.url)+'" target="_blank" rel="noopener noreferrer">'+(labels[row.kind]?'Form 4':'Filing')+' · '+esc(row.filed)+' ↗</a>'+(row.kind==='13F'&&evidenceUrl(row.priorUrl)?' · <a href="'+esc(row.priorUrl)+'" target="_blank" rel="noopener noreferrer">Prior quarter ↗</a>':'')+'</div></div>';
  const day=86400000;
  const windowEnd=Date.parse(reviewedAt),windowStart=windowEnd-29*day;
  const sellers=new Set(trades.filter(t=>t.kind==='sell'&&t.material===true&&typeof t.personId==='string'&&t.personId&&Date.parse(t.date)>=windowStart).map(t=>t.personId));
  const cluster=sellers.size>=3?'<p class="ownership-highlight">'+sellers.size+' distinct insiders made reviewed material discretionary sales in 30 days.</p>':'';
  const buys=trades.filter(t=>t.kind==='buy'&&Date.parse(t.date)>=windowStart);
- const itemized=trades.length?trades.map(rowHtml).join(''):'<p class="stock-note">No reviewed Form 4 transactions available.</p>';
+ const itemized=trades.length?trades.map(rowHtml).join(''):'<p class="stock-note">Form 4 filings have yet to be added for this company.</p>';
  const comparison=snapshot?.comparison;
  const groups=Array.isArray(comparison?.groups)?comparison.groups:[];
  const integral=Number.isSafeInteger;
@@ -222,11 +223,11 @@ function ownershipPanel(symbol){
   (!groups.length||groups.reduce((sum,g)=>sum+g.netShares,0)===comparison.netShares);
  const shares=n=>new Intl.NumberFormat('en-US',{signDisplay:'exceptZero'}).format(n);
  const comparisonHtml=comparable?'<div class="ownership-row"><div><strong>Net change in reported shares</strong><small>'+esc(comparison.quarter+' vs '+comparison.priorQuarter)+'</small></div><strong class="ownership-value">'+shares(comparison.netShares)+'</strong><div class="ownership-detail">'+comparison.added+' added · '+comparison.trimmed+' trimmed · '+comparison.managers+' comparable managers · <a href="'+esc(comparison.url)+'" target="_blank" rel="noopener noreferrer">13F source ↗</a></div></div>'+
-  groups.map(g=>'<div class="ownership-row"><strong>'+esc(g.label)+'</strong><strong>'+shares(g.netShares)+'</strong></div>').join(''):'<p class="stock-note">Comparable quarterly 13F holdings data unavailable.</p>';
+  groups.map(g=>'<div class="ownership-row"><strong>'+esc(g.label)+'</strong><strong>'+shares(g.netShares)+'</strong></div>').join(''):'<p class="stock-note">Market-wide 13F comparison has yet to be compiled.</p>';
  return '<section class="attention-section ownership-section" aria-labelledby="ownership-title"><div class="overview-caption"><h2 id="ownership-title">Ownership Activity</h2><span>'+
-  (evidenceDate(reviewedAt)?'Selected filings reviewed '+esc(reviewedAt):'Filing coverage unavailable')+'</span></div><div class="ownership-grid">'+
+  (evidenceDate(reviewedAt)?'Selected filings reviewed '+esc(reviewedAt):researchLoad==='loading'?'Loading filing records':researchLoad==='unavailable'?'Filing records could not be loaded':'Filing review pending')+'</span></div><div class="ownership-grid">'+
   '<article class="ownership-card"><h3>Insider Transactions</h3>'+cluster+(buys.length?'<p class="ownership-highlight">'+buys.length+' discretionary '+(buys.length===1?'purchase':'purchases')+' in 30 days</p>':'')+itemized+'</article>'+
-  '<article class="ownership-card"><h3>Institutional Holdings</h3>'+comparisonHtml+(stakes.length?stakes.map(rowHtml).join(''):'<p class="stock-note">No reviewed large-stake disclosures available.</p>')+'</article></div></section>';
+  '<article class="ownership-card"><h3>Institutional Holdings</h3>'+positions.map(rowHtml).join('')+stakes.map(rowHtml).join('')+comparisonHtml+'</article></div></section>';
 }
 
 function overviewPanel(panel,m,d,q,p,source){

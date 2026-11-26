@@ -1628,6 +1628,124 @@
           "detail": "9,907,787 Class A shares beneficially owned",
           "url": "https://www.sec.gov/Archives/edgar/data/1432354/000090514826004999/xslSCHEDULE_13G_X02/primary_doc.xml"
         }
+      ],
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Jacob DeWitte · CEO",
+          "date": "2026-11-02",
+          "filed": "2026-11-04",
+          "value": "−40,000 direct shares",
+          "detail": "Direct sales under a Rule 10b5-1 plan. This figure counts DeWitte’s direct sales only",
+          "url": "https://www.sec.gov/Archives/edgar/data/1849056/000202143326000023/xslF345X06/wk-form4_1793827021.xml"
+        }
+      ]
+    },
+    "IBKR": {
+      "reviewed_at": "2026-11-26",
+      "insiders": [
+        {
+          "kind": "sell",
+          "name": "Lawrence E. Harris · Director",
+          "date": "2026-10-28",
+          "filed": "2026-10-29",
+          "value": "−25,000 shares",
+          "detail": "Class A sale at a weighted average of $82.61, about 14.4% of his prior reported direct position. No 10b5-1 plan disclosed in this filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1381197/000138119726000156/0001381197-26-000156-index.html",
+          "material": true,
+          "personId": "lawrence-e-harris"
+        }
+      ]
+    },
+    "HOOD": {
+      "reviewed_at": "2026-11-26",
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Vladimir Tenev · CEO",
+          "date": "2026-10-05",
+          "filed": "2026-10-07",
+          "value": "−375,000 shares",
+          "detail": "Reported sale through a Rule 10b5-1 plan, with Class B shares converting to Class A on sale",
+          "url": "https://www.sec.gov/Archives/edgar/data/1871006/000187100626000012/xslF345X03/wk-form4_1791405206.xml"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "ARK Investment Management · Active manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "−631,834 shares",
+          "detail": "5,236,031 → 4,604,197 reported shares, Q2 to Q3",
+          "url": "https://www.sec.gov/Archives/edgar/data/1697748/000110465926126785/xslForm13F_X02/infotable.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/1697748/000110465926096910/xslForm13F_X02/infotable.xml"
+        }
+      ]
+    },
+    "GOOGL": {
+      "reviewed_at": "2026-11-26",
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Sundar Pichai · CEO",
+          "date": "2026-10-25",
+          "filed": "2026-10-27",
+          "value": "3,705 units withheld",
+          "detail": "Class C stock units withheld for taxes at vesting",
+          "url": "https://www.sec.gov/Archives/edgar/data/1534753/000119312526434831/xslF345X06/ownership.xml"
+        }
+      ]
+    },
+    "NVDA": {
+      "reviewed_at": "2026-11-26",
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Timothy Teter · General counsel",
+          "date": "2026-11-19",
+          "filed": "2026-11-23",
+          "value": "−30,000 shares",
+          "detail": "Family trust sale under a Rule 10b5-1 plan",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000169684126000016/xslF345X06/wk-form4_1795470863.xml"
+        }
+      ]
+    },
+    "KTOS": {
+      "reviewed_at": "2026-11-26",
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Eric DeMarco · CEO",
+          "date": "2026-08-14",
+          "filed": "2026-08-14",
+          "value": "−300,000 shares",
+          "detail": "Trust sold shares under a Rule 10b5-1 plan",
+          "url": "https://www.sec.gov/Archives/edgar/data/1082440/000108244026000005/xslF345X06/primary_doc.xml"
+        }
+      ],
+      "stakes": [
+        {
+          "kind": "13G",
+          "name": "State Street Corporation · Holding company",
+          "date": "2026-09-30",
+          "filed": "2026-11-10",
+          "value": "5.2%",
+          "detail": "9,707,708 common shares reported as beneficially owned",
+          "url": "https://kratosdefense.gcs-web.com/static-files/43384327-0364-4b4a-9bd9-88537c97d181"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "ARK Investment Management · Active manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+581,876 shares",
+          "detail": "4,672,566 → 5,254,442 reported shares, Q2 to Q3",
+          "url": "https://www.sec.gov/Archives/edgar/data/1697748/000110465926126785/xslForm13F_X02/infotable.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/1697748/000110465926096910/xslForm13F_X02/infotable.xml"
+        }
       ]
     }
   }
