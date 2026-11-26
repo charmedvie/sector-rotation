@@ -16,8 +16,19 @@ FLOW_TAGS = {
     'ocf': ('NetCashProvidedByUsedInOperatingActivities',),
     'capex': ('PaymentsToAcquirePropertyPlantAndEquipment','PaymentsToAcquireProductiveAssets'),
 }
-BAL_TAGS = {'equity': ('StockholdersEquity',), 'shares': ('CommonStockSharesOutstanding',)}
-SINGLE_CLASS = {'AMZN','NVDA','KTOS','OKLO'}
+BAL_TAGS = {
+    'equity': ('StockholdersEquity',),
+    'shares': ('CommonStockSharesOutstanding',),
+    'cash': ('CashAndCashEquivalentsAtCarryingValue',),
+    'debt': ('LongTermDebtAndFinanceLeaseObligations', 'LongTermDebt'),
+    'debt_current': ('LongTermDebtAndFinanceLeaseObligationsCurrent', 'LongTermDebtCurrent'),
+    'debt_noncurrent': ('LongTermDebtAndFinanceLeaseObligationsNoncurrent', 'LongTermDebtNoncurrent'),
+}
+# Class structures and issuer-wide share counts must be checked before adding symbols.
+SINGLE_CLASS = {
+    'AAPL', 'AMD', 'AMZN', 'AVGO', 'JNJ', 'KO', 'KTOS', 'MSFT', 'NVDA',
+    'OKLO', 'PG', 'RTX', 'TSLA', 'WMT',
+}
 
 def _day(x):
     return date.fromisoformat(str(x)[:10])
@@ -104,11 +115,25 @@ def historical_valuation(symbol,facts,history):
         # Only use undimensioned companyfacts for single-class issuers.
         records['shares']+=_records(facts,('EntityCommonStockSharesOutstanding',),'shares',False)
         records['shares'].sort(key=lambda r:(r[0],r[1]))
+    # Issuers can switch between standard tags. Each TTM still uses one
+    # concept throughout, including when a recent filing uses a different tag.
+    alternatives = {
+        key: [_records(facts, (tag,), 'USD', True) for tag in FLOW_TAGS[key]]
+        for key in ('revenue', 'capex')
+    }
     splits=[(_day(d),float(v)) for d,v in history.get('Stock Splits',pd.Series(dtype=float)).items() if _finite(v) and v>0]
-    dates=sorted({r[0] for rec in records.values() for r in rec})
+    dates=sorted({r[0] for rec in records.values() for r in rec} |
+                 {r[0] for options in alternatives.values() for rec in options for r in rec})
     snapshots=[]
     for asof in dates:
         vals={k:_snapshot(rec,asof,k,splits) for k,rec in records.items()}
+        for key, options in alternatives.items():
+            reported = [_snapshot(rec, asof, key, splits) for rec in options]
+            candidates = [(value, period) for value, period in reported if value is not None]
+            if key == 'capex':
+                candidates = [(value, period) for value, period in candidates if period == vals['ocf'][1]]
+            if candidates:
+                vals[key] = max(candidates, key=lambda item: item[1])
         # Match prior fiscal TTM endpoints from facts known at the observation date.
         for k in ('eps','op','pretax','tax'):
             _,end=vals.get(k,(None,None))
@@ -136,7 +161,7 @@ def historical_valuation(symbol,facts,history):
                 v,e=vals.get(k,(None,None))
                 return v if e and (day-e).days<=180 and _finite(v) else None
             eps,op=val('eps'),val('op')
-            for k in ('eps','op','pretax','tax','revenue','ocf','capex','equity','shares'):
+            for k in (*FLOW_TAGS, *BAL_TAGS):
                 v=val(k)
                 if v is not None:
                     r[k]=v
@@ -161,6 +186,17 @@ def historical_valuation(symbol,facts,history):
             # Both facts must have been filed before the price observation.
             if shares is not None and shares>0 and sh_end:
                 r['market_cap_proxy']=close*shares
+                cash, debt, dc, dl = map(val, ('cash', 'debt', 'debt_current', 'debt_noncurrent'))
+                cash_period = vals.get('cash', (None, None))[1]
+                debt_period = vals.get('debt', (None, None))[1]
+                if cash_period and cash_period != debt_period:
+                    if dc is not None and dl is not None and all(vals[k][1] == cash_period for k in ('debt_current', 'debt_noncurrent')):
+                        debt, debt_period = dc + dl, cash_period
+                op_period = vals.get('op', (None, None))[1]
+                if cash is not None and debt is not None and cash_period == debt_period == op_period and abs((cash_period-sh_end).days) <= 60 and op is not None and op > 0:
+                    ev = close * shares + debt - cash
+                    if ev > 0:
+                        r['evop'] = ev / op
                 if equity is not None and equity>0 and eq_end and abs((eq_end-sh_end).days)<=60:
                     r['pb']=close*shares/equity
                 if r.get('fcf',0)>0 and ocf_end and abs((ocf_end-sh_end).days)<=60:

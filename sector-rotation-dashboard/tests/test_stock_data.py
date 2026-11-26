@@ -78,3 +78,26 @@ def test_growth_ratio_history_matches_fiscal_periods_and_filing_dates():
     assert result[1]['eps_prior1']==4
     assert result[1]['eps_prior3']==2
     assert result[1]['eps_prior3_period']=='2022-12-31'
+
+
+def test_sec_snapshot_recovers_valuations_when_live_access_is_blocked(monkeypatch):
+    from urllib.error import HTTPError
+    from src import stock_data
+
+    attempted = []
+
+    def blocked(symbol, cik):
+        attempted.append(symbol)
+        raise HTTPError('https://data.sec.gov/', 403, 'Forbidden', {}, None)
+
+    monkeypatch.setattr(stock_data, 'sec_facts', blocked)
+    source = stock_data.FilingSource()
+    for symbol in ('AAPL', 'MSFT'):
+        facts, coverage = source.get(symbol, source.snapshot['ciks'][symbol])
+        assert coverage == {'source': 'SEC snapshot', 'retrieved': source.snapshot['retrieved']}
+        history = pd.DataFrame({'Close': [100.0]}, index=pd.to_datetime(['2025-03-28']))
+        row, = historical_valuation(symbol, facts, history)
+        assert row['asof'] < row['date']
+        assert row['pe'] > 0
+        assert row['market_cap_proxy'] > 0
+    assert attempted == ['AAPL']

@@ -1403,6 +1403,7 @@ function historicalValValue(k,r,hist,s=symbol){
  const aligned=(p,q,days=60)=>p&&q&&Math.abs(new Date(p)-new Date(q))/86400000<=days;
  if(['pe','pb','pfcf','evsales','evebitda','evop'].includes(k))return positive(r[k])?r[k]:null;
  if(k==='cap')return positive(mc)?mc:null;
+ if(k==='cashadj')return positive(mc)&&num(r.cash)&&aligned(r.shares_period,r.cash_period)?mc-r.cash:null;
  if(k==='ps')return positive(mc)&&positive(r.revenue)&&aligned(r.shares_period,r.revenue_period)?mc/r.revenue:null;
  if(k==='yield')return positive(mc)&&num(r.fcf)&&aligned(r.shares_period,r.fcf_period)?100*r.fcf/mc:null;
  if(growthRatioKeys.has(k))return growthRatio(k,r,r.pe,s).value;
@@ -1412,6 +1413,8 @@ function valuationTableFormat(k,v){return !num(v)?'—':valTableSpecs[k][1]==='m
 function valuationTableRows(s,d,rows){
  const hist=valHistory(d),last=hist.at(-1),current=currentValMetrics(s,d,last),hrows=rows.map(r=>valuationAt(hist,r.period));
  const five=valWindow(hist,5),keys=valTableKeys[s]||[];
+ const filings=d.valuation_filing_source;
+ const filingNote=filings?.retrieved?'SEC filing snapshot retrieved '+filings.retrieved:filings?.source==='SEC live'?'Live SEC filings':'SEC filing source unavailable';
  const body=keys.map(k=>{
   const vals=hrows.map(r=>historicalValValue(k,r,hist,s)),item=current[k],now=item?.[1],validCurrent=now&&!['Unavailable','—'].includes(now),latest=historicalValValue(k,last,hist,s);
   if(!validCurrent&&!vals.some(num)&&!num(latest)&&!(growthRatioKeys.has(k)&&current.pe?.[1]&&!['Unavailable','—','N/A'].includes(current.pe[1])))return '';
@@ -1427,11 +1430,11 @@ function valuationTableRows(s,d,rows){
    const r=hrows[i],den=k==='pe'?r?.eps:k==='pb'?r?.equity:k==='pfcf'?r?.fcf:null;
    const g=growthRatioKeys.has(k)&&r?growthRatio(k,r,r.pe,s):null;
    const display=num(v)?valuationTableFormat(k,v):g?.status==='N/A'||num(den)&&den<=0?'N/A':'—';
-   return trendCell(display,g?.tone||'muted',(g?g.detail+' ':'')+(r?'Market close '+r.date+'; financial information filed before this date. '+(r.asof?'Latest filing snapshot '+r.asof+'. ':'')+'Not a multiple using subsequently reported quarter-end results.':'No market observation on or before period end'));
+   return trendCell(display,g?.tone||'muted',(g?g.detail+' ':'')+(r?'Market close '+r.date+'; financial information filed before this date. '+(r.asof?'Latest filing snapshot '+r.asof+'. ':'')+'Historical data uses filings available at the time. '+filingNote+(k==='evop'?' Historical EV uses estimated market cap, reported long-term debt and cash.':''):'No market observation on or before period end'));
   }).join('');
   return '<tr data-valuation-field="'+esc(k)+'"><th scope="row">'+esc(valTableSpecs[k][0])+'</th>'+trendCell(benchmark,'muted',tip)+trendCell(validCurrent?now:'—',item?.[3]||'muted',(item?.[2]||'Current market value unavailable')+(d.quote?.date?' · close '+d.quote.date:''))+cells+'</tr>';
  }).filter(Boolean);
- return body.length?'<tbody id="valuation-table"><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">Valuation <small title="Long-term: latest reconstructed multiple versus available historical median, up to 5 years. Current: latest market quote. Period columns: last available market close at or before each period end, using information available then.">ⓘ</small></th></tr>'+body.join('')+'</tbody>':'';
+ return body.length?'<tbody id="valuation-table"><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">Valuation <small title="Long-term: latest reconstructed multiple versus available historical median, up to 5 years. Current: latest market quote. Period columns: last available market close at or before each period end, using information available then. '+esc(filingNote)+'.">ⓘ</small></th></tr>'+body.join('')+'</tbody>':'';
 }
 
 const valuationOpen={history:false,price:false};

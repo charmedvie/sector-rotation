@@ -1,8 +1,11 @@
 """Optional public stock research data. No holdings or private notes are collected."""
 from datetime import datetime, timezone
 from pathlib import Path
+import gzip
 import json
 import math
+import os
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import pandas as pd
 from .valuation_data import historical_valuation
@@ -67,13 +70,50 @@ SEC_TAGS = {
     'operating_profit':['OperatingIncomeLoss'],
     'eps':['EarningsPerShareDiluted'],
 }
+SEC_SNAPSHOT = Path(__file__).with_name('sec_snapshot')
+
+
+def sec_request(url):
+    contact = os.environ.get('SEC_CONTACT', 'charmedvie@users.noreply.github.com')
+    return Request(url, headers={'User-Agent': f'Stock Intelligence Lab {contact}', 'Accept': 'application/json'})
+
+
 def sec_facts(symbol, cik=None):
     cik = cik if cik is not None else CIKS[symbol]
-    req=Request(f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json',
-        headers={'User-Agent':'Stock Intelligence Lab https://github.com/charmedvie/sector-rotation','Accept':'application/json'})
+    req = sec_request(f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json')
     with urlopen(req, timeout=12) as res:
-        facts=json.load(res).get('facts',{})
-        return {**facts.get('us-gaap',{}), **{k:v for k,v in facts.get('dei',{}).items() if k=='EntityCommonStockSharesOutstanding'}}
+        facts = json.load(res).get('facts', {})
+        return {**facts.get('us-gaap', {}), **{k:v for k,v in facts.get('dei', {}).items() if k == 'EntityCommonStockSharesOutstanding'}}
+
+
+class FilingSource:
+    def __init__(self):
+        self.snapshot = json.loads((SEC_SNAPSHOT / 'manifest.json').read_text())
+        self.live_blocked = False
+        self.loaded = {}
+
+    def get(self, symbol, cik):
+        if cik not in self.loaded:
+            self.loaded[cik] = self._load(symbol, cik)
+        return self.loaded[cik]
+
+    def _load(self, symbol, cik):
+        if not self.live_blocked:
+            try:
+                facts = sec_facts(symbol, cik)
+                if facts:
+                    return facts, {'source': 'SEC live'}
+            except HTTPError as exc:
+                self.live_blocked = exc.code in (403, 429)
+                print(f'SEC company facts for {symbol}: HTTP {exc.code}')
+            except (OSError, ValueError) as exc:
+                print(f'SEC company facts for {symbol}: {exc}')
+        path = SEC_SNAPSHOT / f'CIK{cik:010d}.json.gz'
+        if path.is_file():
+            with gzip.open(path, 'rt', encoding='utf-8') as snapshot:
+                return json.load(snapshot), {'source': 'SEC snapshot', 'retrieved': self.snapshot['retrieved']}
+        return {}, {'source': 'Unavailable'}
+
 
 def quarterly_facts(facts, tag, field):
     units=facts.get(tag,{}).get('units',{})
@@ -114,8 +154,7 @@ def prior_year_comparatives(rows, facts, tags_by_field=None):
 
 
 def sec_ticker_ciks():
-    req=Request('https://www.sec.gov/files/company_tickers.json',
-        headers={'User-Agent':'Stock Intelligence Lab https://github.com/charmedvie/sector-rotation','Accept':'application/json'})
+    req = sec_request('https://www.sec.gov/files/company_tickers.json')
     with urlopen(req, timeout=12) as res:
         return {r['ticker']:int(r['cik_str']) for r in json.load(res).values()}
 
@@ -189,8 +228,10 @@ def generate(output):
     watchlists=json.loads(Path(__file__).with_name('stock_watchlists.json').read_text(encoding='utf-8'))
     payload['watchlists']=watchlists['watchlists']
     watchlist_stocks=watchlists['stocks']
-    peer_ciks=safe(sec_ticker_ciks,{}) or {}
-    requests=safe(lambda:fetch_requests(peer_ciks),None) if peer_ciks else None
+    filings = FilingSource()
+    live_ciks = safe(sec_ticker_ciks, {}) or {}
+    peer_ciks = {**filings.snapshot['ciks'], **live_ciks}
+    requests=safe(lambda:fetch_requests(live_ciks),None) if live_ciks else None
     payload['screening_requests']=requests or {}
     payload['screening_registry_available']=requests is not None
     requested=[s for s,status in (requests or {}).items() if status=='requested' and s not in PILOTS]
@@ -209,7 +250,7 @@ def generate(output):
             is_screening=False
         if watchlist_entry and symbol not in PILOTS and info.get('financialCurrency')!='USD':
             q,annual=[],[]
-        history_period='10y' if symbol in PILOTS or is_screening else '1y'
+        history_period='10y'
         h=safe(lambda:t.history(period=history_period,auto_adjust=False,actions=True,timeout=25)) if symbol in full else None
         if symbol in full and history_period!='1y' and (h is None or h.empty): h=safe(lambda:t.history(period='1y',auto_adjust=False,actions=True,timeout=15))
         prices=[]
@@ -223,15 +264,15 @@ def generate(output):
             prices=[]
         if prices: quote['lastClose']=prices[-1]['close']; quote['date']=prices[-1]['date']
         cik=CIKS.get(symbol,peer_ciks.get(symbol) or peer_ciks.get(symbol.replace('-','.')) or peer_ciks.get(symbol.replace('.','-')))
-        facts = safe(lambda:sec_facts(symbol,cik),{}) if cik is not None else {}
+        facts, filing_source = filings.get(symbol, cik) if cik is not None else ({}, {'source': 'Unavailable'})
         prior = safe(lambda:prior_year_comparatives(q,facts),{}) if facts and symbol in full else {}
         peer_prior = safe(lambda:peer_comparatives(q,facts),{}) if facts else {}
         quality_prior = safe(lambda:quality_comparatives(q,facts),{}) if facts and symbol in full else {}
-        valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in full else []
+        valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in full and info.get('currency') == 'USD' else []
         profile=screening_profile(info,q)
         if is_screening: payload['screening_requests'][symbol]='available' if q and prices else 'data_unavailable'
-        payload['stocks'][symbol]={'screening':is_screening,'metadata':{'name':info.get('shortName') or info.get('longName') or watchlist_entry.get('name') or symbol,'tradingviewSymbol':watchlist_entry.get('symbol'),'sector':info.get('sector'),'industry':info.get('industry'),'exchange':info.get('exchange'),'cik':cik,'profile':profile,'currency':info.get('financialCurrency')},'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'status':'available' if q else 'unavailable'}
-        print(f'{symbol}: {len(q)} quarters, {len(annual)} years; valuation coverage '+str({k:sum(k in r for r in valuation) for k in ('price','eps','pe','pb','pfcf','fcf')}))
+        payload['stocks'][symbol]={'screening':is_screening,'metadata':{'name':info.get('shortName') or info.get('longName') or watchlist_entry.get('name') or symbol,'tradingviewSymbol':watchlist_entry.get('symbol'),'sector':info.get('sector'),'industry':info.get('industry'),'exchange':info.get('exchange'),'cik':cik,'profile':profile,'currency':info.get('financialCurrency')},'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'valuation_filing_source':filing_source,'status':'available' if q else 'unavailable'}
+        print(f'{symbol}: {len(q)} quarters, {len(annual)} years; valuation {filing_source["source"]} '+str({k:sum(k in r for r in valuation) for k in ('price','eps','pe','market_cap_proxy','evop','pb','pfcf','fcf')}))
     output.parent.mkdir(parents=True,exist_ok=True)
     tmp=output.with_suffix('.tmp')
     tmp.write_text(json.dumps(payload,allow_nan=False,separators=(',',':')),encoding='utf-8')
