@@ -120,3 +120,19 @@ test('catalysts keep old active evidence and ignore resolved, future and unsafe 
  vm.runInContext('setResearchEvidence(payload);render()',ctx);
  assert.match(nodes.get('panel').innerHTML,/No sourced development yet/);
 });
+
+test('Overview shows filing-backed ownership rows and excludes planned sales from clusters',()=>{
+ const {ctx,nodes}=load();
+ ctx.payload=JSON.parse(fs.readFileSync('site/data/research-evidence.json','utf8'));
+ vm.runInContext("setResearchEvidence(payload);symbol='AMZN';render()",ctx);
+ let page=nodes.get('panel').innerHTML;
+ assert.match(page,/Ownership Activity/);
+ assert.match(page,/Huttenlocher/);
+ assert.match(page,/Planned trade/);
+ assert.doesNotMatch(page,/distinct insiders/);
+ vm.runInContext("symbol='OKLO';render()",ctx);
+ page=nodes.get('panel').innerHTML;
+ assert.match(page,/Global X Management/);
+ assert.match(page,/5\.08%/);
+ assert.match(page,/Comparable quarterly 13F holdings data unavailable/);
+});

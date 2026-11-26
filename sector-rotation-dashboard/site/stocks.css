@@ -89,3 +89,13 @@ a{color:#a9c9ff}.stock-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0
 .catalyst-metrics dt{font-size:.8rem;color:#aabbd5}
 .catalyst-metrics dd{margin:2px 0 0;font-weight:700}
 .catalyst-card .catalyst-next{border-top:1px solid #31425a;margin:12px 0 0;padding-top:9px}
+
+.ownership-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ownership-card{background:#142033;border:1px solid #31425a;border-radius:9px;padding:14px;min-width:0}
+.ownership-card h3{font-size:16px;margin:0 0 8px}
+.ownership-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:10px 0;border-top:1px solid #31425a}
+.ownership-row small,.ownership-detail{display:block;color:#aebed4;font-size:.83rem}
+.ownership-detail{grid-column:1/-1}
+.ownership-value{font-size:1.1rem;font-variant-numeric:tabular-nums}
+.ownership-highlight{margin:8px 0;color:#9ac9ec;font-weight:600}
+@media(max-width:650px){.ownership-grid{grid-template-columns:1fr}}

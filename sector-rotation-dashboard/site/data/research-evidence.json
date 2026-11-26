@@ -422,5 +422,35 @@
         "status": "expected"
       }
     }
-  ]
+  ],
+  "ownership": {
+    "AMZN": {
+      "reviewed_at": "2026-11-26",
+      "insiders": [
+        {
+          "name": "Daniel P. Huttenlocher · Director",
+          "kind": "planned",
+          "date": "2026-11-18",
+          "filed": "2026-11-20",
+          "value": "−$203K",
+          "detail": "783 shares sold under a disclosed Rule 10b5-1 plan",
+          "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000056/xslF345X06/wk-form4_1795209411.xml"
+        }
+      ]
+    },
+    "OKLO": {
+      "reviewed_at": "2026-11-26",
+      "stakes": [
+        {
+          "name": "Global X Management · Investment adviser",
+          "kind": "13G",
+          "date": "2026-09-30",
+          "filed": "2026-11-16",
+          "value": "5.08%",
+          "detail": "9,907,787 Class A shares beneficially owned",
+          "url": "https://www.sec.gov/Archives/edgar/data/1432354/000090514826004999/xslSCHEDULE_13G_X02/primary_doc.xml"
+        }
+      ]
+    }
+  }
 }

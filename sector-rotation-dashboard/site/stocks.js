@@ -64,7 +64,7 @@ function tickerSearch(){
 
 let data={stocks:{}},symbol='IBKR',tab=tabs[0],frequency='quarterly';
 
-let researchEvidence={schema_version:1,reviewed_at:null,events:[],catalysts:[]},researchLoad='loading';
+let researchEvidence={schema_version:1,reviewed_at:null,events:[],catalysts:[],ownership:{}},researchLoad='loading';
 const evidenceTabs={fundamental:'Fundamentals',risk:'Financial risk',driver:'Business Drivers',peer:'Peers',thesis:'Thesis & catalysts'};
 const evidenceTones={positive:'positive',negative:'caution',mixed:'caution',neutral:'neutral'};
 const evidenceStatusLabels={positive:'Positive',negative:'Negative',mixed:'Mixed',neutral:'Neutral'};
@@ -79,7 +79,7 @@ function setResearchEvidence(payload){
  const ids=new Set(),events=[];
  for(const e of payload.events){if(!validResearchEvent(e)||e.date>payload.reviewed_at||ids.has(e.id))continue;ids.add(e.id);events.push(e);}
  const catalysts=Array.isArray(payload.catalysts)?payload.catalysts.filter(c=>validCatalyst(c,payload.reviewed_at)):[];
- researchEvidence={schema_version:1,reviewed_at:payload.reviewed_at,events,catalysts};researchLoad='available';return true;
+ researchEvidence={schema_version:1,reviewed_at:payload.reviewed_at,events,catalysts,ownership:payload.ownership||{}};researchLoad='available';return true;
 }
 function evidenceActive(e){return e.state==='active'&&(e.structural||(Date.parse(researchEvidence.reviewed_at)-Date.parse(e.date))/86400000<=28);}
 function evidenceMatches(s,tab,key=null){
@@ -195,6 +195,40 @@ function overviewInsights(s,d,q){
  for(const i of items){if(selected.length>=4)break;if(!selected.includes(i))selected.push(i);}
  return {priority:selected,risk,checks,val};
 }
+function ownershipPanel(symbol){
+ const snapshot=Object.hasOwn(researchEvidence.ownership,symbol)?researchEvidence.ownership[symbol]:null;
+ const reviewedAt=snapshot?.reviewed_at;
+ const validDate=date=>evidenceDate(date)&&date<=reviewedAt;
+ const rows=(list,types)=>Array.isArray(list)?list.filter(row=>row&&types.includes(row.kind)&&validDate(row.date)&&
+  validDate(row.filed)&&row.filed>=row.date&&evidenceUrl(row.url)&&[row.name,row.value,row.detail].every(v=>typeof v==='string'&&v.trim()))
+  .sort((a,b)=>b.date.localeCompare(a.date)):[];
+ const trades=rows(snapshot?.insiders,['buy','sell','planned','other']);
+ const stakes=rows(snapshot?.stakes,['13D','13G']);
+ const labels={buy:'Discretionary purchase',sell:'Discretionary sale',planned:'Planned trade',other:'Other reported transaction'};
+ const rowHtml=row=>'<div class="ownership-row"><div><strong>'+esc(row.name)+'</strong><small>'+esc((labels[row.kind]||'Schedule '+row.kind)+' · '+row.date)+'</small></div><strong class="ownership-value">'+esc(row.value)+'</strong><div class="ownership-detail">'+esc(row.detail)+' · <a href="'+esc(row.url)+'" target="_blank" rel="noopener noreferrer">'+(labels[row.kind]?'Form 4':'Filing')+' · '+esc(row.filed)+' ↗</a></div></div>';
+ const day=86400000;
+ const windowEnd=Date.parse(reviewedAt),windowStart=windowEnd-29*day;
+ const sellers=new Set(trades.filter(t=>t.kind==='sell'&&t.material===true&&typeof t.personId==='string'&&t.personId&&Date.parse(t.date)>=windowStart).map(t=>t.personId));
+ const cluster=sellers.size>=3?'<p class="ownership-highlight">'+sellers.size+' distinct insiders made reviewed material discretionary sales in 30 days.</p>':'';
+ const buys=trades.filter(t=>t.kind==='buy'&&Date.parse(t.date)>=windowStart);
+ const itemized=trades.length?trades.map(rowHtml).join(''):'<p class="stock-note">No reviewed Form 4 transactions available.</p>';
+ const comparison=snapshot?.comparison;
+ const groups=Array.isArray(comparison?.groups)?comparison.groups:[];
+ const integral=Number.isSafeInteger;
+ const comparable=validDate(comparison?.quarter)&&validDate(comparison?.priorQuarter)&&comparison.priorQuarter<comparison.quarter&&
+  integral(comparison.netShares)&&[comparison.managers,comparison.added,comparison.trimmed].every(n=>integral(n)&&n>=0)&&
+  comparison.managers>0&&comparison.added+comparison.trimmed<=comparison.managers&&evidenceUrl(comparison.url)&&
+  groups.every(g=>g&&typeof g.label==='string'&&integral(g.netShares))&&
+  (!groups.length||groups.reduce((sum,g)=>sum+g.netShares,0)===comparison.netShares);
+ const shares=n=>new Intl.NumberFormat('en-US',{signDisplay:'exceptZero'}).format(n);
+ const comparisonHtml=comparable?'<div class="ownership-row"><div><strong>Net change in reported shares</strong><small>'+esc(comparison.quarter+' vs '+comparison.priorQuarter)+'</small></div><strong class="ownership-value">'+shares(comparison.netShares)+'</strong><div class="ownership-detail">'+comparison.added+' added · '+comparison.trimmed+' trimmed · '+comparison.managers+' comparable managers · <a href="'+esc(comparison.url)+'" target="_blank" rel="noopener noreferrer">13F source ↗</a></div></div>'+
+  groups.map(g=>'<div class="ownership-row"><strong>'+esc(g.label)+'</strong><strong>'+shares(g.netShares)+'</strong></div>').join(''):'<p class="stock-note">Comparable quarterly 13F holdings data unavailable.</p>';
+ return '<section class="attention-section ownership-section" aria-labelledby="ownership-title"><div class="overview-caption"><h2 id="ownership-title">Ownership Activity</h2><span>'+
+  (evidenceDate(reviewedAt)?'Selected filings reviewed '+esc(reviewedAt):'Filing coverage unavailable')+'</span></div><div class="ownership-grid">'+
+  '<article class="ownership-card"><h3>Insider Transactions</h3>'+cluster+(buys.length?'<p class="ownership-highlight">'+buys.length+' discretionary '+(buys.length===1?'purchase':'purchases')+' in 30 days</p>':'')+itemized+'</article>'+
+  '<article class="ownership-card"><h3>Institutional Holdings</h3>'+comparisonHtml+(stakes.length?stakes.map(rowHtml).join(''):'<p class="stock-note">No reviewed large-stake disclosures available.</p>')+'</article></div></section>';
+}
+
 function overviewPanel(panel,m,d,q,p,source){
  const s=symbol,all=d.quarterly||[],pre=precommercial(s),rg=quarterGrowth(all,q,'revenue'),margin=q.operating_margin,core=broker(s)?q.pretax:q.operating_profit,ev=financialEvidence(d,all,'revenue'),analysis=overviewInsights(s,d,q),priority=analysis.priority;
  const growthLabel=pre?'Pre-commercial':assessmentLabel(rg,'Growing','Contracting'),profitLabel=num(core)?core>0?'Profitable':core<0?'Loss-making':'Break-even':'Not assessed';
@@ -212,6 +246,7 @@ function overviewPanel(panel,m,d,q,p,source){
  summaryTile('Financial risk',riskLabel,riskDetail,'Financial risk',riskHigh||riskWatch?'caution':'neutral')+
  summaryTile('Valuation',pre?'Milestones':val?.st?val.st.premium>10?'Above history':val.st.premium< -10?'Below history':'Near history':pe>0?'Current P/E':'N/A',pe>0?fmt(pe)+'x trailing P/E':'P/E unavailable / not relevant','Fundamentals',val?.tone||'neutral')+'</div>'+
  '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><h2 id="attention-title">What deserves your attention</h2></div></div><div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.news?newsIcon():f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+(f.news?'NEWS · ':'')+esc(f.target)+(f.evidence?' · '+esc(f.evidence):'')+'</span><strong>'+esc(f.title)+'</strong><small>'+(f.news?'Our assessment: ':'')+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">No current material findings.</p>')+'</div><aside class="diligence"><div class="tile-kicker">'+(isScreening(s)?'DEEP RESEARCH CHECKLIST':'THESIS PRESSURE / WATCH')+'</div>'+list(isScreening(s)?m.kpis:analysis.checks.length?analysis.checks.slice(0,3).map(c=>c.name+' · '+c.value):m.risks.slice(0,3))+(isScreening(s)?'<p class="stock-note">Company-specific KPIs, filing exposures and thesis not yet reviewed.</p>':'<button class="stock-action" data-target="Thesis & catalysts">Review thesis ↗</button>')+'</aside></div></section>'+
+ ownershipPanel(s)+
  '<div class="valuation-section">'+valuationContext(m,p,pre)+'</div>';
  panel.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{tab=b.dataset.target;render();(b.dataset.section&&el(b.dataset.section)||el('panel')).scrollIntoView({block:'nearest'});});
 }
