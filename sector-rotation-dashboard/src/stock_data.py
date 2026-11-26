@@ -9,6 +9,7 @@ from .valuation_data import historical_valuation
 from .screening_requests import fetch_requests, screening_profile
 
 PILOTS = ['IBKR','HOOD','AMZN','GOOGL','NVDA','KTOS','OKLO']
+BUILT_IN_SCREENING = ['SCHW']
 PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT']
 FIELDS = {
  'revenue': ['Total Revenue'], 'gross_profit':['Gross Profit'],
@@ -61,7 +62,7 @@ def safe(call, default=None):
         return default
 
 
-CIKS = {'IBKR':1381197,'HOOD':1783879,'AMZN':1018724,'GOOGL':1652044,'NVDA':1045810,'KTOS':1069258,'OKLO':1849056}
+CIKS = {'IBKR':1381197,'HOOD':1783879,'AMZN':1018724,'GOOGL':1652044,'NVDA':1045810,'KTOS':1069258,'OKLO':1849056,'SCHW':316709}
 SEC_TAGS = {
     'revenue': ['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax','InterestAndDividendIncomeOperating'],
     'operating_profit':['OperatingIncomeLoss'],
@@ -191,9 +192,10 @@ def generate(output):
     payload['screening_requests']=requests or {}
     payload['screening_registry_available']=requests is not None
     requested=[s for s,status in (requests or {}).items() if status=='requested' and s not in PILOTS]
-    full=set(PILOTS+requested)
-    for symbol in dict.fromkeys(PILOTS+PEERS+requested):
-        is_screening=symbol in requested
+    screening=set(BUILT_IN_SCREENING+requested)
+    full=set(PILOTS)|screening
+    for symbol in dict.fromkeys(PILOTS+PEERS+BUILT_IN_SCREENING+requested):
+        is_screening=symbol in screening
         provider_symbol=symbol.replace('.', '-')
         t=yf.Ticker(provider_symbol)
         q=extract([safe(lambda:t.quarterly_income_stmt),safe(lambda:t.quarterly_balance_sheet),safe(lambda:t.quarterly_cashflow)])
