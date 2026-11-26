@@ -64,7 +64,7 @@ function tickerSearch(){
 
 let data={stocks:{}},symbol='IBKR',tab=tabs[0],frequency='quarterly';
 
-let researchEvidence={schema_version:1,reviewed_at:null,events:[]},researchLoad='loading';
+let researchEvidence={schema_version:1,reviewed_at:null,events:[],catalysts:[]},researchLoad='loading';
 const evidenceTabs={fundamental:'Fundamentals',risk:'Financial risk',driver:'Business Drivers',peer:'Peers',thesis:'Thesis & catalysts'};
 const evidenceTones={positive:'positive',negative:'caution',mixed:'caution',neutral:'neutral'};
 const evidenceStatusLabels={positive:'Positive',negative:'Negative',mixed:'Mixed',neutral:'Neutral'};
@@ -78,7 +78,8 @@ function setResearchEvidence(payload){
  if(!payload||payload.schema_version!==1||!evidenceDate(payload.reviewed_at)||!Array.isArray(payload.events))return false;
  const ids=new Set(),events=[];
  for(const e of payload.events){if(!validResearchEvent(e)||e.date>payload.reviewed_at||ids.has(e.id))continue;ids.add(e.id);events.push(e);}
- researchEvidence={schema_version:1,reviewed_at:payload.reviewed_at,events};researchLoad='available';return true;
+ const catalysts=Array.isArray(payload.catalysts)?payload.catalysts.filter(c=>validCatalyst(c,payload.reviewed_at)):[];
+ researchEvidence={schema_version:1,reviewed_at:payload.reviewed_at,events,catalysts};researchLoad='available';return true;
 }
 function evidenceActive(e){return e.state==='active'&&(e.structural||(Date.parse(researchEvidence.reviewed_at)-Date.parse(e.date))/86400000<=28);}
 function evidenceMatches(s,tab,key=null){
@@ -1686,6 +1687,33 @@ function thesisCheckReported(s,d,check){
 function thesisRead(key,fallback){try{const raw=localStorage.getItem(key);if(raw===null)return fallback;return JSON.parse(raw)??fallback;}catch{return fallback;}}
 function thesisWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{return false;}}
 const convictionOptions=['Thesis strengthened','Thesis unchanged','New concern','Thesis weakened','Thesis invalidated','Research note'];
+function validCatalyst(c,reviewedAt){
+ if(!c||!Object.hasOwn(thesisConfig,c.symbol)||!thesisConfig[c.symbol].catalysts.some(([name])=>name===c.key))return false;
+ if(!evidenceDate(c.date)||c.date>reviewedAt||!['active','resolved','superseded'].includes(c.state)||
+  !Object.hasOwn(evidenceStatusLabels,c.tone)||![c.headline,c.fact,c.assessment].every(v=>typeof v==='string'&&v.trim())||
+  !Array.isArray(c.sources)||!c.sources.length||!c.sources.every(s=>s&&typeof s.label==='string'&&evidenceUrl(s.url)))return false;
+ if(c.metrics!==undefined&&(!Array.isArray(c.metrics)||!c.metrics.every(m=>Array.isArray(m)&&m.length===2&&m.every(v=>typeof v==='string'))))return false;
+ const next=c.next;
+ return next===undefined||!!next&&typeof next.label==='string'&&!!next.label.trim()&&
+  (next.status==='expected'&&(next.date===undefined||evidenceDate(next.date))||
+   next.status==='scheduled'&&evidenceDate(next.date)&&evidenceUrl(next.url))&&
+  (next.url===undefined||evidenceUrl(next.url));
+}
+function catalystCard(s,[name,what,cadence]){
+ const latest=researchEvidence.catalysts.filter(c=>c.symbol===s&&c.key===name&&c.state==='active')
+  .sort((a,b)=>b.date.localeCompare(a.date))[0];
+ const heading='<article class="catalyst-card"><h4>'+esc(name)+'</h4>';
+ if(!latest)return heading+'<p>'+esc(what)+'</p><small>'+esc(researchLoad==='available'?'No sourced development yet':researchReviewCaption())+' · '+esc(cadence)+'</small></article>';
+ const {next,metrics=[]}=latest;
+ const summary='<div class="research-evidence-item research-'+esc(latest.tone)+'"><div class="research-evidence-meta">'+
+  '<span class="research-news-label">'+newsIcon()+esc(latest.date)+'</span><span class="research-impact">'+esc(evidenceStatusLabels[latest.tone])+'</span></div>'+
+  '<strong>'+esc(latest.headline)+'</strong><p>'+esc(latest.fact)+'</p>'+
+  (metrics.length?'<dl class="catalyst-metrics">'+metrics.map(([label,value])=>'<div><dt>'+esc(label)+'</dt><dd>'+esc(value)+'</dd></div>').join('')+'</dl>':'')+
+  '<p><span class="research-role">Assessment</span> '+esc(latest.assessment)+'</p><small>'+evidenceSources(latest)+'</small></div>';
+ const nextLabel=next?(next.date?next.date+' · ':'')+next.label+' ('+next.status+')':cadence+' · timing unconfirmed';
+ return heading+summary+'<p class="catalyst-next"><strong>Next</strong> '+esc(nextLabel)+
+  (next?.url?' · <a href="'+esc(next.url)+'" target="_blank" rel="noopener noreferrer">Source ↗</a>':'')+'</p></article>';
+}
 function thesisPanel(panel,m,d,source){
  const s=symbol,cfg=thesisConfig[s],q=d.quarterly?.[0]||{},checks=cfg.checks.map(c=>thesisCheck(s,d,c)),key='stock-intelligence-notes-'+s,customKey='stock-intelligence-thesis-'+s;
  let custom=thesisRead(customKey,{});if(!custom||typeof custom!=='object'||Array.isArray(custom))custom={};
@@ -1695,9 +1723,9 @@ function thesisPanel(panel,m,d,source){
  panel.innerHTML='<h2>Thesis & catalysts</h2>'+
  '<section class="thesis-section"><article class="thesis-hero"><div class="thesis-hero-head"><span>'+esc(s)+' · '+(custom.thesis?'PERSONAL THESIS':'PROPOSED RESEARCH THESIS')+'</span><button id="thesis-edit" class="stock-action">Edit thesis</button></div><h3>'+esc(active.title)+'</h3><p>'+esc(active.thesis)+'</p><div class="thesis-conditions"><div><strong>WHAT MUST GO RIGHT</strong><p>'+esc(active.positive)+'</p></div><div><strong>WHAT WOULD INVALIDATE THE THESIS</strong><p>'+esc(active.invalid)+'</p></div></div></article><div id="thesis-editor" hidden class="thesis-form"><label for="thesis-title">Title</label><input id="thesis-title" value="'+esc(active.title)+'"><label for="thesis-body">Investment thesis</label><textarea id="thesis-body">'+esc(active.thesis)+'</textarea><label for="thesis-positive">What must go right</label><textarea id="thesis-positive">'+esc(active.positive)+'</textarea><label for="thesis-invalid">Invalidation criteria</label><textarea id="thesis-invalid">'+esc(active.invalid)+'</textarea><div class="thesis-actions"><button id="thesis-save-edit" class="stock-action">Save thesis</button><button id="thesis-reset" class="stock-action">Restore proposed thesis</button></div><p id="thesis-edit-status" class="stock-note"></p></div></section>'+
  '<section class="thesis-section"><h3>Thesis validation</h3><div class="thesis-checks">'+checks.map(c=>'<article class="thesis-check thesis-'+c.status+'"><div class="thesis-check-top"><strong>'+esc(c.name)+'</strong><span>'+esc(thesisStatus[c.status])+(c.status!==c.reportedStatus?' · updated':'')+'</span></div><div class="thesis-metric">'+esc(c.value)+'</div><p>'+esc(c.condition)+'</p><details class="thesis-evidence"><summary>Evidence</summary>'+esc(c.detail)+'</details><small>'+esc(c.period)+sourceLink(c)+'</small>'+(c.status!==c.reportedStatus?'<p class="stock-note">Reported assessment: '+esc(thesisStatus[c.reportedStatus])+'</p>':'')+evidenceBlock(s,'thesis',c.name,c.researchChange)+'</article>').join('')+'</div><p class="stock-note">Checks assess the proposed thesis, not custom edits. Sustained support requires multi-quarter evidence.</p></section>'+
- '<section class="thesis-section"><h3>Catalyst watchlist</h3><div class="catalyst-grid">'+cfg.catalysts.map(([name,what,cadence])=>'<article class="catalyst-card"><span class="catalyst-kind">WATCH ITEM</span><h4>'+esc(name)+'</h4><p>'+esc(what)+'</p><small>'+esc(cadence)+'</small></article>').join('')+'</div><h4 class="thesis-subhead">Your dated catalysts</h4><div id="catalyst-list"></div><details class="risk-method"><summary>Add dated catalyst</summary><div class="thesis-form catalyst-form"><label for="cat-name">Event / development</label><input id="cat-name" placeholder="e.g. Quarterly results or licensing decision"><div class="thesis-form-row"><div><label for="cat-date">Expected or confirmed date (optional)</label><input id="cat-date" type="date"></div><div><label for="cat-status">Date status</label><select id="cat-status"><option value="Watch">Watch / anticipated</option><option value="Confirmed">Confirmed by source</option></select></div></div><label for="cat-source">Source URL (required for confirmed dates)</label><input id="cat-source" type="url" placeholder="https://…"><button id="cat-add" class="stock-action">Add catalyst</button><p id="cat-feedback" class="stock-note"></p></div></details></section>'+
+ '<section class="thesis-section"><h3>Catalyst watchlist</h3><div class="catalyst-grid">'+cfg.catalysts.map(catalyst=>catalystCard(s,catalyst)).join('')+'</div><h4 class="thesis-subhead">Your dated catalysts</h4><div id="catalyst-list"></div><details class="risk-method"><summary>Add dated catalyst</summary><div class="thesis-form catalyst-form"><label for="cat-name">Event / development</label><input id="cat-name" placeholder="e.g. Quarterly results or licensing decision"><div class="thesis-form-row"><div><label for="cat-date">Expected or confirmed date (optional)</label><input id="cat-date" type="date"></div><div><label for="cat-status">Date status</label><select id="cat-status"><option value="Watch">Watch / anticipated</option><option value="Confirmed">Confirmed by source</option></select></div></div><label for="cat-source">Source URL (required for confirmed dates)</label><input id="cat-source" type="url" placeholder="https://…"><button id="cat-add" class="stock-action">Add catalyst</button><p id="cat-feedback" class="stock-note"></p></div></details></section>'+
  '<section class="thesis-section"><h3>Research journal</h3><details class="risk-method"><summary>Add research review</summary><div class="thesis-form"><div class="thesis-form-row"><div><label for="thesis-conviction">Review outcome</label><select id="thesis-conviction">'+convictionOptions.map(o=>'<option>'+esc(o)+'</option>').join('')+'</select></div><div><label for="thesis-period">Reporting period or event date</label><input id="thesis-period" type="date" value="'+esc(q.period||'')+'"></div></div><label for="thesis">Research conclusion</label><textarea id="thesis" placeholder="What changed? What evidence supports or challenges the thesis? What will you monitor next?"></textarea><button class="stock-action" id="save">Save dated review + evidence snapshot</button><p id="save-status" class="stock-note"></p></div></details><div id="history"></div></section>'+
- '<details class="risk-method"><summary>Evidence & limitations</summary><p>Quantitative checks reuse the latest available standardized financials and the dated Business Drivers / Financial Risk snapshots. Dated public research evidence is reviewed separately from reported financial values. An event changes a status only through an explicit reviewed assessment; no single headline establishes a sustained financial trend. Catalyst dates are user-entered and not independently verified by this dashboard. Notes are private to the current browser, and clearing browser data removes them.</p>'+source+'</details>';
+ '<details class="risk-method"><summary>Evidence & limitations</summary><p>Quantitative checks reuse the latest available standardized financials and the dated Business Drivers / Financial Risk snapshots. Dated public research evidence is reviewed separately from reported financial values. An event changes a status only through an explicit reviewed assessment; no single headline establishes a sustained financial trend. Public catalyst dates are marked scheduled or expected. Your dated catalysts are user-entered. Notes are private to the current browser, and clearing browser data removes them.</p>'+source+'</details>';
  el('thesis-edit').onclick=()=>{el('thesis-editor').hidden=!el('thesis-editor').hidden;};
  el('thesis-save-edit').onclick=()=>{const next={title:el('thesis-title').value.trim(),thesis:el('thesis-body').value.trim(),positive:el('thesis-positive').value.trim(),invalid:el('thesis-invalid').value.trim()};if(!Object.values(next).every(Boolean)){el('thesis-edit-status').textContent='Complete all four fields.';return;}if(thesisWrite(customKey,next))render();else el('thesis-edit-status').textContent='Browser storage unavailable; not saved.';};
  el('thesis-reset').onclick=()=>{if(thesisWrite(customKey,{}))render();else el('thesis-edit-status').textContent='Browser storage unavailable; not saved.';};

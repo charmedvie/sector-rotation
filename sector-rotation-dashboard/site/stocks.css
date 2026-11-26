@@ -83,3 +83,9 @@ a{color:#a9c9ff}.stock-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0
 .research-news-icon{display:inline-block;flex:0 0 auto;vertical-align:middle;color:inherit}.research-news-label{display:inline-flex;align-items:center;gap:5px;color:#9ac9ec;font-weight:600}.research-role{font-weight:600;color:#9eafc6}.finding-symbol .research-news-icon{width:19px;height:19px}
 
 .trend-peg-cheap{color:#70d5bd!important}.trend-peg-reasonable{color:#b0cdb8!important}.trend-peg-premium{color:#e8b365!important}.trend-peg-demanding{color:#ef9299!important}
+
+.catalyst-card .research-evidence-item{margin-top:10px}
+.catalyst-metrics{display:flex;flex-wrap:wrap;gap:8px 16px;margin:10px 0}
+.catalyst-metrics dt{font-size:.8rem;color:#aabbd5}
+.catalyst-metrics dd{margin:2px 0 0;font-weight:700}
+.catalyst-card .catalyst-next{border-top:1px solid #31425a;margin:12px 0 0;padding-top:9px}

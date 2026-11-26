@@ -27,7 +27,7 @@ test('valuation ranges, attribution and missing history',()=>{const {ctx,nodes}=
 test('peer comparisons use selected peer medians and comparable reporting dates',()=>{const {ctx,nodes}=load();vm.runInContext("symbol='NVDA';tab='Peers';const mk=(r,old,pe,date='2026-09-30')=>({quarterly:[{period:date,revenue:r,operating_profit:r/2,operating_margin:50}],annual:[],quote:{trailingPE:pe},prices:[],peer_prior:{[date]:{revenue:old}}});data={stocks:{NVDA:mk(150,100,30),AMD:mk(120,100,20),AVGO:mk(140,100,40)}};render();if(peerBaseline('NVDA',['NVDA','AMD','AVGO'],'pe')!==30||peerTone('pe',20,30)!=='lower'||peerBaseline('NVDA',['NVDA','AMD'],'pe')!==null)throw Error('median');const g=peerGraph('NVDA',['NVDA','AMD','AVGO'],peerSettings('NVDA'));if(g.points.length!==3||Math.abs(g.mx-30)>1e-6||g.my!==30)throw Error('map');data.stocks.AVGO=mk(140,100,40,'2025-09-30');if(peerBaseline('NVDA',['NVDA','AMD','AVGO'],'pe')!==null)throw Error('stale peer');peerSettings('NVDA').enabled=['AMD'];render();",ctx);assert.match(nodes.get('panel').innerHTML,/Comparison universe/);assert.doesNotMatch(nodes.get('panel').innerHTML,/id="peer-scatter"/);assert.doesNotMatch(nodes.get('panel').innerHTML,/Relative fundamental momentum|Chart hidden|GROWTH VS VALUATION/i);});
 test('financial and precommercial peer groups use appropriate metrics',()=>{const {ctx,nodes}=load();vm.runInContext("symbol='IBKR';tab='Peers';render();if(peerValue('IBKR',{operating_margin:99},'margin')!==null)throw Error('financial margin');symbol='OKLO';render();if(peerSettings('OKLO').x!=='cash'||peerSettings('OKLO').y!=='marketcap')throw Error('precommercial axes');",ctx);assert.match(nodes.get('panel').innerHTML,/BWXT/);assert.doesNotMatch(nodes.get('panel').innerHTML,/Capital and valuation map/);});
 
-test('thesis tracker renders every company with explicit evidence and no fabricated reviews',()=>{const {ctx,nodes}=load();vm.runInContext("if(tabs.includes('Technical')||tabs.includes('Valuation')||tabs.length!==6)throw Error('technical tab');for(const s of Object.keys(M)){symbol=s;tab='Thesis & catalysts';render();const page=el('panel').innerHTML;if(!page.includes('Thesis validation')||!page.includes('Catalyst watchlist')||!page.includes('Research journal'))throw Error(s);}symbol='AMZN';tab='Thesis & catalysts';render();",ctx);assert.match(nodes.get('panel').innerHTML,/AWS capital productivity/);assert.match(nodes.get('panel').innerHTML,/WATCH ITEM/);assert.match(nodes.get('history').innerHTML,/No dated reviews yet/);vm.runInContext("tab='Overview';render();",ctx);assert.doesNotMatch(nodes.get('panel').innerHTML,/Technical trend|data-target="Technical"/);});
+test('thesis tracker renders every company with explicit evidence and no fabricated reviews',()=>{const {ctx,nodes}=load();vm.runInContext("if(tabs.includes('Technical')||tabs.includes('Valuation')||tabs.length!==6)throw Error('technical tab');for(const s of Object.keys(M)){symbol=s;tab='Thesis & catalysts';render();const page=el('panel').innerHTML;if(!page.includes('Thesis validation')||!page.includes('Catalyst watchlist')||!page.includes('Research journal'))throw Error(s);}symbol='AMZN';tab='Thesis & catalysts';render();",ctx);assert.match(nodes.get('panel').innerHTML,/AWS capital productivity/);assert.match(nodes.get('panel').innerHTML,/Evidence review loading/);assert.match(nodes.get('history').innerHTML,/No dated reviews yet/);vm.runInContext("tab='Overview';render();",ctx);assert.doesNotMatch(nodes.get('panel').innerHTML,/Technical trend|data-target="Technical"/);});
 test('thesis validation distinguishes missing and stale disclosures from actual evidence',()=>{const {ctx}=load();vm.runInContext("const c=thesisConfig.AMZN.checks[0];if(thesisCheck('AMZN',{quarterly:[{period:'2026-12-31'}]},c).status!=='unknown')throw Error('stale');if(thesisCheck('AMZN',{quarterly:[]},thesisConfig.AMZN.checks[3]).status!=='unknown')throw Error('missing FCF');if(thesisCheck('OKLO',{quarterly:[]},thesisConfig.OKLO.checks[3]).status!=='unknown')throw Error('unverified PPA');",ctx);});
 
 test('private notes survive migration and saved reviews include dated evidence',()=>{const {ctx,nodes}=load();vm.runInContext("const store=new Map([['stock-intelligence-notes-IBKR',JSON.stringify([{date:'2026-10-01',text:'Existing note'}])]]);localStorage.getItem=k=>store.get(k)??null;localStorage.setItem=(k,v)=>store.set(k,v);symbol='IBKR';tab='Thesis & catalysts';render();el('thesis').value='New review';el('thesis-period').value='2026-09-30';el('save').onclick();const n=JSON.parse(store.get('stock-intelligence-notes-IBKR'));if(n.length!==2||n[1].text!=='Existing note'||!n[0].evidence.length||!n[0].thesis)throw Error('journal migration');",ctx);assert.match(nodes.get('history').innerHTML,/Existing note/);assert.match(nodes.get('history').innerHTML,/New review/);});
@@ -77,3 +77,46 @@ test('reviewed evidence enriches existing cards without changing reported metric
 test('news entries distinguish source facts and research assessment',()=>{const {ctx}=load();vm.runInContext("{const x={tone:'positive',implication:'Analysis',event:{date:'2026-11-26',kind:'confirmed',state:'active',headline:'Event',fact:'Fact',sources:[]}};const h=evidenceItem(x);if(!h.includes('research-news-icon')||!h.includes('NEWS ·')||!h.includes('Reported:')||!h.includes('Our assessment:'))throw Error('missing news marker');}",ctx);});
 
 test('growth valuation uses matched fiscal growth and withholds unreliable classification',()=>{const {ctx}=load();vm.runInContext("{const r={eps:6,eps_prior1:5,eps_prior3:3,op:120,op_prior1:100,op_prior3:60,pretax:100,pretax_prior1:90,pretax_prior3:50,tax:20,tax_prior1:18,tax_prior3:10,pe:20};const a=growthRatio('peg',r,20,'AMZN'),b=growthRatio('peg3',r,20,'AMZN'),c=growthRatio('peop',r,20,'AMZN');if(Math.abs(a.value-1)>1e-8||Math.abs(b.value-20/(100*(Math.cbrt(2)-1)))>1e-8||Math.abs(c.value-1)>1e-8||c.tone!=='muted'||a.tone!=='peg-reasonable')throw Error('ratio');if(growthRatio('peg',{...r,eps_prior1:.01},20,'AMZN').tone!=='muted'||growthRatio('peg',{...r,eps_prior1:-1},20,'AMZN').status!=='N/A'||growthRatio('peg',{...r,tax:40},20,'AMZN').tone!=='muted')throw Error('quality screen');if(valTableKeys.AMZN.includes('pfcf')||valTableKeys.HOOD.includes('peop')||valTableKeys.OKLO.includes('peg')||!valTableKeys.IBKR.includes('peg3'))throw Error('scope');if(historicalValValue('peg',r,[],'AMZN')!==a.value)throw Error('historical');}",ctx);});
+
+test('the shipped catalyst evidence renders for all seven companies',()=>{
+ const {ctx,nodes}=load();
+ ctx.payload=JSON.parse(fs.readFileSync('site/data/research-evidence.json','utf8'));
+ assert.ok(vm.runInContext('setResearchEvidence(payload)',ctx));
+ assert.equal(vm.runInContext('researchEvidence.catalysts.length',ctx),ctx.payload.catalysts.length);
+ for(const {symbol,headline} of ctx.payload.catalysts){
+  ctx.ticker=symbol;
+  vm.runInContext("symbol=ticker;tab='Thesis & catalysts';render()",ctx);
+  assert.ok(nodes.get('panel').innerHTML.includes(headline),symbol);
+ }
+ assert.equal(new Set(ctx.payload.catalysts.map(c=>c.symbol)).size,7);
+ vm.runInContext("symbol='IBKR';render()",ctx);
+ const page=nodes.get('panel').innerHTML;
+ assert.match(page,/\+34%/);
+ assert.match(page,/2026-12-09 · Fed decision \(scheduled\)/);
+ assert.match(page,/Q4 results in January 2027 \(expected\)/);
+ assert.match(page,/Your dated catalysts/);
+});
+
+test('catalysts keep old active evidence and ignore resolved, future and unsafe updates',()=>{
+ const {ctx,nodes}=load();
+ const payload=JSON.parse(fs.readFileSync('site/data/research-evidence.json','utf8'));
+ const row=payload.catalysts.find(c=>c.key==='Monthly brokerage metrics');
+ ctx.payload={...payload,reviewed_at:'2027-05-01',catalysts:[
+  row,
+  {...row,date:'2027-01-01',headline:'Superseded record',state:'superseded'},
+  {...row,date:'2027-02-01',headline:'Resolved record',state:'resolved'},
+  {...row,date:'2027-03-01',headline:'Unsafe record',sources:[{label:'Unsafe',url:'javascript:alert(1)'}]},
+  {...row,date:'2027-04-01',headline:'Unverified schedule',next:{label:'Missing source',status:'scheduled',date:'2027-06-01'}},
+  {...row,date:'2027-06-01',headline:'Future record'}
+ ]};
+ vm.runInContext("setResearchEvidence(payload);tab='Thesis & catalysts';render()",ctx);
+ assert.match(nodes.get('panel').innerHTML,/October brokerage metrics/);
+ assert.doesNotMatch(nodes.get('panel').innerHTML,/Superseded record|Resolved record|Unsafe record|Unverified schedule|Future record/);
+ ctx.payload.catalysts.push({...row,date:'2027-04-30',headline:'Newer sourced report'});
+ vm.runInContext('setResearchEvidence(payload);render()',ctx);
+ assert.match(nodes.get('panel').innerHTML,/Newer sourced report/);
+ assert.doesNotMatch(nodes.get('panel').innerHTML,/October brokerage metrics/);
+ delete ctx.payload.catalysts;
+ vm.runInContext('setResearchEvidence(payload);render()',ctx);
+ assert.match(nodes.get('panel').innerHTML,/No sourced development yet/);
+});
