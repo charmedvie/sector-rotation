@@ -7,9 +7,6 @@
       "WMT",
       "RTX"
     ],
-    "Index": [
-      "DOW"
-    ],
     "Stablish": [
       "AAPL",
       "AMD",
@@ -59,10 +56,6 @@
     "RTX": {
       "name": "RTX Corporation",
       "symbol": "NYSE:RTX"
-    },
-    "DOW": {
-      "name": "Dow, Inc.",
-      "symbol": "NYSE:DOW"
     },
     "AAPL": {
       "name": "Apple Inc.",
