@@ -64,3 +64,17 @@ def test_nearby_cover_page_shares_and_fcf_independent_of_equity():
     del facts['StockholdersEquity']
     assert 'pfcf' in historical_valuation('AMZN',facts,h)[1]
     assert 'pb' not in historical_valuation('HOOD',facts,h)[1]
+
+
+def test_growth_ratio_history_matches_fiscal_periods_and_filing_dates():
+    facts={'EarningsPerShareDiluted':{'units':{'USD/shares':[
+        {'start':'2022-01-01','end':'2022-12-31','filed':'2023-02-15','val':2,'form':'10-K','accn':'a'},
+        {'start':'2024-01-01','end':'2024-12-31','filed':'2025-02-15','val':4,'form':'10-K','accn':'b'},
+        {'start':'2025-01-01','end':'2025-12-31','filed':'2026-02-15','val':6,'form':'10-K','accn':'c'},
+    ]}}}
+    h=pd.DataFrame({'Close':[100,120]},index=pd.to_datetime(['2026-02-13','2026-02-20']))
+    result=historical_valuation('AMZN',facts,h)
+    assert 'eps_prior1' not in result[0]
+    assert result[1]['eps_prior1']==4
+    assert result[1]['eps_prior3']==2
+    assert result[1]['eps_prior3_period']=='2022-12-31'

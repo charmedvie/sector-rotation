@@ -36,7 +36,7 @@ function registerScreeningStocks(){
   exposureDimensions[s]=profile[1].map(id=>[id,names[id]]);
   riskConfig[s]=profile[1].map(id=>[id,names[id],names[id]]);
   if(restrictedProfile(s))peerFinance.add(s);
-  valTableKeys[s]=precommercial(s)?['pb','cap','ev','cashadj']:restrictedProfile(s)?['pe','pb','cap']:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'];
+  valTableKeys[s]=precommercial(s)?['pb','cashadj']:restrictedProfile(s)?['pe','ps','peg','peg3','pb']:['pe','ps','peg','peg3','peop','yield','evop'];
  }
  for(const s of screeningTickers){
   const meta=get(s).metadata||{},group=[];
@@ -527,7 +527,7 @@ function qualitySection(qrows,returnData=false){
 function fundamentalsPanel(panel,d,note,source){
  const qrows=deriveRows(d.quarterly),annual=deriveRows(d.annual,true),rows=frequency==='annual'?annual:qrows,vc=valuationCharts(d);
  panel.innerHTML='<h2>Fundamentals</h2><section class="fund-section"><h3>Key fundamental insights</h3>'+qualitySection(qrows)+'</section>'+
- '<section class="fund-section"><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<details class="risk-method"><summary>Financial definitions &amp; data</summary><p>Quarterly colours: consecutive quarterly movements; latest YoY is a separate comparison. Long-term C = CAGR; rates in pp. Annual colours use consecutive annual movements. ROE = TTM common earnings / average common equity. ROIC = after-tax operating profit / average invested capital. Missing or ambiguous values are neutral. Valuation: the current column uses latest market data; fiscal-date columns use the last available weekly close before or on each period end and only then-known filing information. Historical multiples use positive denominators; share counts approximate market cap. Long-term multiples compare the latest reconstructed value with its own available median (up to 5 years); valuation cells are neutral, not buy/sell signals.</p>'+note+source+'</details>'+'</section>'+vc.html;
+ '<section class="fund-section"><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<details class="risk-method"><summary>Financial definitions &amp; data</summary><p>Quarterly colours: consecutive quarterly movements; latest YoY is a separate comparison. Long-term C = CAGR; rates in pp. Annual colours use consecutive annual movements. ROE = TTM common earnings / average common equity. ROIC = after-tax operating profit / average invested capital. Missing or ambiguous values are neutral. Valuation: the current column uses latest market data; fiscal-date columns use the last available weekly close before or on each period end and only then-known filing information. Historical multiples use positive denominators; share counts approximate market cap. Long-term multiples compare the latest reconstructed value with its own available median (up to 5 years); PEG 1Y = P/E / TTM diluted EPS YoY growth; PEG 3Y = P/E / 3Y TTM diluted EPS CAGR; P/E / operating profit growth is diagnostic, not PEG. Growth uses percent units. PEG colours: below 1 potentially inexpensive; 1–1.5 reasonable; above 1.5–2 premium; above 2 demanding. Non-positive denominators are N/A; extreme growth, material earnings-quality divergence, tax shifts or missing comparable checks are unclassified. No forecast or buy/sell signal.</p>'+note+source+'</details>'+'</section>'+vc.html;
  el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};vc.bind(panel);
 }
 
@@ -1169,7 +1169,7 @@ function kpiPanel(panel,m,d,source){
 }
 
 let valuationYears=5,valuationMetric='pe';
-const valuationKeys={pe:'Trailing P/E',pb:'Price / book',pfcf:'Price / free cash flow'};
+const valuationKeys={pe:'Trailing P/E',pb:'Price / book'};
 const valMultiple=(v)=>num(v)&&v>0?fmt(v,1)+'x':'—';
 const valSigned=(v)=>num(v)?(v>0?'+':'')+fmt(v,1)+'%':'—';
 function valHistory(d){return (d.valuation_history||[]).filter(r=>r.date&&num(r.price)&&r.price>0).slice().sort((a,b)=>a.date.localeCompare(b.date));}
@@ -1229,8 +1229,8 @@ function currentValMetrics(s,d,last){
  simple('cashadj','Market cap less reported cash',num(mc)&&num(q.cash)?mc-q.cash:null,'Not enterprise value; debt and cash restrictions excluded');
  simple('cash','Cash & short-term investments',q.cash,'Reported balance; not necessarily unrestricted');
  put('pfcf','Price / FCF',multiple(mc,fcf,null,'Market cap / TTM FCF',!broker(s)&&s!=='OKLO'));
- const hist=valHistory(d),prior=last&&valWindow(hist,1)[0],eg=prior&&last&&((new Date(last.date)-new Date(prior.date))/86400000)>=350&&num(prior.eps)&&prior.eps>0&&num(last.eps)?100*(last.eps/prior.eps-1):null,pe=num(price)&&eps>0?price/eps:last?.pe;
- put('peg','Trailing PEG',num(eg)&&eg>0&&pe>0?[valMultiple(pe/eg),'Trailing P/E / TTM EPS YoY growth (%)']:num(eg)&&eg<=0?['N/A','Non-positive EPS growth']:['Unavailable','Comparable positive prior-year EPS required']);
+ const snap=ratioSnapshot(s,d,last),pe=num(price)&&snap.eps>0?price/snap.eps:null;
+ for(const k of growthRatioKeys){const g=growthRatio(k,snap,pe,s);items[k]=[valTableSpecs[k][0],num(g.value)?fmt(g.value,2):g.status,g.detail+' '+snap.source,g.tone];}
  return items;
 }
 function valCurrent(s,d,last){
@@ -1251,23 +1251,59 @@ function valuationSignal(s,d,years=5){
 // Market snapshots use the last available weekly close on or before the fiscal period end.
 // All denominators are filing-date aligned by the data generator; do not join later financial statements.
 const valTableSpecs={
- pe:['Trailing P/E','multiple'],pb:['Price / book','multiple'],pfcf:['Price / FCF','multiple'],evsales:['EV / sales','multiple'],evebitda:['EV / EBITDA','multiple'],evop:['EV / operating profit','multiple'],ps:['Price / sales','multiple'],yield:['FCF yield','rate'],peg:['Trailing PEG','multiple'],cap:['Market cap','money'],ev:['Enterprise value','money'],cashadj:['Market cap less reported cash','money']
+ pe:['Trailing P/E','multiple'],ps:['Price / sales','multiple'],peg:['PEG (1Y)','growth'],peg3:['PEG (3Y)','growth'],peop:['P/E / operating profit growth','growth'],yield:['FCF yield','rate'],evop:['EV / operating profit','multiple'],pb:['Price / book','multiple'],cashadj:['Market cap less reported cash','money']
 };
-const valTableKeys={
- IBKR:['pe','pb','ps','cap'],HOOD:['pe','pb','ps','cap'],
- AMZN:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'],
- GOOGL:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'],
- NVDA:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'],
- KTOS:['pe','pb','pfcf','evsales','evebitda','evop','ps','yield','peg','cap'],
- OKLO:['pb','cap','ev','cashadj']
-};
+const operatingValKeys=['pe','ps','peg','peg3','peop','yield','evop'],financialValKeys=['pe','ps','peg','peg3','pb'];
+const valTableKeys={IBKR:financialValKeys,HOOD:financialValKeys,AMZN:operatingValKeys,GOOGL:operatingValKeys,NVDA:operatingValKeys,KTOS:operatingValKeys,OKLO:['pb','cashadj']};
+const growthRatioKeys=new Set(['peg','peg3','peop']);
+function growthRate(now,prior,years=1){return num(now)&&num(prior)&&now>0&&prior>0?100*(Math.pow(now/prior,1/years)-1):null;}
+function growthBand(v){return v<1-1e-9?'peg-cheap':v<=1.5+1e-9?'peg-reasonable':v<=2+1e-9?'peg-premium':'peg-demanding';}
+function growthBandLabel(v){return {'peg-cheap':'Potentially inexpensive relative to growth','peg-reasonable':'Reasonable relative to growth','peg-premium':'Premium valuation','peg-demanding':'Demanding expectations'}[growthBand(v)];}
+function growthRatio(k,r,pe,s){
+ const years=k==='peg3'?3:1,base=k==='peop'?'op':'eps',old=base+'_prior'+years;
+ if(!num(pe)||pe<=0)return {value:null,status:num(r?.eps)&&r.eps<=0?'N/A':'Unavailable',tone:'muted',detail:'Positive comparable trailing P/E required'};
+ if(!num(r?.[base])||!num(r?.[old]))return {value:null,status:'Unavailable',tone:'muted',detail:'Comparable '+years+'Y fiscal TTM history unavailable'};
+ const g=growthRate(r[base],r[old],years);
+ if(!num(g)||g<=0)return {value:null,status:'N/A',tone:'muted',detail:'Non-positive profit or growth; ratio not meaningful'};
+ const value=pe/g,notes=[],core=broker(s)?'pretax':'op',cg=growthRate(r[core],r[core+'_prior'+years],years);
+ if(g>300||r[old]/r[base]<.05)notes.push('Extreme growth or very small prior base');
+ if(k!=='peop'){
+  if(!num(cg))notes.push('Comparable core profit growth unavailable or non-positive');
+  else if(Math.abs(g-cg)>Math.max(15,.5*g))notes.push('EPS and core-profit growth diverge materially');
+  const t=r.tax,p=r.pretax,ot=r['tax_prior'+years],op=r['pretax_prior'+years];
+  if(num(t)&&num(p)&&p>0&&num(ot)&&num(op)&&op>0){if(Math.abs(100*(t/p-ot/op))>5)notes.push('Effective tax rate changed materially');}
+  else notes.push('Comparable tax-rate evidence unavailable');
+ }
+ const diagnostic=k==='peop',tone=diagnostic||notes.length?'muted':growthBand(value);
+ const detail='Trailing P/E '+fmt(pe,2)+' ÷ '+(diagnostic?'TTM operating profit YoY growth':years===3?'3Y TTM diluted EPS CAGR':'TTM diluted EPS YoY growth')+' '+fmt(g,2)+'%. '+(notes.length?'Unclassified: '+notes.join('; ')+'. ':diagnostic?'Diagnostic, not conventional PEG. ':growthBandLabel(value)+' (rule of thumb only). ');
+ return {value,status:null,tone,detail};
+}
+function ratioSnapshot(s,d,last){
+ const rows=d.quarterly||[],q=rows[0]||{},out={},mapped={eps:'eps',op:'operating_profit',pretax:'pretax',tax:'tax_expense'};
+ if(last&&last.eps_period===q.period&&(!d.quote?.date||last.date<=d.quote.date)&&num(last.eps)){
+  for(const k of Object.keys(mapped)){
+   if(last[k+'_period']!==last.eps_period)continue;
+   out[k]=last[k];
+   for(const y of [1,3])if(num(last[k+'_prior'+y]))out[k+'_prior'+y]=last[k+'_prior'+y];
+  }
+  return {...out,source:'Filing-derived split-adjusted TTM; EPS may use annual plus YTD proxy'};
+ }
+ for(const [k,field] of Object.entries(mapped)){
+  out[k]=ttmAt(rows,0,field);
+  out[k+'_prior1']=matchedTtmPrior(d,rows,field);
+  if(!num(out[k+'_prior1'])&&q.period&&rows[4]?.period&&Math.abs((new Date(q.period)-new Date(rows[4].period))/86400000-365.2425)<=14)out[k+'_prior1']=ttmAt(rows,4,field);
+  if(q.period&&rows[12]?.period&&Math.abs((new Date(q.period)-new Date(rows[12].period))/86400000-1095.7275)<=14)out[k+'_prior3']=ttmAt(rows,12,field);
+  else if(q.period&&d.annual?.length){const a=d.annual.find(r=>r.period===q.period),old=d.annual.find(r=>Math.abs((new Date(q.period)-new Date(r.period))/86400000-1095.7275)<=14);if(a&&old&&num(a[field])&&num(old[field]))out[k+'_prior3']=old[field];}
+ }
+ return {...out,source:'Reported standardized fiscal TTM'};
+}
 function valuationAt(history,date,maxAge=8){
  if(!date||!history.length)return null;
  let lo=0,hi=history.length;
  while(lo<hi){const mid=(lo+hi)>>1;if(history[mid].date<=date)lo=mid+1;else hi=mid;}
  const r=history[lo-1];return r&&(new Date(date)-new Date(r.date))/86400000<=maxAge?r:null;
 }
-function historicalValValue(k,r,hist){
+function historicalValValue(k,r,hist,s=symbol){
  if(!r)return null;
  const mc=r.market_cap_proxy,positive=v=>num(v)&&v>0;
  const aligned=(p,q,days=60)=>p&&q&&Math.abs(new Date(p)-new Date(q))/86400000<=days;
@@ -1275,42 +1311,38 @@ function historicalValValue(k,r,hist){
  if(k==='cap')return positive(mc)?mc:null;
  if(k==='ps')return positive(mc)&&positive(r.revenue)&&aligned(r.shares_period,r.revenue_period)?mc/r.revenue:null;
  if(k==='yield')return positive(mc)&&num(r.fcf)&&aligned(r.shares_period,r.fcf_period)?100*r.fcf/mc:null;
- if(k==='peg'){
-  const date=new Date(r.date+'T00:00:00Z');date.setUTCFullYear(date.getUTCFullYear()-1);
-  const prior=valuationAt(hist,date.toISOString().slice(0,10),14);
-  if(!positive(r.pe)||!positive(prior?.eps)||!positive(r.eps))return null;
-  const growth=100*(r.eps/prior.eps-1);return growth>0?r.pe/growth:null;
- }
+ if(growthRatioKeys.has(k))return growthRatio(k,r,r.pe,s).value;
  return null;
 }
-function valuationTableFormat(k,v){return !num(v)?'—':valTableSpecs[k][1]==='money'?money(v):valTableSpecs[k][1]==='rate'?pct(v):valMultiple(v);}
+function valuationTableFormat(k,v){return !num(v)?'—':valTableSpecs[k][1]==='money'?money(v):valTableSpecs[k][1]==='rate'?pct(v):valTableSpecs[k][1]==='growth'?fmt(v,2):valMultiple(v);}
 function valuationTableRows(s,d,rows){
  const hist=valHistory(d),last=hist.at(-1),current=currentValMetrics(s,d,last),hrows=rows.map(r=>valuationAt(hist,r.period));
  const five=valWindow(hist,5),keys=valTableKeys[s]||[];
  const body=keys.map(k=>{
-  const vals=hrows.map(r=>historicalValValue(k,r,hist)),item=current[k],now=item?.[1],validCurrent=now&&!['Unavailable','—'].includes(now),latest=historicalValValue(k,last,hist);
-  if(!validCurrent&&!vals.some(num)&&!num(latest))return '';
-  const series=five.map(r=>({date:r.date,value:historicalValValue(k,r,hist)})).filter(r=>num(r.value));
+  const vals=hrows.map(r=>historicalValValue(k,r,hist,s)),item=current[k],now=item?.[1],validCurrent=now&&!['Unavailable','—'].includes(now),latest=historicalValValue(k,last,hist,s);
+  if(!validCurrent&&!vals.some(num)&&!num(latest)&&!(growthRatioKeys.has(k)&&current.pe?.[1]&&!['Unavailable','—','N/A'].includes(current.pe[1])))return '';
+  const series=five.map(r=>({date:r.date,value:historicalValValue(k,r,hist,s)})).filter(r=>num(r.value));
   const span=series.length?(new Date(series.at(-1).date)-new Date(series[0].date))/86400000/365.2425:0;
   let benchmark='—',tip='Insufficient comparable history';
   if(series.length>=8&&span>=.9&&num(latest)){
    const median=peerMedian(series.map(r=>r.value)),period=span>=4.75?'5Y':fmt(span,1)+'Y';
    if(valTableSpecs[k][1]==='rate'){benchmark=period+' '+((latest-median)>0?'+':'')+fmt(latest-median,1)+'pp';tip='Latest historical yield minus median; '+series.length+' observations, through '+last.date;}
-   else if(valTableSpecs[k][1]==='multiple'&&median>0){benchmark=period+' '+valSigned(100*(latest/median-1));tip='Latest reconstructed multiple versus '+period+' median '+valMultiple(median)+'; '+series.length+' observations, through '+last.date+'; not a fair-value signal.';}
+   else if(['multiple','growth'].includes(valTableSpecs[k][1])&&median>0){benchmark=period+' '+valSigned(100*(latest/median-1));tip='Latest reconstructed multiple versus '+period+' median '+valuationTableFormat(k,median)+'; '+series.length+' observations, through '+last.date+'; not a fair-value signal.';}
   }
   const cells=vals.map((v,i)=>{
    const r=hrows[i],den=k==='pe'?r?.eps:k==='pb'?r?.equity:k==='pfcf'?r?.fcf:null;
-   const display=num(v)?valuationTableFormat(k,v):num(den)&&den<=0?'N/A':'—';
-   return trendCell(display,'muted',r?'Market close '+r.date+'; financial information filed before this date. '+(r.asof?'Latest filing snapshot '+r.asof+'. ':'')+'Not a multiple using subsequently reported quarter-end results.':'No market observation on or before period end');
+   const g=growthRatioKeys.has(k)&&r?growthRatio(k,r,r.pe,s):null;
+   const display=num(v)?valuationTableFormat(k,v):g?.status==='N/A'||num(den)&&den<=0?'N/A':'—';
+   return trendCell(display,g?.tone||'muted',(g?g.detail+' ':'')+(r?'Market close '+r.date+'; financial information filed before this date. '+(r.asof?'Latest filing snapshot '+r.asof+'. ':'')+'Not a multiple using subsequently reported quarter-end results.':'No market observation on or before period end'));
   }).join('');
-  return '<tr data-valuation-field="'+esc(k)+'"><th scope="row">'+esc(valTableSpecs[k][0])+'</th>'+trendCell(benchmark,'muted',tip)+trendCell(validCurrent?now:'—','muted',(item?.[2]||'Current market value unavailable')+(d.quote?.date?' · close '+d.quote.date:''))+cells+'</tr>';
+  return '<tr data-valuation-field="'+esc(k)+'"><th scope="row">'+esc(valTableSpecs[k][0])+'</th>'+trendCell(benchmark,'muted',tip)+trendCell(validCurrent?now:'—',item?.[3]||'muted',(item?.[2]||'Current market value unavailable')+(d.quote?.date?' · close '+d.quote.date:''))+cells+'</tr>';
  }).filter(Boolean);
  return body.length?'<tbody id="valuation-table"><tr class="financial-group"><th scope="rowgroup" colspan="'+(3+rows.length)+'">Valuation <small title="Long-term: latest reconstructed multiple versus available historical median, up to 5 years. Current: latest market quote. Period columns: last available market close at or before each period end, using information available then.">ⓘ</small></th></tr>'+body.join('')+'</tbody>':'';
 }
 
 const valuationOpen={history:false,price:false};
 function valuationCharts(d){
- const hist=valHistory(d),rows=valWindow(hist,valuationYears),last=rows.at(-1),a=valAttribution(rows),metrics=precommercial(symbol)?['pb']:['IBKR','HOOD','GOOGL'].includes(symbol)?['pe']:Object.keys(valuationKeys);
+ const hist=valHistory(d),rows=valWindow(hist,valuationYears),last=rows.at(-1),a=valAttribution(rows),metrics=precommercial(symbol)?['pb']:broker(symbol)?['pe','pb']:['pe'];
  const usable=metrics.filter(k=>valStats(rows,k,last?.[k]));if(usable.length&&!usable.includes(valuationMetric))valuationMetric=usable[0];
  const stat=valStats(rows,valuationMetric,last?.[valuationMetric]),short=valStats(valWindow(hist,1),valuationMetric,last?.[valuationMetric]),long=valStats(valWindow(hist,5),valuationMetric,last?.[valuationMetric]);
  const indexFields=[['price','Share price'],['eps','TTM diluted EPS'],['op','TTM operating profit']],active=indexFields.filter(([k])=>rows.filter(r=>num(r[k])&&r[k]>0).length>=8),base=rows.find(r=>active.every(([k])=>num(r[k])&&r[k]>0)),indexRows=base?rows.filter(r=>r.date>=base.date):[],traces=base?active.map(([k,n])=>({name:n,x:indexRows.map(r=>r.date),y:indexRows.map(r=>num(r[k])?100*r[k]/base[k]:null),mode:'lines',connectgaps:false})):[];

@@ -10,6 +10,8 @@ import pandas as pd
 FLOW_TAGS = {
     'eps': ('EarningsPerShareDiluted',),
     'op': ('OperatingIncomeLoss',),
+    'pretax': ('IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'),
+    'tax': ('IncomeTaxExpenseBenefit',),
     'revenue': ('RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet'),
     'ocf': ('NetCashProvidedByUsedInOperatingActivities',),
     'capex': ('PaymentsToAcquirePropertyPlantAndEquipment','PaymentsToAcquireProductiveAssets'),
@@ -56,8 +58,8 @@ def _adjust(r, key, splits):
 def _duration(r):
     return (r[1]-r[2]).days if r[2] else 0
 
-def _snapshot(records, asof, key, splits):
-    known=[r for r in records if r[0]<=asof]
+def _snapshot(records, asof, key, splits, period_limit=None):
+    known=[r for r in records if r[0]<=asof and (period_limit is None or r[1]<=period_limit)]
     if not known: return None,None
     # Most recent period known, not a prior-year comparative repeated in a new filing.
     end=max(r[1] for r in known)
@@ -107,6 +109,15 @@ def historical_valuation(symbol,facts,history):
     snapshots=[]
     for asof in dates:
         vals={k:_snapshot(rec,asof,k,splits) for k,rec in records.items()}
+        # Match prior fiscal TTM endpoints from facts known at the observation date.
+        for k in ('eps','op','pretax','tax'):
+            _,end=vals.get(k,(None,None))
+            if not end: continue
+            for years in (1,3):
+                target=end-timedelta(days=round(365.2425*years))
+                value,period=_snapshot(records[k],asof,k,splits,target+timedelta(days=14))
+                if period and abs((period-target).days)<=14 and _finite(value):
+                    vals[f'{k}_prior{years}']=(value,period)
         snapshots.append(vals)
     # Last valid trading close of each ISO week, including latest close.
     weekly={}
@@ -125,11 +136,19 @@ def historical_valuation(symbol,facts,history):
                 v,e=vals.get(k,(None,None))
                 return v if e and (day-e).days<=180 and _finite(v) else None
             eps,op=val('eps'),val('op')
-            for k in ('eps','op','revenue','ocf','capex','equity','shares'):
+            for k in ('eps','op','pretax','tax','revenue','ocf','capex','equity','shares'):
                 v=val(k)
                 if v is not None:
                     r[k]=v
                     r[k+'_period']=vals[k][1].isoformat()
+            for k in ('eps','op','pretax','tax'):
+                if k not in r: continue
+                for years in (1,3):
+                    key=f'{k}_prior{years}'
+                    value,period=vals.get(key,(None,None))
+                    if period and _finite(value):
+                        r[key]=value
+                        r[key+'_period']=period.isoformat()
             if eps is not None and eps>0:
                 r['pe']=close/eps
             equity,shares,ocf,capex=map(val,('equity','shares','ocf','capex'))
