@@ -26,7 +26,11 @@ const screeningProfiles={
 const screeningTickers=new Set(),lookupOnlyTickers=new Set(),profileOf=s=>get(s).metadata?.profile||'unclassified',isScreening=s=>screeningTickers.has(s);
 const restrictedProfile=s=>isScreening(s)&&['financial','bank','insurance','real_estate','unclassified'].includes(profileOf(s));
 const precommercial=s=>s==='OKLO'||isScreening(s)&&profileOf(s)==='precommercial';
-function screeningTabs(s){return !isScreening(s)?tabs:['Overview','Fundamentals','Financial risk',...(peerGroups[s]?.length>=2?['Peers']:[])];}
+function screeningTabs(s){
+ if(!isScreening(s))return tabs;
+ const reviewed=Object.hasOwn(companyResearch,s);
+ return tabs.filter(t=>(t!=='Business Drivers'&&t!=='Thesis & catalysts'||reviewed)&&(t!=='Peers'||peerGroups[s]?.length>=2));
+}
 function registerScreeningStocks(){
  for(const [s,d] of Object.entries(data.stocks||{})){
   if(Object.hasOwn(M,s)||!/^[A-Z][A-Z0-9.-]{0,9}$/.test(s))continue;
@@ -70,6 +74,37 @@ function tickerSearch(){
 }
 
 let data={stocks:{}},symbol='IBKR',tab=tabs[0],frequency='quarterly';
+let companyResearch={};
+function setCompanyResearch(payload){
+ if(!payload?.companies||!evidenceDate(payload.reviewed_at))return false;
+ const validText=value=>typeof value==='string'&&value.trim().length>0;
+ const validRows=(rows,length)=>Array.isArray(rows)&&rows.length>0&&rows.every(row=>Array.isArray(row)&&
+  (row.length===length||row.length===length+1&&evidenceUrl(row[length]))&&row.slice(0,length).every(validText));
+ companyResearch=Object.fromEntries(Object.entries(payload.companies).filter(([ticker,r])=>
+  /^[A-Z][A-Z0-9.-]{0,9}$/.test(ticker)&&r&&evidenceDate(r.date)&&r.date<=payload.reviewed_at&&evidenceUrl(r.source)&&
+  [r.thesis,r.confirmation,r.invalidation].every(validText)&&validRows(r.drivers,3)&&validRows(r.risks,3)&&validRows(r.catalysts,2)));
+ return true;
+}
+function researchSource(url,date){
+ return '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Primary source'+(date?' · '+esc(date):'')+' ↗</a>';
+}
+function reviewedMetricCards(profile,items){
+ return '<div class="risk-map">'+items.map(([title,metric,detail,url])=>'<article class="risk-map-item">'+
+  '<h4>'+esc(title)+'</h4><div class="risk-metric">'+esc(metric)+'</div><p>'+esc(detail)+'</p>'+
+  '<small>'+researchSource(url||profile.source,url?null:profile.date)+'</small></article>').join('')+'</div>';
+}
+function reviewedDrivers(panel,profile){
+ panel.innerHTML='<h2>Business Drivers</h2>'+reviewedMetricCards(profile,profile.drivers);
+}
+function reviewedThesis(panel,profile){
+ panel.innerHTML='<h2>Thesis &amp; catalysts</h2><section class="thesis-section"><article class="thesis-hero"><h3>Research thesis</h3>'+
+  '<p>'+esc(profile.thesis)+'</p><div class="thesis-conditions"><div><strong>WHAT WOULD SUPPORT IT</strong><p>'+esc(profile.confirmation)+'</p></div>'+
+  '<div><strong>WHAT WOULD WEAKEN IT</strong><p>'+esc(profile.invalidation)+'</p></div></div></article></section>'+
+  '<section class="thesis-section"><h3>Catalyst watchlist</h3><div class="catalyst-grid">'+profile.catalysts.map(([title,detail,url])=>
+   '<article class="catalyst-card"><h4>'+esc(title)+'</h4><p>'+esc(detail)+'</p><small>'+
+   researchSource(url||profile.source,url?null:profile.date)+'</small></article>').join('')+'</div></section>';
+}
+
 
 let researchEvidence={schema_version:1,reviewed_at:null,events:[],catalysts:[],ownership:{}},researchLoad='loading';
 const evidenceTabs={fundamental:'Fundamentals',risk:'Financial risk',driver:'Business Drivers',peer:'Peers',thesis:'Thesis & catalysts'};
@@ -242,11 +277,11 @@ function ownershipPanel(symbol){
  return '<section class="attention-section ownership-section" aria-labelledby="ownership-title"><div class="overview-caption"><h2 id="ownership-title">Ownership Activity</h2><span>'+
   (evidenceDate(reviewedAt)?'Selected filings reviewed '+esc(reviewedAt):researchLoad==='loading'?'Loading filing records':researchLoad==='unavailable'?'Filing records could not be loaded':'Filing review pending')+'</span></div><div class="ownership-grid">'+
   '<article class="ownership-card"><h3>Insider Transactions</h3>'+cluster+(buys.length?'<p class="ownership-highlight">'+buys.length+' discretionary '+(buys.length===1?'purchase':'purchases')+' in 30 days</p>':'')+itemized+'</article>'+
-  '<article class="ownership-card"><h3>Institutional Holdings</h3>'+positions.map(rowHtml).join('')+stakes.map(rowHtml).join('')+comparisonHtml+'</article></div></section>';
+  '<article class="ownership-card"><h3>Institutional Holdings</h3>'+positions.map(rowHtml).join('')+stakes.map(rowHtml).join('')+comparisonHtml+(snapshot?.note?'<p class="stock-note">'+esc(snapshot.note)+'</p>':'')+'</article></div></section>';
 }
 
 function overviewPanel(panel,m,d,q,p,source){
- const s=symbol,all=d.quarterly||[],pre=precommercial(s),rg=quarterGrowth(all,q,'revenue'),margin=q.operating_margin,core=broker(s)?q.pretax:q.operating_profit,ev=financialEvidence(d,all,'revenue'),analysis=overviewInsights(s,d,q),priority=analysis.priority;
+ const s=symbol,profile=companyResearch[s],all=d.quarterly||[],pre=precommercial(s),rg=quarterGrowth(all,q,'revenue'),margin=q.operating_margin,core=broker(s)?q.pretax:q.operating_profit,ev=financialEvidence(d,all,'revenue'),analysis=overviewInsights(s,d,q),priority=analysis.priority;
  const growthLabel=pre?'Pre-commercial':assessmentLabel(rg,'Growing','Contracting'),profitLabel=num(core)?core>0?'Profitable':core<0?'Loss-making':'Break-even':'Not assessed';
  const riskHigh=analysis.risk.map.find(r=>r.status==='high'),riskWatch=analysis.risk.map.find(r=>r.status==='watch')||analysis.risk.extra.find(r=>r.status==='Monitor'),riskKnown=analysis.risk.map.some(r=>r.status!=='unknown')||analysis.risk.extra.length;
  const riskLabel=riskHigh?'Elevated':riskWatch?'Monitor':riskKnown?'Reviewed':'Not assessed',riskDetail=riskHigh?.title||riskWatch?.title||(riskKnown?'No elevated reviewed exposure':'Evidence unavailable');
@@ -261,7 +296,7 @@ function overviewPanel(panel,m,d,q,p,source){
  summaryTile('Momentum',evidenceClass(ev),ev.count?ev.count+' comparable YoY periods':'History unavailable','Fundamentals',ev.kind==='sustained'||ev.kind==='structural'?ev.direction<0?'caution':ev.direction>0||ev.persistence>0?'positive':'neutral':'neutral')+
  summaryTile('Financial risk',riskLabel,riskDetail,'Financial risk',riskHigh||riskWatch?'caution':'neutral')+
  summaryTile('Valuation',pre?'Milestones':val?.st?val.st.premium>10?'Above history':val.st.premium< -10?'Below history':'Near history':pe>0?'Current P/E':'N/A',pe>0?fmt(pe)+'x trailing P/E':'P/E unavailable / not relevant','Fundamentals',val?.tone||'neutral')+'</div>'+
- '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><h2 id="attention-title">What deserves your attention</h2></div></div><div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.news?newsIcon():f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+(f.news?'NEWS · ':'')+esc(f.target)+(f.evidence?' · '+esc(f.evidence):'')+'</span><strong>'+esc(f.title)+'</strong><small>'+(f.news?'Our assessment: ':'')+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">No current material findings.</p>')+'</div><aside class="diligence"><div class="tile-kicker">'+(isScreening(s)?'DEEP RESEARCH CHECKLIST':'THESIS PRESSURE / WATCH')+'</div>'+list(isScreening(s)?m.kpis:analysis.checks.length?analysis.checks.slice(0,3).map(c=>c.name+' · '+c.value):m.risks.slice(0,3))+(isScreening(s)?'<p class="stock-note">Company-specific KPIs, filing exposures and thesis not yet reviewed.</p>':'<button class="stock-action" data-target="Thesis & catalysts">Review thesis ↗</button>')+'</aside></div></section>'+
+ '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><h2 id="attention-title">What deserves your attention</h2></div></div><div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.news?newsIcon():f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+(f.news?'NEWS · ':'')+esc(f.target)+(f.evidence?' · '+esc(f.evidence):'')+'</span><strong>'+esc(f.title)+'</strong><small>'+(f.news?'Our assessment: ':'')+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">No current material findings.</p>')+'</div><aside class="diligence"><div class="tile-kicker">'+(profile?'THESIS &amp; CATALYSTS':isScreening(s)?'DEEP RESEARCH CHECKLIST':'THESIS PRESSURE / WATCH')+'</div>'+list(isScreening(s)?m.kpis:analysis.checks.length?analysis.checks.slice(0,3).map(c=>c.name+' · '+c.value):m.risks.slice(0,3))+(profile?'<p>'+esc(profile.thesis)+'</p><button class="stock-action" data-target="Thesis &amp; catalysts">Review thesis ↗</button>':isScreening(s)?'<p class="stock-note">Company-specific KPIs, filing exposures and thesis not yet reviewed.</p>':'<button class="stock-action" data-target="Thesis & catalysts">Review thesis ↗</button>')+'</aside></div></section>'+
  ownershipPanel(s)+
  '<div class="valuation-section">'+valuationContext(m,p,pre)+'</div>';
  panel.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{tab=b.dataset.target;render();(b.dataset.section&&el(b.dataset.section)||el('panel')).scrollIntoView({block:'nearest'});});
@@ -920,6 +955,7 @@ function riskMainCards(s,d,q){
 function riskPanel(panel,m,d,q,note,source){
  const s=symbol,f=exposureFilings[s],stress=renderStress(s,d,q),cards=riskMainCards(s,d,q),history=riskHistory(s,d,q),scenarios=scenarioSpecs(s,d,q),matched=f?.period===q.period;
  panel.innerHTML='<h2>Financial risk</h2><p class="risk-intro">'+esc(q.period||'Reporting period unavailable')+'</p>'+
+ (companyResearch[s]?'<section class="risk-section"><h3>Company-specific risks</h3>'+reviewedMetricCards(companyResearch[s],companyResearch[s].risks)+'</section>':'')+
  (cards.html?'<section class="risk-section"><h3>Risk map</h3>'+cards.html+'</section>':'')+
  (s==='AMZN'&&matched?'<details class="risk-method"><summary>Scheduled contractual payments</summary>'+table(['Period','Principal commitments'],[['Remaining 2026','$31.6B'],['2027','$124.3B'],['2028','$85.6B'],['2029','$103.0B'],['2030','$76.4B'],['Thereafter','$462.7B']])+'<p class="stock-note">Includes debt principal and interest, leases and purchases; overlaps recorded debt.</p></details>':'')+
  (scenarios.length?'<section class="risk-section"><h3>Financial stress tests</h3><div class="stress-grid">'+stress.html+'</div></section>':'')+
@@ -1697,7 +1733,7 @@ AMZN:{title:'AWS-led profitable growth',thesis:'AWS and advertising can drive lo
 GOOGL:{title:'Search durability and profitable Cloud scale',thesis:'Search monetisation and distribution remain durable through AI changes while Cloud and subscriptions deepen growth and cash generation.',positive:'Search revenue holds up, traffic costs remain manageable, Cloud converts backlog profitably and capital intensity delivers returns.',invalid:'Structural loss of search economics or distribution, or sustained AI investment without adequate incremental operating profit and cash generation.',checks:[
  ['Search monetisation','kpi','search','up','Search revenue should remain resilient through AI transitions.'],['Cloud growth','kpi','cloud','up','Monitor growth and backlog conversion.'],['Cloud profitability','kpi','cloudMargin','up','Segment margins should hold as Cloud expands.'],['Traffic acquisition costs','kpi','tac','down','Higher TAC / advertising revenue can pressure economics.'],['Free cash flow','ttm','fcf','up','Watch cash generation through infrastructure investment.'],['Distribution and remedies','manual','','','Review antitrust remedies, defaults and AI search monetisation.']],catalysts:[['Search and AI monetisation','Search growth, AI serving cost and commercial query trends','Quarterly review'],['Cloud backlog conversion','Revenue, operating income and infrastructure deployment','Quarterly review'],['Antitrust and distribution','Material legal orders and implementation','Legal development watch']]},
 NVDA:{title:'Accelerated computing platform leadership',thesis:'Demand for accelerated computing, networking and software ecosystem advantages can sustain revenue growth and strong margins across successive product generations.',positive:'Data Center demand expands, margins remain resilient, customers deploy capacity economically and working capital remains aligned with sales.',invalid:'Sustained demand slowdown, meaningful structural margin compression or evidence that ecosystem advantages and customer economics are deteriorating.',checks:[
- ['Data Center demand','kpi','dc','up','Monitor revenue growth and architecture transitions.'],['Compute and networking','kpi','compute','up','Track reporting-segment demand, distinct from Data Center compute.'],['Gross margin','fin','gross_margin','up','Watch sustained compression after product-mix and ramp effects.'],['Inventory exposure','risk','inventory','','Compare inventory growth with revenue growth.'],['Receivables exposure','risk','receivables','','Monitor receivables versus sales and customer financing.'],['Customer concentration','manual','','','Review disclosed customer concentration, commitments and export exposure.']],catalysts:[['Architecture ramp','New product shipments, supply and gross margin','Product and quarterly review'],['Customer AI spending','Hyperscaler capex, utilization and demand','Customer earnings watch'],['Export and supply restrictions','Policy changes and customer concentration','Regulatory development watch']]},
+ ['Data Center demand','kpi','dc','up','Monitor revenue growth and architecture transitions.'],['Compute and networking','kpi','compute','up','Track reporting-segment demand, distinct from Data Center compute.'],['Gross margin','fin','gross_margin','up','Watch sustained compression after product-mix and ramp effects.'],['Inventory exposure','risk','inventory','','Compare inventory growth with revenue growth.'],['Receivables exposure','risk','receivables','','Monitor receivables versus sales and customer financing.'],['Customer concentration','manual','','','Review disclosed customer concentration, commitments and export exposure.']],catalysts:[['Architecture ramp','New product shipments, supply and gross margin','Product and quarterly review'],['Customer AI spending','Hyperscaler capex, utilization and demand','Customer earnings watch'],['Export and supply restrictions','Policy changes and customer concentration','Regulatory development watch'],['Leadership and governance','Leadership changes and board oversight','Filing watch']]},
 KTOS:{title:'Backlog conversion into profitable production',thesis:'Defense technology demand and funded contract awards can support scalable production, improving segment economics and cash conversion.',positive:'Funded backlog grows, bookings convert into profitable revenue, and working capital and production capex remain financeable.',invalid:'Repeated program delays, adverse fixed-price execution or persistent cash burn and dilution despite backlog growth.',checks:[
  ['Demand pipeline','kpi','backlog','up','Track total backlog and funding mix together.'],['Funded share of backlog','kpi','fundedShare','up','Funded orders are more concrete than unfunded pipeline.'],['TTM book-to-bill','kpi','bookTTM','above1','Bookings exceeding billings support pipeline replenishment.'],['Operating margin','fin','operating_margin','up','Monitor production economics and contract cost overruns.'],['Free cash flow','ttm','fcf','up','Check cash conversion and capital needs.'],['Receivables exposure','risk','receivables','','Investigate working capital growing faster than sales.']],catalysts:[['Contract awards','Funded awards, book-to-bill and program scope','Award announcement watch'],['Production ramps','Delivery schedules, segment profitability and cost execution','Quarterly review'],['Capital requirements','Working capital, capex and share issuance','Filing watch']]},
 OKLO:{title:'Pre-commercial nuclear execution',thesis:'A staged path through licensing, fuel, construction and funded binding customer commitments could establish commercial reactor economics.',positive:'Each authorization gate and fuel/construction milestone is completed, binding agreements convert into funded projects, and runway covers the execution path.',invalid:'Material licensing or deployment delays without credible mitigation, inability to secure fuel or funded customers, or financing gaps that materially impair execution.',checks:[
@@ -1799,7 +1835,7 @@ function thesisPanel(panel,m,d,source){
 
 function render(){if(!screeningTabs(symbol).includes(tab))tab='Overview';controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
 const exchange=isScreening(symbol)?({NYQ:'NYSE',NMS:'NASDAQ',NGM:'NASDAQ',NCM:'NASDAQ',ASE:'AMEX',PCX:'AMEX',BTS:'CBOE'}[d.metadata?.exchange]||''):symbol==='OKLO'?'NYSE':'NASDAQ';
-el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent(d.metadata?.tradingviewSymbol||(exchange?exchange+':'+symbol:symbol));el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry+(isScreening(symbol)?' · Automatic screening':' · Deep research');el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
+el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent(d.metadata?.tradingviewSymbol||(exchange?exchange+':'+symbol:symbol));el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry+(companyResearch[symbol]?' · Filing-backed research':isScreening(symbol)?' · Automatic screening':' · Deep research');el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
 el('overview').querySelectorAll('tr').forEach(r=>{r.onclick=()=>select(r.dataset.symbol);r.onkeydown=e=>{if(e.key==='Enter')select(r.dataset.symbol);};});
 el('cards').innerHTML=[['REVENUE YoY',pct(yoy(symbol,'revenue'))],['OPERATING MARGIN',pct(q.operating_margin)],['EPS YoY',pct(yoy(symbol,'eps'))],['TRAILING P/E',fmt(p.trailingPE)]].map(a=>'<div class="stat-card"><div class="stat-top">'+a[0]+'</div><div class="stat-number">'+a[1]+'</div><div class="stat-desc">'+esc(q.period||'No statement data')+'</div></div>').join('');
@@ -1809,12 +1845,14 @@ panel.classList.remove('overview-panel');
 if(tab==='Overview'){overviewPanel(panel,m,d,q,p,source);}
 else if(tab==='Fundamentals'){fundamentalsPanel(panel,d,note,source);}
 else if(tab==='Financial risk'){riskPanel(panel,m,d,q,note,source);}
-else if(tab==='Business Drivers'){kpiPanel(panel,m,d,source);}
+else if(tab==='Business Drivers'){if(companyResearch[symbol])reviewedDrivers(panel,companyResearch[symbol]);else kpiPanel(panel,m,d,source);}
 else if(tab==='Peers'){peerPanel(panel,m,d,source);}
-else if(tab==='Thesis & catalysts'){thesisPanel(panel,m,d,source);}
+else if(tab==='Thesis & catalysts'){if(companyResearch[symbol])reviewedThesis(panel,companyResearch[symbol]);else thesisPanel(panel,m,d,source);}
 }
 const h=location.hash.slice(1);if(Object.prototype.hasOwnProperty.call(M,h))symbol=h;
 el('ticker-form').onsubmit=e=>{e.preventDefault();tickerSearch();};
 render();
 fetch('data/research-evidence.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Evidence not published');return r.json();}).then(j=>{if(!setResearchEvidence(j))throw Error('Invalid evidence');render();}).catch(()=>{researchLoad='unavailable';render();});
 fetch('data/stocks.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Data not published');return r.json();}).then(j=>{data=j;registerScreeningStocks();if(Object.prototype.hasOwnProperty.call(M,h))symbol=h;el('freshness').textContent=j.generated_at?.slice(0,10)||'Unknown';el('data-status').textContent=j.source||'';render();}).catch(()=>{el('freshness').textContent='Unavailable';el('data-status').textContent='Financial data has not yet been published. Research framework remains accessible.';});
+
+fetch('data/company-research.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Company research unavailable');return r.json();}).then(j=>{if(setCompanyResearch(j))render();}).catch(()=>{});

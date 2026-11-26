@@ -162,12 +162,13 @@ test('every watchlist company shows reviewed ownership records and manager sampl
  const {ctx,nodes}=load();
  ctx.payload=JSON.parse(fs.readFileSync('site/data/research-evidence.json','utf8'));
  vm.runInContext('setResearchEvidence(payload)',ctx);
- for(const [ticker,snapshot] of Object.entries(ctx.payload.ownership)){
+ for(const ticker of ['IBKR','HOOD','AMZN','GOOGL','NVDA','KTOS','OKLO']){
+  const snapshot=ctx.payload.ownership[ticker];
   ctx.ticker=ticker;
   vm.runInContext("symbol=ticker;render()",ctx);
   assert.ok(nodes.get('panel').innerHTML.includes(snapshot.insiders[0].name));
  }
- assert.equal(Object.keys(ctx.payload.ownership).length,7);
+ assert.equal(Object.keys(ctx.payload.ownership).length,30);
  vm.runInContext("symbol='KTOS';render()",ctx);
  const page=nodes.get('panel').innerHTML;
  assert.match(page,/\+581,876 shares/);
@@ -208,4 +209,26 @@ test('TradingView groups preserve duplicate membership and keep missing-data sto
  assert.match(nodes.get('company').textContent,/AAPL · Apple/);
  assert.match(nodes.get('tradingview-link').href,/NASDAQ%3AAAPL/);
  assert.match(watchlist,/aria-label="Other research"/);
+});
+
+test('filing-backed profiles render drivers, risks and thesis for every newly researched ticker',()=>{
+ const {ctx,nodes}=load();
+ ctx.payload=JSON.parse(fs.readFileSync('site/data/company-research.json','utf8'));
+ assert.ok(vm.runInContext('setCompanyResearch(payload)',ctx));
+ assert.equal(vm.runInContext('Object.keys(companyResearch).length',ctx),23);
+ for(const [ticker,profile] of Object.entries(ctx.payload.companies)){
+  ctx.ticker=ticker;
+  vm.runInContext(`
+   data.stocks[ticker]={metadata:{name:ticker},quote:{},quarterly:[],annual:[],prices:[]};
+   data.watchlists={Test:[ticker]};
+   registerScreeningStocks();
+   select(ticker);
+  `,ctx);
+  for(const [section,heading] of [['Business Drivers',profile.drivers[0][0]],['Financial risk','Company-specific risks'],['Thesis & catalysts','Catalyst watchlist']]){
+   ctx.section=section;
+   vm.runInContext('tab=section;render()',ctx);
+   assert.ok(nodes.get('panel').innerHTML.includes(heading),ticker+' '+section);
+   assert.match(nodes.get('panel').innerHTML,/Primary source/);
+  }
+ }
 });

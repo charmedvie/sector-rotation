@@ -901,6 +901,32 @@
           "implication": "Liquidity supports near-term corporate operations. Capital spending and project financing requirements are separate from the operating cash-use figure."
         }
       ]
+    },
+    {
+      "id": "hood-november-share-repurchases-20261119",
+      "date": "2026-11-19",
+      "headline": "Robinhood stepped up Q4 repurchases",
+      "fact": "Robinhood reported more than $100M of share repurchases through November 18 at an average price of about $79. The prior quarter total was $25M.",
+      "kind": "confirmed",
+      "materiality": "medium",
+      "state": "active",
+      "structural": false,
+      "sources": [
+        {
+          "label": "Robinhood repurchase update",
+          "url": "https://investors.robinhood.com/static-files/13e8fd24-c586-4e2d-93fc-877e9383a5b8"
+        }
+      ],
+      "impacts": [
+        {
+          "symbol": "HOOD",
+          "tab": "thesis",
+          "key": "Earnings quality",
+          "title": "Quicker repurchases affect per-share comparisons",
+          "tone": "neutral",
+          "implication": "Compare diluted share count and operating profit separately. Repurchases use cash and can affect EPS through the share count."
+        }
+      ]
     }
   ],
   "catalysts": [
@@ -1599,6 +1625,26 @@
           "$3.13B"
         ]
       ]
+    },
+    {
+      "symbol": "NVDA",
+      "key": "Leadership and governance",
+      "date": "2026-11-22",
+      "headline": "Board reinstated Jensen Huang",
+      "fact": "The board reinstated Huang as president, CEO and director effective November 22.",
+      "tone": "mixed",
+      "assessment": "Continuity at the top returns. Watch subsequent filings for governance, investigation and oversight developments.",
+      "state": "active",
+      "sources": [
+        {
+          "label": "SEC Form 8-K",
+          "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000090/nvda-20261122.htm"
+        }
+      ],
+      "next": {
+        "label": "Next material governance filing",
+        "status": "expected"
+      }
     }
   ],
   "ownership": {
@@ -1613,6 +1659,27 @@
           "value": "−$203K",
           "detail": "783 shares sold under a disclosed Rule 10b5-1 plan",
           "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000056/xslF345X06/wk-form4_1795209411.xml"
+        },
+        {
+          "kind": "other",
+          "name": "Jeffrey Bezos · Executive chair",
+          "date": "2026-11-13",
+          "filed": "2026-11-16",
+          "value": "771,492 shares gifted",
+          "detail": "Combined gift of common shares on November 12 and 13",
+          "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000044/xslF345X06/wk-form4_1794864240.xml"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+3,136,754 shares",
+          "detail": "635,764,130 → 638,900,884 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
         }
       ]
     },
@@ -1639,6 +1706,18 @@
           "detail": "Direct sales under a Rule 10b5-1 plan. This figure counts DeWitte’s direct sales only",
           "url": "https://www.sec.gov/Archives/edgar/data/1849056/000202143326000023/xslF345X06/wk-form4_1793827021.xml"
         }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+630,017 shares",
+          "detail": "6,539,334 → 7,169,351 shares in matched Q2 and Q3 filing rows (COM CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
       ]
     },
     "IBKR": {
@@ -1654,6 +1733,18 @@
           "url": "https://www.sec.gov/Archives/edgar/data/1381197/000138119726000156/0001381197-26-000156-index.html",
           "material": true,
           "personId": "lawrence-e-harris"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+548,442 shares",
+          "detail": "28,349,920 → 28,898,362 shares in matched Q2 and Q3 filing rows (COM CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
         }
       ]
     },
@@ -1680,6 +1771,16 @@
           "detail": "5,236,031 → 4,604,197 reported shares, Q2 to Q3",
           "url": "https://www.sec.gov/Archives/edgar/data/1697748/000110465926126785/xslForm13F_X02/infotable.xml",
           "priorUrl": "https://www.sec.gov/Archives/edgar/data/1697748/000110465926096910/xslForm13F_X02/infotable.xml"
+        },
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+84,348 shares",
+          "detail": "51,655,498 → 51,739,846 shares in matched Q2 and Q3 filing rows (COM CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
         }
       ]
     },
@@ -1695,6 +1796,18 @@
           "detail": "Class C stock units withheld for taxes at vesting",
           "url": "https://www.sec.gov/Archives/edgar/data/1534753/000119312526434831/xslF345X06/ownership.xml"
         }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+1,877,390 shares",
+          "detail": "382,951,664 → 384,829,054 shares in matched Q2 and Q3 filing rows (CAP STK CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
       ]
     },
     "NVDA": {
@@ -1708,6 +1821,27 @@
           "value": "−30,000 shares",
           "detail": "Family trust sale under a Rule 10b5-1 plan",
           "url": "https://www.sec.gov/Archives/edgar/data/1045810/000169684126000016/xslF345X06/wk-form4_1795470863.xml"
+        },
+        {
+          "kind": "planned",
+          "name": "Colette Kress · CFO",
+          "date": "2026-09-17",
+          "filed": "2026-09-18",
+          "value": "−34,918 shares",
+          "detail": "Three sales under a disclosed Rule 10b5-1 plan. Tax withholding on September 16 is excluded",
+          "url": "https://www.sec.gov/Archives/edgar/data/1588670/000158867026000014/xslF345X06/wk-form4_1789765959.xml"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "−215,616 shares",
+          "detail": "1,540,816,358 → 1,540,600,742 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
         }
       ]
     },
@@ -1745,8 +1879,562 @@
           "detail": "4,672,566 → 5,254,442 reported shares, Q2 to Q3",
           "url": "https://www.sec.gov/Archives/edgar/data/1697748/000110465926126785/xslForm13F_X02/infotable.xml",
           "priorUrl": "https://www.sec.gov/Archives/edgar/data/1697748/000110465926096910/xslForm13F_X02/infotable.xml"
+        },
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+9,681 shares",
+          "detail": "8,449,693 → 8,459,374 shares in matched Q2 and Q3 filing rows (COM NEW)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
         }
       ]
+    },
+    "JNJ": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+530,869 shares",
+          "detail": "157,226,374 → 157,757,243 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Joaquin Duato",
+          "date": "2026-08-05",
+          "filed": "2026-08-07",
+          "value": "−48,480 shares",
+          "detail": "Two reported sales at weighted prices of about $258–$259",
+          "url": "https://www.sec.gov/Archives/edgar/data/200406/000020040626000171/xslF345X06/wk-form4_1786139443.xml"
+        }
+      ]
+    },
+    "KO": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+14,687,904 shares",
+          "detail": "238,798,011 → 253,485,915 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "James Quincey",
+          "date": "2026-07-29",
+          "filed": "2026-07-29",
+          "value": "−527,087 shares",
+          "detail": "Total sold on July 28–29 after option exercises under a disclosed Rule 10b5-1 plan",
+          "url": "https://www.sec.gov/Archives/edgar/data/21344/000002134426000156/xslF345X06/form4.xml"
+        }
+      ]
+    },
+    "PG": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+27,801 shares",
+          "detail": "152,109,741 → 152,137,542 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Jon Moeller",
+          "date": "2026-08-06",
+          "filed": "2026-08-10",
+          "value": "1,936 RSUs",
+          "detail": "Reported grant of restricted stock units",
+          "url": "https://www.sec.gov/Archives/edgar/data/80424/000008042426000105/xslF345X06/form4.xml"
+        }
+      ]
+    },
+    "WMT": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+2,728,467 shares",
+          "detail": "286,350,346 → 289,078,813 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Doug McMillon",
+          "date": "2026-01-22",
+          "filed": "2026-01-23",
+          "value": "−19,416 shares",
+          "detail": "Rule 10b5-1 plan sale at a weighted average of $119.17",
+          "url": "https://www.sec.gov/Archives/edgar/data/104169/000133578226000004/xslF345X05/wk-form4_1769208590.xml"
+        }
+      ]
+    },
+    "RTX": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+270,527 shares",
+          "detail": "87,947,095 → 88,217,622 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Christopher Calio",
+          "date": "2026-02-19",
+          "filed": "2026-02-23",
+          "value": "31,199 shares exercised",
+          "detail": "Reported exercise at $76 per share. The filing also lists subsequent sales",
+          "url": "https://www.sec.gov/Archives/edgar/data/101829/000122520826002410/xslF345X03/doc4.xml"
+        }
+      ]
+    },
+    "AAPL": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "−3,880,127 shares",
+          "detail": "959,107,911 → 955,227,784 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Arthur Levinson · Director",
+          "date": "2026-11-16",
+          "filed": "2026-11-18",
+          "value": "−90,000 shares",
+          "detail": "Two reported sales. A separate gift of 50,000 shares is excluded from the sale count",
+          "url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126044773/xslF345X06/form4.xml"
+        }
+      ]
+    },
+    "AMD": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+357,340 shares",
+          "detail": "106,500,177 → 106,857,517 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Lisa Su · CEO",
+          "date": "2026-11-16",
+          "filed": "2026-11-18",
+          "value": "Planned sales",
+          "detail": "Multiple executions under a disclosed Rule 10b5-1 plan",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000213/xslF345X06/wk-form4_1795036763.xml"
+        }
+      ]
+    },
+    "AVGO": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+2,172,841 shares",
+          "detail": "309,168,582 → 311,341,423 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Hock Tan · CEO",
+          "date": "2026-01-06",
+          "filed": "2026-01-08",
+          "value": "−70,000 shares",
+          "detail": "Three reported sales on January 6",
+          "url": "https://www.sec.gov/Archives/edgar/data/1211588/000173016826000004/xslF345X05/wk-form4_1767915448.xml"
+        }
+      ]
+    },
+    "META": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+904,931 shares",
+          "detail": "143,440,997 → 144,345,928 shares in matched Q2 and Q3 filing rows (CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Andrew Bosworth",
+          "date": "2026-11-17",
+          "filed": "2026-11-19",
+          "value": "−7,847 shares",
+          "detail": "Class A shares sold at $625 under a disclosed Rule 10b5-1 plan",
+          "url": "https://www.sec.gov/Archives/edgar/data/1326801/000095010326017900/xslF345X06/ownership.xml"
+        }
+      ]
+    },
+    "MSFT": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+892,799 shares",
+          "detail": "485,192,007 → 486,084,806 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Satya Nadella · CEO",
+          "date": "2026-09-01",
+          "filed": "2026-09-02",
+          "value": "Planned sales",
+          "detail": "Multiple reported executions under a Rule 10b5-1 plan adopted March 8.",
+          "url": "https://www.sec.gov/Archives/edgar/data/789019/000078901926000161/xslF345X03/form4.xml"
+        }
+      ]
+    },
+    "PLTR": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+622,640 shares",
+          "detail": "146,137,514 → 146,760,154 shares in matched Q2 and Q3 filing rows (CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Peter Thiel · Director",
+          "date": "2026-11-20",
+          "filed": "2026-11-24",
+          "value": "+850,100 shares",
+          "detail": "Class A purchases under a pre-existing Rule 10b5-1 plan",
+          "url": "https://www.sec.gov/Archives/edgar/data/1211060/000121106026000012/xslF345X06/form4-11252026_011156.xml"
+        }
+      ]
+    },
+    "TSM": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "−75,151 ADS",
+          "detail": "93,806 → 18,655 ADS in matched Q2 and Q3 filing rows (SPONSORED ADS)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "note": "The institutional row is for the U.S. ADS. Taiwan insider disclosures require a separate review."
+    },
+    "AFRM": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+49,282 shares",
+          "detail": "12,320,890 → 12,370,172 shares in matched Q2 and Q3 filing rows (COM CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Max Levchin · CEO",
+          "date": "2026-01-05",
+          "filed": "2026-01-07",
+          "value": "−666,666 shares",
+          "detail": "Shares sold after an option exercise under a disclosed Rule 10b5-1 plan",
+          "url": "https://www.sec.gov/Archives/edgar/data/1820953/000162828026001248/xslF345X03/wk-form4_1767826879.xml"
+        }
+      ]
+    },
+    "ASTS": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+431,165 shares",
+          "detail": "12,515,363 → 12,946,528 shares in matched Q2 and Q3 filing rows (COM CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Abel Avellan · CEO",
+          "date": "2026-06-22",
+          "filed": "2026-06-23",
+          "value": "Up to 2.5M shares",
+          "detail": "Reported prepaid forward exposure. Ultimate settlement can be in stock or cash",
+          "url": "https://www.sec.gov/Archives/edgar/data/1780312/000149315226029685/xslF345X06/ownership.xml"
+        }
+      ]
+    },
+    "HIMS": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "−14,980 shares",
+          "detail": "9,541,384 → 9,526,404 shares in matched Q2 and Q3 filing rows (COM CL A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Andrew Dudum · CEO",
+          "date": "2026-08-25",
+          "filed": "2026-08-27",
+          "value": "463,289 shares",
+          "detail": "Gift reported by the trust. No sale proceeds reflected in this transaction",
+          "url": "https://www.sec.gov/Archives/edgar/data/1773751/000177375126000217/xslF345X06/wk-form4_1787878906.xml"
+        }
+      ]
+    },
+    "NBIS": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+7,636 shares",
+          "detail": "177,106 → 184,742 shares in matched Q2 and Q3 filing rows (SHS CLASS A)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Marc Boynton",
+          "date": "2026-11-13",
+          "filed": "2026-11-17",
+          "value": "−4,502 shares",
+          "detail": "Class A sales across eight executions in the selected filing",
+          "url": "https://www.sec.gov/Archives/edgar/data/1513845/000151384526000151/xslF345X06/form4.xml"
+        }
+      ]
+    },
+    "ONDS": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+2,848,508 shares",
+          "detail": "21,914,212 → 24,762,720 shares in matched Q2 and Q3 filing rows (COM NEW)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Eric Brock · CEO",
+          "date": "2026-06-02",
+          "filed": "2026-06-02",
+          "value": "−2,378,245 shares",
+          "detail": "Company sold shares to cover potential tax withholding on restricted-stock vesting",
+          "url": "https://www.sec.gov/Archives/edgar/data/1646188/000121390026064364/xslF345X03/ownership.xml"
+        }
+      ]
+    },
+    "RKLB": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+1,027,113 shares",
+          "detail": "25,299,213 → 26,326,326 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Peter Beck · CEO",
+          "date": "2026-05-26",
+          "filed": "2026-05-28",
+          "value": "5M shares",
+          "detail": "Reported conversion into common stock held by a trust",
+          "url": "https://www.sec.gov/Archives/edgar/data/1819994/000200101126000076/xslF345X06/edgardoc.xml"
+        }
+      ]
+    },
+    "TSLA": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+638,177 shares",
+          "detail": "184,023,551 → 184,661,728 shares in matched Q2 and Q3 filing rows (COM)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Vaibhav Taneja · CFO",
+          "date": "2026-09-05",
+          "filed": "2026-09-09",
+          "value": "6,539 shares vested",
+          "detail": "Restricted stock units settled in common shares. The filing separately reports a sale on September 8.",
+          "url": "https://www.sec.gov/Archives/edgar/data/1318605/000110465926106432/xslF345X06/tm2625055d1_4seq1.xml"
+        }
+      ]
+    },
+    "GOOG": {
+      "reviewed_at": "2026-11-26",
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+1,659,925 shares",
+          "detail": "306,936,860 → 308,596,785 shares in matched Q2 and Q3 filing rows (CAP STK CL C)",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Sundar Pichai · CEO",
+          "date": "2026-10-25",
+          "filed": "2026-10-27",
+          "value": "3,705 units withheld",
+          "detail": "Class C stock units withheld for taxes at vesting",
+          "url": "https://www.sec.gov/Archives/edgar/data/1534753/000119312526434831/xslF345X06/ownership.xml"
+        }
+      ]
+    },
+    "ANT": {
+      "reviewed_at": "2026-11-26",
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Dario Amodei · CEO",
+          "date": "2026-11-20",
+          "filed": "2026-11-23",
+          "value": "−3,378,378 shares",
+          "detail": "IPO-related Class A sale at $83; a separate tax withholding is excluded",
+          "url": "https://www.sec.gov/Archives/edgar/data/2130357/000215794726000004/xslF345X06/form4-11232026_101129.xml"
+        }
+      ],
+      "note": "The November IPO followed the September 13F reporting date. See the Catalyst watchlist for the disclosed Class N strategic placement."
+    },
+    "SPCX": {
+      "reviewed_at": "2026-11-26",
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Elon Musk · CEO",
+          "date": "2026-06-15",
+          "filed": "2026-06-17",
+          "value": "Share-class conversions",
+          "detail": "Reporting trusts disclosed equity conversions with no cash purchase shown on those lines",
+          "url": "https://www.sec.gov/Archives/edgar/data/1181412/000162828026044069/xslF345X06/wk-form4_1781740812.xml"
+        }
+      ],
+      "note": "No comparable two-quarter institutional row was verified in this review."
+    },
+    "SKHY": {
+      "reviewed_at": "2026-11-26",
+      "note": "U.S. Form 4 and comparable 13F data for this ADR were not verified. Check issuer disclosures for domestic ownership reporting."
     }
   }
 }

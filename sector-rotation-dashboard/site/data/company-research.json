@@ -1,0 +1,954 @@
+{
+  "reviewed_at": "2026-11-26",
+  "companies": {
+    "JNJ": {
+      "date": "2026-10-13",
+      "source": "https://www.jnj.com/media-center/press-releases/johnson-johnson-reports-q3-2026-results-raises-2026-guidance",
+      "thesis": "Innovative Medicine launches and MedTech growth can offset losses of drug exclusivity if the portfolio also converts revenue growth into cash.",
+      "confirmation": "Newer medicines and devices sustain operating growth after the effect of acquisitions and currency.",
+      "invalidation": "Launches fail to replace lost sales, or recurring legal and operating costs erode cash generation.",
+      "drivers": [
+        [
+          "Portfolio scale",
+          "$25.4B Q3 sales, +5.9% YoY",
+          "Track Innovative Medicine and MedTech separately."
+        ],
+        [
+          "Guidance",
+          "Full-year guidance raised",
+          "Compare realised sales and adjusted profit with management’s new range."
+        ]
+      ],
+      "risks": [
+        [
+          "Earnings quality",
+          "$0.09 GAAP EPS",
+          "The quarter’s reported EPS fell sharply. Use the issuer’s GAAP reconciliation before treating the decline as a recurring operating trend."
+        ],
+        [
+          "Portfolio replacement",
+          "Patent exposure",
+          "Compare replacement products and devices with erosion in established drugs."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 results",
+          "Confirm the raised outlook and compare growth by segment."
+        ],
+        [
+          "Product launches and access",
+          "Watch disclosed uptake, approvals and reimbursement."
+        ]
+      ]
+    },
+    "KO": {
+      "date": "2026-10-27",
+      "source": "https://investors.coca-colacompany.com/filings-reports/all-sec-filings/content/0001628280-26-067403/a2026q3earningsreleaseex-9.htm",
+      "thesis": "Brand and bottler distribution can support cash generation if volume growth survives pricing and mix changes.",
+      "confirmation": "Unit cases grow across markets and currency-neutral operating profit follows.",
+      "invalidation": "Volumes weaken persistently while pricing, currency or bottler changes mask underlying demand.",
+      "drivers": [
+        [
+          "Global unit cases",
+          "+5%",
+          "Volume growth shows physical demand, with geographic mix still important."
+        ],
+        [
+          "Comparable operating profit",
+          "+8% currency-neutral",
+          "Compare with the reported 12% increase to see currency and comparability effects."
+        ]
+      ],
+      "risks": [
+        [
+          "Shipment timing",
+          "Concentrate vs unit cases",
+          "Concentrate shipments can run ahead of consumer demand and reverse in another quarter."
+        ],
+        [
+          "Pricing and cost",
+          "Price/mix +1%",
+          "Retest the balance between affordability, mix and marketing spend."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 operating update",
+          "Compare unit case growth, price/mix and concentrate timing."
+        ],
+        [
+          "Bottler and currency effects",
+          "Review comparable operating income and cash conversion."
+        ]
+      ]
+    },
+    "PG": {
+      "date": "2026-10-22",
+      "source": "https://www.sec.gov/Archives/edgar/data/80424/000008042426000250/fy2627q1jas8-kexhibit991.htm",
+      "thesis": "Brand investment and productivity can compound earnings if growth is driven by volume as well as mix and pricing.",
+      "confirmation": "Volume-led organic growth persists and productivity offsets operating cost inflation.",
+      "invalidation": "Unit volumes weaken while recurring costs leave earnings trailing sales.",
+      "drivers": [
+        [
+          "Organic sales",
+          "+4% YoY",
+          "Volume contributed about two points."
+        ],
+        [
+          "Quarterly sales",
+          "$23.3B",
+          "Check the growth split across the five segments."
+        ]
+      ],
+      "risks": [
+        [
+          "Earnings conversion",
+          "GAAP EPS +1%",
+          "Earnings growth trailed sales as operating costs increased."
+        ],
+        [
+          "Category dispersion",
+          "Health care volume under pressure",
+          "Avoid extrapolating aggregate growth to all categories."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Fiscal Q2 report",
+          "Track volume and mix by segment."
+        ],
+        [
+          "Productivity and cost update",
+          "Check whether core EPS growth catches up with organic sales."
+        ]
+      ]
+    },
+    "WMT": {
+      "date": "2026-11-19",
+      "source": "https://www.sec.gov/Archives/edgar/data/104169/000010416926000168/earningsreleasefy27q3.htm",
+      "thesis": "Store fulfilment, marketplace and advertising can improve the economics of low-price retail if operating profit grows alongside sales.",
+      "confirmation": "Digital and advertising growth translate into sustained operating-income growth and cash generation.",
+      "invalidation": "Fulfilment costs or weak unit demand absorb the benefits of channel mix.",
+      "drivers": [
+        [
+          "Revenue",
+          "$188.8B, +5.2% YoY",
+          "Constant-currency growth was 4.5%."
+        ],
+        [
+          "Digital mix",
+          "Global e-commerce +17%",
+          "Global advertising rose 25%. Follow the contribution to margins."
+        ]
+      ],
+      "risks": [
+        [
+          "Channel profitability",
+          "Pickup and delivery mix",
+          "Digital growth needs to cover fulfilment costs and staffing."
+        ],
+        [
+          "Comparability",
+          "Adjusted vs GAAP",
+          "Compare operating profit on the same basis and follow working capital through the holiday season."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Holiday-quarter results",
+          "Watch transaction growth, units and operating margin."
+        ],
+        [
+          "Digital and ads",
+          "Review U.S. e-commerce and advertising growth against expense rates."
+        ]
+      ]
+    },
+    "RTX": {
+      "date": "2026-10-20",
+      "source": "https://www.rtx.com/news/news-center/2026/10/20/rtx-reports-q3-2026-results",
+      "thesis": "Commercial aftermarket demand and a large backlog can sustain cash generation if execution and engine-related costs remain manageable.",
+      "confirmation": "Backlog converts to cash and aftermarket strength offsets programme costs.",
+      "invalidation": "Persistent cash underperformance or warranty and programme costs outweigh volume growth.",
+      "drivers": [
+        [
+          "Quarterly sales",
+          "$25.0B, +11% YoY",
+          "Organic growth was 12% on the company’s basis."
+        ],
+        [
+          "Backlog",
+          "$340B",
+          "Commercial backlog was $176B and defence backlog was $164B."
+        ]
+      ],
+      "risks": [
+        [
+          "One-time recovery",
+          "$0.25 adjusted EPS contribution",
+          "Tariff-related recovery lifted earnings and cash flow. Reassess the recurring run rate."
+        ],
+        [
+          "Execution",
+          "Backlog conversion",
+          "Monitor delivery timing, warranty cash costs and segment margins."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Next results",
+          "Compare underlying cash flow excluding recoveries."
+        ],
+        [
+          "Backlog execution",
+          "Review deliveries, aftermarket mix and segment margins."
+        ]
+      ]
+    },
+    "AAPL": {
+      "date": "2026-11-02",
+      "source": "https://www.apple.com/newsroom/2026/11/apple-reports-fourth-quarter-results/",
+      "thesis": "An installed-base renewal cycle and profitable Services growth can support earnings if margins hold through new hardware launches.",
+      "confirmation": "Product upgrades and Services grow together and underlying margin remains resilient.",
+      "invalidation": "Weaker upgrades, regional demand or Services economics cause prolonged weakness in underlying gross profit.",
+      "drivers": [
+        [
+          "Quarterly sales",
+          "$114.5B, +12% YoY",
+          "Apple cited an iPhone September-quarter record and an all-time Services record."
+        ],
+        [
+          "Operating cash flow",
+          "$28B",
+          "Compare cash generation with capital returns and working capital."
+        ]
+      ],
+      "risks": [
+        [
+          "Margin quality",
+          "47.9% gross margin",
+          "Tariff refunds contributed approximately one point."
+        ],
+        [
+          "Product concentration",
+          "iPhone upgrade cycle",
+          "Watch regional sell-through and mix during the holiday quarter."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Holiday-quarter results",
+          "Test demand for the new iPhone line and Services growth."
+        ],
+        [
+          "Gross margin bridge",
+          "Compare excluding the September-quarter tariff refunds."
+        ]
+      ]
+    },
+    "AMD": {
+      "date": "2026-11-03",
+      "source": "https://ir.amd.com/news-events/press-releases/detail/1303/amd-reports-third-quarter-2026-financial-results",
+      "thesis": "EPYC and Instinct adoption can expand profit if the data-centre mix and software ecosystem support recurring demand.",
+      "confirmation": "Data Center growth continues alongside higher GAAP operating margins and broad customer shipments.",
+      "invalidation": "Accelerator deployment slips or growth requires persistent margin concessions.",
+      "drivers": [
+        [
+          "Data Center",
+          "+97% YoY",
+          "Record Instinct and EPYC sales contributed."
+        ],
+        [
+          "GAAP operating margin",
+          "21% vs 14%",
+          "Revenue reached $13.4B."
+        ]
+      ],
+      "risks": [
+        [
+          "Customer ramps",
+          "Deployment timing",
+          "Distinguish signed commitments and roadmaps from recognised sales."
+        ],
+        [
+          "Margin gap",
+          "54% GAAP gross margin",
+          "Compare GAAP and adjusted results through the product ramp."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 results",
+          "Review Instinct and EPYC growth and GAAP margins."
+        ],
+        [
+          "Customer deployments",
+          "Look for disclosed shipments, capacity and repeat orders."
+        ]
+      ]
+    },
+    "AVGO": {
+      "date": "2026-09-02",
+      "source": "https://www.broadcom.com/company/news/apj/financial-releases/64671",
+      "thesis": "Custom accelerators and networking can compound cash generation alongside infrastructure software if large customer ramps diversify.",
+      "confirmation": "Forecast accelerator growth converts to sales and reported cash generation remains strong.",
+      "invalidation": "Customer concentration, delayed projects or weak software renewals impair recurring earnings.",
+      "drivers": [
+        [
+          "AI semiconductors",
+          "$16.7B in fiscal Q3",
+          "Issuer reported 221% annual growth."
+        ],
+        [
+          "Consolidated sales",
+          "$29.6B, +86% YoY",
+          "Compare semiconductor and software growth and operating cash generation."
+        ]
+      ],
+      "risks": [
+        [
+          "Concentration",
+          "Hyperscaler programmes",
+          "Large custom programmes can make timing and customer dependence material."
+        ],
+        [
+          "Guidance risk",
+          "$21.7B Q4 AI sales outlook",
+          "Management’s estimate is sensitive to shipment timing and mix."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Fiscal Q4 results · Dec 9 (scheduled)",
+          "Compare actual AI sales and margins with guidance.",
+          "https://investors.broadcom.com/node/64841/pdf"
+        ],
+        [
+          "Software renewals",
+          "Check infrastructure software growth alongside cash conversion."
+        ]
+      ]
+    },
+    "GOOG": {
+      "date": "2026-10-28",
+      "source": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000080/googexhibit991q32026.htm",
+      "thesis": "Search and Cloud can support profitable growth if AI investment earns a return and distribution remedies leave traffic economics resilient.",
+      "confirmation": "Search monetisation holds while Cloud backlog turns into profitable revenue and cash flow.",
+      "invalidation": "Distribution changes or rising capital intensity depress sustainable returns despite cloud growth.",
+      "drivers": [
+        [
+          "Search and other",
+          "$63.35B Q3 revenue",
+          "Year-over-year growth was about 12%."
+        ],
+        [
+          "Cloud",
+          "$30.7B sales; $11.1B operating income",
+          "Measure backlog conversion and margin alongside hardware mix."
+        ]
+      ],
+      "risks": [
+        [
+          "Cash investment",
+          "Cash flow vs capex",
+          "Nine-month operating cash flow was $127.1B versus $132.0B in property and equipment purchases.",
+          "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
+        ],
+        [
+          "Distribution",
+          "Search remedies",
+          "Track enforcement and changes to commercial terms. GOOG is Class C.",
+          "https://www.justice.gov/atr/case/us-and-plaintiff-states-v-google-llc"
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 operating results",
+          "Review Search monetisation, Cloud margins and capex."
+        ],
+        [
+          "Search remedy implementation",
+          "Follow the next court update.",
+          "https://www.justice.gov/atr/case/us-and-plaintiff-states-v-google-llc"
+        ]
+      ]
+    },
+    "META": {
+      "date": "2026-10-21",
+      "source": "https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Third-Quarter-2026-Results/",
+      "thesis": "Advertising scale and improvements in ad yield can fund AI investment if legal cash costs and infrastructure spending remain manageable.",
+      "confirmation": "Ad impressions and yield expand while free cash flow remains resilient after capital spending.",
+      "invalidation": "Durable ad weakness or sustained spending growth overwhelms cash generated by the apps.",
+      "drivers": [
+        [
+          "Advertising",
+          "Impressions +10%; price per ad +14%",
+          "Both measures supported Q3 revenue growth."
+        ],
+        [
+          "Revenue",
+          "$64.6B, +26% YoY",
+          "Track ad growth against engagement across the Family of Apps."
+        ]
+      ],
+      "risks": [
+        [
+          "Litigation",
+          "$9.89B Q3 charge",
+          "The settlement charge affected reported earnings. Cash payments will follow their own schedule."
+        ],
+        [
+          "Capital intensity",
+          "$34.91B Q3 capex",
+          "Issuer measure includes principal payments on finance leases."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 results",
+          "Compare ad yield, impressions and infrastructure spending."
+        ],
+        [
+          "Legal cash and payments",
+          "Track settlement disclosures and GAAP-to-adjusted reconciliation."
+        ]
+      ]
+    },
+    "MSFT": {
+      "date": "2026-10-28",
+      "source": "https://www.microsoft.com/en-us/Investor/earnings/FY-2027-Q1/press-release-webcast",
+      "thesis": "Azure growth and recurring enterprise subscriptions can compound earnings if infrastructure deployment generates sustainable returns.",
+      "confirmation": "Cloud revenue and customer commitments convert to revenue without persistently weakening margins and cash conversion.",
+      "invalidation": "Major customer concentration or capacity costs lead to sustained margin pressure and weak returns.",
+      "drivers": [
+        [
+          "Azure",
+          "+48% revenue growth",
+          "Check usage and capacity availability in the next report."
+        ],
+        [
+          "Commercial commitments",
+          "$677B remaining performance obligations",
+          "Cloud revenue was $63.9B, up 30%."
+        ]
+      ],
+      "risks": [
+        [
+          "Contract timing",
+          "RPO includes multi-year commitments",
+          "Backlog timing and customer mix can differ from current cash receipts."
+        ],
+        [
+          "Infrastructure returns",
+          "Capacity and capital cost",
+          "Compare segment profit and cash capex as leased and owned assets come online."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Fiscal Q2 results",
+          "Review Azure growth, cloud margin and capex."
+        ],
+        [
+          "Backlog conversion",
+          "Check the timing and customer mix of commercial commitments."
+        ]
+      ]
+    },
+    "PLTR": {
+      "date": "2026-11-02",
+      "source": "https://www.sec.gov/Archives/edgar/data/1321655/000132165526000045/a2026q3ex991pressrelease.htm",
+      "thesis": "Commercial deployments can widen recurring software revenue alongside government work if orders convert and growth supports GAAP margins.",
+      "confirmation": "U.S. commercial customers renew and expand while recognised revenue and operating profit follow.",
+      "invalidation": "Slower customer expansion or persistent contract conversion delays undermine operating leverage.",
+      "drivers": [
+        [
+          "U.S. commercial",
+          "$984M, +148% YoY",
+          "Commercial exceeded U.S. government revenue in Q3."
+        ],
+        [
+          "U.S. government",
+          "$953M, +96% YoY",
+          "Budget and contract schedules can make results uneven."
+        ]
+      ],
+      "risks": [
+        [
+          "Booking vs revenue",
+          "Total contract value +6% YoY",
+          "Contract value growth and recognised revenue growth measure different things."
+        ],
+        [
+          "GAAP economics",
+          "Stock-based compensation",
+          "Track diluted share growth and GAAP profit alongside adjusted margins."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 commercial results",
+          "Review U.S. commercial growth and contract conversion."
+        ],
+        [
+          "Government and dilution",
+          "Track awarded work and diluted shares over the next reports."
+        ]
+      ]
+    },
+    "TSM": {
+      "date": "2026-10-15",
+      "source": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000726/a3q26e_withguidancexfinal.htm",
+      "thesis": "Leading-edge manufacturing can drive durable returns if advanced-node demand supports utilisation through an expensive capacity buildout.",
+      "confirmation": "Advanced-node share and margin remain strong through new-node and overseas production ramps.",
+      "invalidation": "Weak utilisation, slower node transitions or overseas costs materially reduce returns.",
+      "drivers": [
+        [
+          "Q3 sales",
+          "NT$1.494T, +50.9% YoY",
+          "Issuer also reported US$46.72B of sales."
+        ],
+        [
+          "Advanced wafer sales",
+          "79% from 7nm and more advanced",
+          "2nm already accounted for 8% of wafer revenue."
+        ]
+      ],
+      "risks": [
+        [
+          "Margin and capex",
+          "66.4% gross margin",
+          "Watch utilisation and dilution from new overseas capacity."
+        ],
+        [
+          "ADR accounting",
+          "USD price vs TWD statements",
+          "Use the issuer’s ADR earnings conversion before applying per-share comparisons."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 results",
+          "Compare actual revenue and margin with issuer guidance."
+        ],
+        [
+          "Advanced-node ramp",
+          "Follow 2nm mix, capacity and reported margins."
+        ]
+      ]
+    },
+    "AFRM": {
+      "date": "2026-11-05",
+      "source": "https://investors.affirm.com/static-files/20984a84-828f-4b3c-be8b-fe2154288a62",
+      "thesis": "Payments scale can grow earnings if credit performance and funding costs remain disciplined across the cycle.",
+      "confirmation": "GMV grows while revenue less transaction costs stays resilient as a share of GMV.",
+      "invalidation": "Vintage losses or funding costs compress contribution even as checkout volume rises.",
+      "drivers": [
+        [
+          "Merchant volume",
+          "$14.4B GMV, +34% YoY",
+          "Track consumer repeat usage and merchant breadth."
+        ],
+        [
+          "Contribution",
+          "$617M revenue less transaction costs",
+          "Issuer measure was 4.3% of GMV."
+        ]
+      ],
+      "risks": [
+        [
+          "Credit",
+          "Underwriting and vintage losses",
+          "Monitor delinquency and realised losses as origination expands."
+        ],
+        [
+          "Funding",
+          "Loan sales and funding economics",
+          "Compare profitability under different funding and interest-rate conditions."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Fiscal Q2 results",
+          "Compare GMV growth, credit costs and contribution margin."
+        ],
+        [
+          "Funding disclosures",
+          "Follow committed capacity and loan-sale economics."
+        ]
+      ]
+    },
+    "ANT": {
+      "date": "2026-11-20",
+      "source": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026075973/ant-20261119.htm",
+      "thesis": "Claude usage can produce durable economics if monetisation grows faster than inference and infrastructure costs.",
+      "confirmation": "Recurring customer usage, retention and gross profit scale after normalising for compute and partner terms.",
+      "invalidation": "Customer concentration, contractual compute expense or production costs undermine cash generation.",
+      "drivers": [
+        [
+          "Demand",
+          "$17.0B Q3 revenue",
+          "Reported in the IPO prospectus. Avoid treating one quarter as recurring revenue.",
+          "https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm"
+        ],
+        [
+          "Strategic financing",
+          "$26.0B concurrent private placement",
+          "Seven corporate investors bought Class N shares."
+        ]
+      ],
+      "risks": [
+        [
+          "Governance",
+          "Multiple equity classes",
+          "Public Class A economics and voting rights should be read with the prospectus."
+        ],
+        [
+          "Capital economics",
+          "Compute commitments",
+          "Separate operating cash generation from the IPO and strategic equity inflows."
+        ]
+      ],
+      "catalysts": [
+        [
+          "First post-IPO results",
+          "Review revenue, gross profit and operating cash flows."
+        ],
+        [
+          "Share supply and governance",
+          "Track filed lock-up provisions and disclosures, and distinguish Class N from Class A.",
+          "https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm"
+        ]
+      ]
+    },
+    "ASTS": {
+      "date": "2026-11-09",
+      "source": "https://www.sec.gov/Archives/edgar/data/1780312/000119312526453758/asts-ex99_1.htm",
+      "thesis": "Direct-to-device connectivity can become a recurring business if deployments, approvals and partner activation lead to paying subscriptions.",
+      "confirmation": "Commercial launch and carrier activation translate into recurring service revenue.",
+      "invalidation": "Repeated deployment delays or cash requirements outpace verified service monetisation.",
+      "drivers": [
+        [
+          "Quarterly revenue",
+          "$42.3M",
+          "Revenue came from gateway deliveries and government milestones."
+        ],
+        [
+          "Reported cash",
+          "$3.2B including restricted cash",
+          "Compare deployable cash with satellite and launch commitments."
+        ]
+      ],
+      "risks": [
+        [
+          "Commercial scale",
+          "Milestone revenue",
+          "Do not extrapolate gateway or milestone sales into recurring subscriber revenue."
+        ],
+        [
+          "Funding and execution",
+          "$211.0M Q3 operating expenses",
+          "Deployment and approval timing can increase funding needs."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Commercial service milestones",
+          "Follow actual network service availability and carrier billing."
+        ],
+        [
+          "Next capital update",
+          "Track cash excluding restrictions, deployment spend and financing."
+        ]
+      ]
+    },
+    "HIMS": {
+      "date": "2026-11-09",
+      "source": "https://investors.hims.com/news/news-details/2026/Hims--Hers-Health-Inc--Reports-Third-Quarter-2026-Financial-Results/",
+      "thesis": "A broader digital-health platform can compound revenue if subscription acquisition, retention and contribution economics remain durable.",
+      "confirmation": "Subscriber growth and revenue per subscriber expand while cash conversion improves.",
+      "invalidation": "Higher acquisition costs, treatment availability or regulatory changes weaken recurring contribution.",
+      "drivers": [
+        [
+          "Revenue",
+          "$890M, +49% YoY",
+          "Compare product and geographic mix rather than assigning all growth to subscriber count."
+        ],
+        [
+          "Subscribers",
+          "2.79M, +13% YoY",
+          "Watch retention and monthly revenue per subscriber."
+        ]
+      ],
+      "risks": [
+        [
+          "Earnings guidance",
+          "$257M–$277M adjusted EBITDA outlook",
+          "Issuer reduced full-year adjusted EBITDA guidance."
+        ],
+        [
+          "Product and regulatory exposure",
+          "Availability and compliance",
+          "Watch product-category mix and any disclosed changes to prescriptions, supply or restrictions."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 earnings",
+          "Check revenue mix and actual adjusted EBITDA against the revised range."
+        ],
+        [
+          "Subscriber economics",
+          "Review retention, marketing efficiency and recurring contribution."
+        ]
+      ]
+    },
+    "NBIS": {
+      "date": "2026-11-12",
+      "source": "https://www.sec.gov/Archives/edgar/data/1513845/000110465926126008/tm2629571d1_ex99-1.htm",
+      "thesis": "AI cloud infrastructure can scale if signed capacity converts to revenue and generates cash after financing and expansion costs.",
+      "confirmation": "Contracted capacity comes online on time and operating cash after capex improves.",
+      "invalidation": "Construction delays, customer concentration or refinancing needs absorb expected gains.",
+      "drivers": [
+        [
+          "Adjusted EBITDA",
+          "$465.8M in Q3",
+          "Reported continuing operations still showed a $37.5M net loss."
+        ],
+        [
+          "Property and equipment",
+          "$19.34B net at quarter-end",
+          "Track commissioned rather than planned capacity."
+        ]
+      ],
+      "risks": [
+        [
+          "Funding",
+          "About $14.0B noncurrent debt",
+          "Monitor interest costs, lease obligations and maturity schedules."
+        ],
+        [
+          "Customer cash flow",
+          "Deferred revenue and delivery",
+          "Advance billings and backlog depend on satisfying service obligations."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Capacity delivery",
+          "Watch commissioning, utilisation and Q4 sales."
+        ],
+        [
+          "Financing and cash flow",
+          "Review capital spending, debt drawdowns and collections."
+        ]
+      ]
+    },
+    "ONDS": {
+      "date": "2026-11-12",
+      "source": "https://www.sec.gov/Archives/edgar/data/1646188/000119312526457088/onds-ex99_1.htm",
+      "thesis": "The enlarged portfolio can reach durable profitability if organic growth and order conversion survive integration.",
+      "confirmation": "Pro forma organic revenue converts into repeat orders, margins and cash receipts.",
+      "invalidation": "Acquisition integration, working capital or dilution undermines returns.",
+      "drivers": [
+        [
+          "Q3 revenue",
+          "$167.5M",
+          "Pro forma organic revenue grew 64% year over year on the issuer’s basis."
+        ],
+        [
+          "Backlog",
+          "$835M, +36% QoQ",
+          "Issuer reported $214M of new orders in Q3."
+        ]
+      ],
+      "risks": [
+        [
+          "Acquisition effects",
+          "Reported vs pro forma",
+          "Comparability depends on when acquired operations entered the financials."
+        ],
+        [
+          "Conversion",
+          "Orders vs cash",
+          "Review contract economics, acquisition commitments and cash flow."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 results",
+          "Compare actual sales with the more-than-$250M management target."
+        ],
+        [
+          "Backlog conversion",
+          "Track cash collection and organic margins across the enlarged business."
+        ]
+      ]
+    },
+    "RKLB": {
+      "date": "2026-11-09",
+      "source": "https://investors.rocketlabcorp.com/news-releases/news-release-details/rocket-lab-announces-third-quarter-2026-financial-results-posts",
+      "thesis": "Launch and space systems can grow together if backlog converts and development spend is matched by durable gross profit.",
+      "confirmation": "Repeat launch and systems revenue converts to cash while new launch capacity earns commercial returns.",
+      "invalidation": "Major schedule delays or development costs require repeated financing without comparable revenue growth.",
+      "drivers": [
+        [
+          "Revenue",
+          "$268M, +73% YoY",
+          "Bookings and revenue should be tracked separately."
+        ],
+        [
+          "Backlog",
+          "$3.57B, +52% QoQ",
+          "Issuer reported positive Q3 operating cash flow of $7.2M."
+        ]
+      ],
+      "risks": [
+        [
+          "Development spend",
+          "Neutron schedule",
+          "First launch was targeted for 2027 at the earliest in the Q3 release."
+        ],
+        [
+          "Cash conversion",
+          "Quarterly cash flows can vary",
+          "Check operating cash after capital expenditures and development spend."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 earnings",
+          "Compare sales and gross margins against management’s range."
+        ],
+        [
+          "Launch milestones",
+          "Follow schedule and realised backlog conversion."
+        ]
+      ]
+    },
+    "SKHY": {
+      "date": "2026-10-28",
+      "source": "https://news.skhynix.com/en/q3-2026-business-results/",
+      "thesis": "HBM and higher-value memory can sustain returns if capacity contracts and product mix cushion the memory cycle.",
+      "confirmation": "Contracted output turns into volume and stable margins as new memory generations ramp.",
+      "invalidation": "Memory pricing reverses or expansion costs grow faster than realised demand.",
+      "drivers": [
+        [
+          "Quarterly revenue",
+          "₩104.62T",
+          "Issuer reported sales growth of 32% sequentially."
+        ],
+        [
+          "Long-term agreements",
+          "Over half of 2027–28 capacity",
+          "Issuer-reported coverage still depends on contract terms and delivery."
+        ]
+      ],
+      "risks": [
+        [
+          "Cycle exposure",
+          "80% Q3 operating margin",
+          "Peak pricing and high utilisation can unwind as supply catches up."
+        ],
+        [
+          "Reporting currency",
+          "KRW vs USD ADR",
+          "Corporate statements and ADR trading prices require currency and ratio checks."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 results",
+          "Review HBM mix, memory price and operating margin."
+        ],
+        [
+          "Capacity and contracts",
+          "Watch delivery, utilisation and contract disclosure."
+        ]
+      ]
+    },
+    "SPCX": {
+      "date": "2026-10-21",
+      "source": "https://www.sec.gov/Archives/edgar/data/1181412/000162828026066880/spcx-20260930.htm",
+      "thesis": "Starlink and launch scale can support consolidated returns if new capital-intensive businesses earn adequate cash returns.",
+      "confirmation": "Connectivity grows with unit economics intact and consolidated cash flow covers expansion over time.",
+      "invalidation": "Heavy expansion, acquisition costs or slower subscriber growth undermine segment cash generation.",
+      "drivers": [
+        [
+          "Connectivity",
+          "Starlink",
+          "Track customers, revenue and costs from hardware and satellite deployment."
+        ],
+        [
+          "Space",
+          "Launch services and development",
+          "Compare mix and recognised revenue across launch and development activity."
+        ]
+      ],
+      "risks": [
+        [
+          "Acquisition exposure",
+          "$47.9B SI segment goodwill",
+          "Review acquisition accounting and cash returns as the newer segment scales."
+        ],
+        [
+          "Capital intensity",
+          "Satellite, launch and compute spending",
+          "Watch segment profit and capex together."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Next segment results",
+          "Compare Connectivity growth and gross profit with corporate investment."
+        ],
+        [
+          "Capital allocation",
+          "Check compute and launch investment against consolidated cash generation."
+        ]
+      ]
+    },
+    "TSLA": {
+      "date": "2026-10-21",
+      "source": "https://assets-ir.tesla.com/tesla-contents/IR/TSLA-Q3-2026-Update.pdf",
+      "thesis": "Auto cost reductions, energy growth and software revenue can support earnings if recurring operating cash improves.",
+      "confirmation": "Deliveries and margins stabilise while energy and software make measurable profit contributions.",
+      "invalidation": "Weak unit economics or rising investment outpaces realised cash generation.",
+      "drivers": [
+        [
+          "Vehicle deliveries",
+          "486,532 in Q3, −2% YoY",
+          "Compare unit growth with pricing, mix and automotive margin."
+        ],
+        [
+          "FSD subscriptions",
+          "1.74M active, +67% YoY",
+          "The reported subscription base is distinct from realised standalone earnings."
+        ]
+      ],
+      "risks": [
+        [
+          "Automotive pricing",
+          "Volume and incentives",
+          "Track margin excluding regulatory credits and effects of product mix."
+        ],
+        [
+          "Capital requirements",
+          "Compute and production investment",
+          "Review capital intensity against cash generated by current operations."
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 deliveries and energy deployments",
+          "Compare delivery volumes, production and installed storage."
+        ],
+        [
+          "Q4 operating results",
+          "Review automotive margin and cash flow after capital expenditure."
+        ]
+      ]
+    }
+  }
+}
