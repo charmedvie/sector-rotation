@@ -32,9 +32,10 @@ function registerScreeningStocks(){
   if(Object.hasOwn(M,s)||!/^[A-Z][A-Z0-9.-]{0,9}$/.test(s))continue;
   const meta=d.metadata||{};
   const approved=d.screening&&data.screening_requests?.[s]==='available';
+  const inWatchlist=Object.values(data.watchlists||{}).some(list=>list.includes(s));
   const publishedPeer=!d.screening&&d.quarterly?.length&&meta.currency==='USD'&&d.quote?.currency==='USD';
-  if(!approved&&!publishedPeer)continue;
-  if(!approved)lookupOnlyTickers.add(s);
+  if(!approved&&!publishedPeer&&!inWatchlist)continue;
+  if(!approved&&!inWatchlist)lookupOnlyTickers.add(s);
   const profile=screeningProfiles[meta.profile]||screeningProfiles.unclassified;
   screeningTickers.add(s);M[s]={name:meta.name||s,industry:meta.industry||profile[0],question:'',peers:[],risks:[],sec:meta.cik||'',kpis:profile[2]};
   const names={liquidity:'Debt and financing exposure',coverage:'Interest service coverage',shortterm:'Short-term obligation coverage',inventory:'Inventory exposure',receivables:'Receivables exposure',shares:'Share dilution',capex:'Capital spending',runway:'Historical cash runway proxy',capital:'Regulatory capital'};
@@ -139,7 +140,15 @@ function table(headers,rows){return '<div class="table-scroll"><table><thead><tr
 function box(title,body){return '<div class="stock-item"><h3>'+esc(title)+'</h3>'+body+'</div>';}
 function list(arr){return '<ul>'+arr.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';}
 function chart(id,traces,ytitle){if(!window.Plotly)return;Plotly.react(id,traces,{paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#b7c6db'},margin:{l:64,r:18,t:18,b:45},legend:{orientation:'h'},xaxis:{gridcolor:'#28364a'},yaxis:{title:ytitle,gridcolor:'#28364a'},hovermode:'x unified'},{responsive:true,displayModeBar:false});}
-function controls(){el('watchlist').innerHTML=Object.keys(M).filter(s=>!lookupOnlyTickers.has(s)).map(s=>'<button aria-pressed="'+(s===symbol)+'" data-symbol="'+s+'">'+s+'</button>').join('');el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=screeningTabs(symbol).map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}
+function controls(){
+ const tickerButton=s=>'<button aria-pressed="'+(s===symbol)+'" data-symbol="'+esc(s)+'">'+esc(s)+'</button>';
+ const groups=Object.entries(data.watchlists||{});
+ const grouped=new Set(groups.flatMap(([,tickers])=>tickers));
+ const other=Object.keys(M).filter(s=>!lookupOnlyTickers.has(s)&&!grouped.has(s));
+ const row=(name,tickers)=>'<div class="stock-watchlist-group" role="group" aria-label="'+esc(name)+'"><span>'+esc(name)+'</span><div>'+tickers.filter(s=>Object.hasOwn(M,s)).map(tickerButton).join('')+'</div></div>';
+ el('watchlist').innerHTML=groups.length?groups.map(([name,tickers])=>row(name,tickers)).join('')+
+  (other.length?row('Other research',other):''):other.map(tickerButton).join('');
+ el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=screeningTabs(symbol).map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}
 function select(s){if(!Object.prototype.hasOwnProperty.call(M,s))return;symbol=s;tab='Overview';location.hash=s;render();}
 function spark(values,color='#8caee1'){
  const valid=values.filter(Number.isFinite);if(valid.length<2)return '<div class="spark-empty">Insufficient history</div>';
@@ -1790,7 +1799,7 @@ function thesisPanel(panel,m,d,source){
 
 function render(){if(!screeningTabs(symbol).includes(tab))tab='Overview';controls();const m=M[symbol],d=get(symbol),q=latest(symbol),p=d.quote;
 const exchange=isScreening(symbol)?({NYQ:'NYSE',NMS:'NASDAQ',NGM:'NASDAQ',NCM:'NASDAQ',ASE:'AMEX',PCX:'AMEX',BTS:'CBOE'}[d.metadata?.exchange]||''):symbol==='OKLO'?'NYSE':'NASDAQ';
-el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent(exchange?exchange+':'+symbol:symbol);el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry+(isScreening(symbol)?' · Automatic screening':' · Deep research');el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
+el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent(d.metadata?.tradingviewSymbol||(exchange?exchange+':'+symbol:symbol));el('company').textContent=symbol+' · '+m.name;el('industry').textContent=m.industry+(isScreening(symbol)?' · Automatic screening':' · Deep research');el('question').textContent='';el('price').textContent=p.lastClose==null?'—':'$'+fmt(p.lastClose,2);el('price-date').textContent=p.date?'Close · '+p.date:'Price unavailable';
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');
 el('overview').querySelectorAll('tr').forEach(r=>{r.onclick=()=>select(r.dataset.symbol);r.onkeydown=e=>{if(e.key==='Enter')select(r.dataset.symbol);};});
 el('cards').innerHTML=[['REVENUE YoY',pct(yoy(symbol,'revenue'))],['OPERATING MARGIN',pct(q.operating_margin)],['EPS YoY',pct(yoy(symbol,'eps'))],['TRAILING P/E',fmt(p.trailingPE)]].map(a=>'<div class="stat-card"><div class="stat-top">'+a[0]+'</div><div class="stat-number">'+a[1]+'</div><div class="stat-desc">'+esc(q.period||'No statement data')+'</div></div>').join('');

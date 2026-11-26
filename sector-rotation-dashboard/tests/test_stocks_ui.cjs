@@ -190,3 +190,22 @@ test('published peers are searchable during a registry outage without joining th
  assert.doesNotMatch(nodes.get('watchlist').innerHTML,/data-symbol="SCHW"/);
  assert.equal(nodes.get('ticker-feedback').textContent,'');
 });
+
+test('TradingView groups preserve duplicate membership and keep missing-data stocks selectable',()=>{
+ const {ctx,nodes}=load();
+ vm.runInContext(`
+  data={watchlists:{P1:['AAPL','IBKR'],Stablish:['AAPL','AMD']},stocks:{
+   AAPL:{quarterly:[],annual:[],quote:{},prices:[],metadata:{name:'Apple',tradingviewSymbol:'NASDAQ:AAPL'}},
+   AMD:{quarterly:[],annual:[],quote:{},prices:[],metadata:{name:'AMD',tradingviewSymbol:'NASDAQ:AMD'}}
+  }};
+  registerScreeningStocks();
+  select('AAPL');
+ `,ctx);
+ const watchlist=nodes.get('watchlist').innerHTML;
+ assert.equal((watchlist.match(/data-symbol="AAPL"/g)||[]).length,2);
+ assert.match(watchlist,/aria-label="P1"/);
+ assert.match(watchlist,/aria-label="Stablish"/);
+ assert.match(nodes.get('company').textContent,/AAPL · Apple/);
+ assert.match(nodes.get('tradingview-link').href,/NASDAQ%3AAAPL/);
+ assert.match(watchlist,/aria-label="Other research"/);
+});

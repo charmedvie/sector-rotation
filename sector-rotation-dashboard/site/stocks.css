@@ -99,3 +99,9 @@ a{color:#a9c9ff}.stock-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0
 .ownership-value{font-size:1.1rem;font-variant-numeric:tabular-nums}
 .ownership-highlight{margin:8px 0;color:#9ac9ec;font-weight:600}
 @media(max-width:650px){.ownership-grid{grid-template-columns:1fr}}
+
+.stock-watchlist-group{display:grid;grid-template-columns:110px minmax(0,1fr);align-items:baseline;gap:6px 10px;width:100%}
+.stock-watchlist-group>span{font-size:.8rem;font-weight:650;color:#aebed4}
+.stock-watchlist-group>div{display:flex;flex-wrap:wrap;gap:5px}
+.stock-watchlist-group button{padding:5px 9px}
+@media(max-width:550px){.stock-watchlist-group{grid-template-columns:1fr}}

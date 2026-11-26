@@ -1,0 +1,177 @@
+{
+  "watchlists": {
+    "Defensive": [
+      "JNJ",
+      "KO",
+      "PG",
+      "WMT",
+      "RTX"
+    ],
+    "Index": [
+      "DOW"
+    ],
+    "P1": [
+      "AAPL",
+      "AMZN",
+      "GOOG",
+      "IBKR",
+      "KO",
+      "NVDA",
+      "BMNR"
+    ],
+    "Stablish": [
+      "AAPL",
+      "AMD",
+      "AMZN",
+      "AVGO",
+      "GOOG",
+      "IBKR",
+      "META",
+      "MSFT",
+      "NVDA",
+      "PLTR",
+      "TSM"
+    ],
+    "Volatile": [
+      "AFRM",
+      "ANT",
+      "ASTS",
+      "HIMS",
+      "HOOD",
+      "KTOS",
+      "NBIS",
+      "OKLO",
+      "ONDS",
+      "RKLB",
+      "SKHY",
+      "SPCX",
+      "TSLA"
+    ]
+  },
+  "stocks": {
+    "JNJ": {
+      "name": "Johnson & Johnson",
+      "symbol": "NYSE:JNJ"
+    },
+    "KO": {
+      "name": "Coca-Cola Company",
+      "symbol": "NYSE:KO"
+    },
+    "PG": {
+      "name": "Procter & Gamble Company",
+      "symbol": "NYSE:PG"
+    },
+    "WMT": {
+      "name": "Walmart Inc.",
+      "symbol": "NASDAQ:WMT"
+    },
+    "RTX": {
+      "name": "RTX Corporation",
+      "symbol": "NYSE:RTX"
+    },
+    "DOW": {
+      "name": "Dow, Inc.",
+      "symbol": "NYSE:DOW"
+    },
+    "AAPL": {
+      "name": "Apple Inc.",
+      "symbol": "NASDAQ:AAPL"
+    },
+    "AMZN": {
+      "name": "Amazon.com, Inc.",
+      "symbol": "NASDAQ:AMZN"
+    },
+    "GOOG": {
+      "name": "Alphabet Inc. Class C",
+      "symbol": "NASDAQ:GOOG"
+    },
+    "IBKR": {
+      "name": "Interactive Brokers Group, Inc. Class A",
+      "symbol": "NASDAQ:IBKR"
+    },
+    "NVDA": {
+      "name": "NVIDIA Corporation",
+      "symbol": "NASDAQ:NVDA"
+    },
+    "BMNR": {
+      "name": "BitMine Immersion Technologies Inc",
+      "symbol": "NYSE:BMNR"
+    },
+    "AMD": {
+      "name": "Advanced Micro Devices, Inc.",
+      "symbol": "NASDAQ:AMD"
+    },
+    "AVGO": {
+      "name": "Broadcom Inc.",
+      "symbol": "NASDAQ:AVGO"
+    },
+    "META": {
+      "name": "Meta Platforms Inc Class A",
+      "symbol": "NASDAQ:META"
+    },
+    "MSFT": {
+      "name": "Microsoft Corporation",
+      "symbol": "NASDAQ:MSFT"
+    },
+    "PLTR": {
+      "name": "Palantir Technologies Inc. Class A",
+      "symbol": "NASDAQ:PLTR"
+    },
+    "TSM": {
+      "name": "Taiwan Semiconductor Manufacturing Co., Ltd. Sponsored ADR",
+      "symbol": "NYSE:TSM"
+    },
+    "AFRM": {
+      "name": "Affirm Holdings, Inc. Class A",
+      "symbol": "NASDAQ:AFRM"
+    },
+    "ANT": {
+      "name": "Anthropic, PBC Class A",
+      "symbol": "NASDAQ:ANT"
+    },
+    "ASTS": {
+      "name": "AST SpaceMobile, Inc. Class A",
+      "symbol": "NASDAQ:ASTS"
+    },
+    "HIMS": {
+      "name": "Hims & Hers Health, Inc. Class A",
+      "symbol": "NYSE:HIMS"
+    },
+    "HOOD": {
+      "name": "Robinhood Markets, Inc. Class A",
+      "symbol": "NASDAQ:HOOD"
+    },
+    "KTOS": {
+      "name": "Kratos Defense & Security Solutions, Inc.",
+      "symbol": "NASDAQ:KTOS"
+    },
+    "NBIS": {
+      "name": "Nebius Group N.V. Class A",
+      "symbol": "NASDAQ:NBIS"
+    },
+    "OKLO": {
+      "name": "Oklo Inc. Class A",
+      "symbol": "NYSE:OKLO"
+    },
+    "ONDS": {
+      "name": "Ondas Inc.",
+      "symbol": "NASDAQ:ONDS"
+    },
+    "RKLB": {
+      "name": "Rocket Lab Corporation",
+      "symbol": "NASDAQ:RKLB"
+    },
+    "SKHY": {
+      "name": "SK hynix Inc. Sponsored ADR",
+      "symbol": "NASDAQ:SKHY"
+    },
+    "SPCX": {
+      "name": "Space Exploration Technologies Corp",
+      "symbol": "NASDAQ:SPCX"
+    },
+    "TSLA": {
+      "name": "Tesla, Inc.",
+      "symbol": "NASDAQ:TSLA"
+    }
+  }
+}
