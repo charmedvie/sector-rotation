@@ -17,6 +17,7 @@ const screeningProfiles={
  biotech:['Biotechnology',['liquidity','runway','shares'],['Pipeline and clinical milestones','Commercial sales','R&D and financing']],
  precommercial:['Pre-commercial',['runway','shortterm','shares'],['Commercial milestones','Binding contracts','Cash burn and dilution']],
  capital_intensive:['Capital-intensive',['liquidity','coverage','shortterm','capex'],['Capacity and utilization','Capital commitments','Incremental returns']],
+ exchange:['Exchange operator',['coverage','receivables'],['Trading volume and fee capture','Market data and licensing','Clearing and counterparty exposure']],
  financial:['Financial services',['capital','liquidity'],['Client assets and monetisation','Credit and capital','Ownership and fee economics']],
  bank:['Bank',['capital','liquidity'],['Net interest margin and deposits','Loan quality','Regulatory capital']],
  insurance:['Insurance',['capital','liquidity'],['Combined ratio','Reserves and investments','Reinsurance']],

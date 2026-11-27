@@ -1,5 +1,5 @@
 {
-  "reviewed_at": "2026-11-26",
+  "reviewed_at": "2026-11-27",
   "companies": {
     "JNJ": {
       "date": "2026-10-13",
@@ -1034,6 +1034,134 @@
         [
           "Q4 operating results",
           "Review automotive margin and cash flow after capital expenditure."
+        ]
+      ]
+    },
+    "CME": {
+      "date": "2026-10-21",
+      "source": "https://investor.cmegroup.com/index.php/news-releases/news-release-details/cme-group-inc-reports-highest-q3-revenue-record-q3-2026",
+      "thesis": "CME earns a fee each time customers trade and clear derivatives. Deep interest-rate markets attract repeat hedging, while market-data subscriptions add a second revenue stream.",
+      "confirmation": "Volumes grow across asset classes, fees per contract hold and market-data revenue keeps rising.",
+      "invalidation": "Volume shifts toward lower-fee contracts, clearing adoption stalls or costs rise faster than fees.",
+      "drivers": [
+        [
+          "Trading activity",
+          "30 million contracts per day",
+          "October volume rose 15% year over year. Interest-rate contracts averaged 14.8 million per day.",
+          "https://www.cmegroup.com/media-room/press-releases/2026/11/03/cme_group_reportsrecordoctoberadvof30millioncontractsup15yearove.html"
+        ],
+        [
+          "Fees per contract",
+          "$0.679 in Q3",
+          "The prior-year rate was $0.702. A shift toward lower-fee products can offset part of a volume gain.",
+          "https://investor.cmegroup.com/static-files/83779364-14f9-4f3e-925d-46132daf8c84"
+        ],
+        [
+          "Market data",
+          "$243.1 million in Q3",
+          "Watch data and information-services sales alongside clearing and transaction revenue.",
+          "https://investor.cmegroup.com/static-files/83779364-14f9-4f3e-925d-46132daf8c84"
+        ]
+      ],
+      "risks": [
+        [
+          "Revenue sensitivity",
+          "Product mix and pricing",
+          "Compare the fee earned per contract with trading volume. Stronger volume can coincide with a lower fee per trade.",
+          "https://investor.cmegroup.com/static-files/83779364-14f9-4f3e-925d-46132daf8c84"
+        ],
+        [
+          "Clearing risk",
+          "Member default and collateral",
+          "Review margin coverage, default resources and stress testing. Member collateral should be assessed separately from corporate cash.",
+          "https://investor.cmegroup.com/static-files/83779364-14f9-4f3e-925d-46132daf8c84"
+        ],
+        [
+          "Execution risk",
+          "Treasury clearing launch",
+          "Regulatory approvals, member onboarding and actual cleared volume determine the contribution.",
+          "https://investor.cmegroup.com/news-releases/news-release-details/cme-group-launch-cme-securities-clearing-december-7-expand"
+        ]
+      ],
+      "catalysts": [
+        [
+          "Dec 7 target · Treasury clearing",
+          "Watch approvals, launch status and first clearing members.",
+          "https://investor.cmegroup.com/news-releases/news-release-details/cme-group-launch-cme-securities-clearing-december-7-expand"
+        ],
+        [
+          "Monthly · Trading volume",
+          "Compare rate, equity and energy volumes with October’s 30 million total daily contracts.",
+          "https://www.cmegroup.com/media-room/press-releases/2026/11/03/cme_group_reportsrecordoctoberadvof30millioncontractsup15yearove.html"
+        ],
+        [
+          "Next earnings · Fee capture",
+          "Check pricing, product mix and market-data growth against Q3.",
+          "https://investor.cmegroup.com/static-files/83779364-14f9-4f3e-925d-46132daf8c84"
+        ]
+      ]
+    },
+    "CBOE": {
+      "date": "2026-10-30",
+      "source": "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Results-for-Third-Quarter-2026/default.aspx",
+      "thesis": "Cboe earns fees on its proprietary index options and sells market data. Growth depends on repeat SPX and VIX trading and the revenue captured per contract.",
+      "confirmation": "Index-option volume and fee capture hold up beyond volatile months, with continued Data Vantage growth.",
+      "invalidation": "Short-dated activity reverses, fee capture falls or expenses outpace organic net revenue.",
+      "drivers": [
+        [
+          "Index options",
+          "6.9 million contracts per day",
+          "October set a record for proprietary index options. SPX accounted for 5.5 million contracts per day.",
+          "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Trading-Volume-for-October-2026/default.aspx"
+        ],
+        [
+          "Data Vantage",
+          "Mid-teens organic growth target",
+          "Management raised its 2026 target in October. Compare actual organic results with guidance.",
+          "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Results-for-Third-Quarter-2026/default.aspx"
+        ],
+        [
+          "Operating performance",
+          "$712.2 million Q3 net revenue",
+          "Up 18% year over year. GAAP diluted EPS was $4.08 and adjusted diluted EPS was $3.63.",
+          "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Results-for-Third-Quarter-2026/default.aspx"
+        ]
+      ],
+      "risks": [
+        [
+          "Volume concentration",
+          "3.6 million daily same-day SPX contracts",
+          "October activity was unusually strong. Monitor whether demand holds as volatility changes.",
+          "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Trading-Volume-for-October-2026/default.aspx"
+        ],
+        [
+          "Index licensing",
+          "Exclusive S&P license extended through 2051",
+          "The extension supports the SPX franchise. Proprietary products still depend on licensing economics and client demand.",
+          "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Results-for-Third-Quarter-2026/default.aspx"
+        ],
+        [
+          "Comparability",
+          "Australia divestiture",
+          "The sale closed July 31. Use organic growth and comparable geographic coverage when assessing volumes.",
+          "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Trading-Volume-for-October-2026/default.aspx"
+        ]
+      ],
+      "catalysts": [
+        [
+          "Monthly · SPX activity",
+          "Track index volume, same-day expiries and revenue per contract against October.",
+          "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Trading-Volume-for-October-2026/default.aspx"
+        ],
+        [
+          "Dec 6 target · Longer EDGX hours",
+          "Watch regulatory approval, industry readiness and volumes in extended sessions.",
+          "https://www.cboe.com/insights/posts/market-metrics-that-matter-u-s-cash-equities-october-volume-briefing/"
+        ],
+        [
+          "Next earnings · Data and expenses",
+          "Compare Data Vantage growth with the mid-teens target and 2026 adjusted expenses with the $830–845 million range.",
+          "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Results-for-Third-Quarter-2026/default.aspx"
         ]
       ]
     }

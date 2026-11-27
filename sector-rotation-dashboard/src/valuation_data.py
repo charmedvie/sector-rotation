@@ -26,7 +26,7 @@ BAL_TAGS = {
 }
 # Class structures and issuer-wide share counts must be checked before adding symbols.
 SINGLE_CLASS = {
-    'AAPL', 'AMD', 'AMZN', 'AVGO', 'JNJ', 'KO', 'KTOS', 'MSFT', 'NVDA',
+    'AAPL', 'AMD', 'AMZN', 'AVGO', 'CBOE', 'JNJ', 'KO', 'KTOS', 'MSFT', 'NVDA',
     'OKLO', 'PG', 'RTX', 'TSLA', 'WMT',
 }
 
@@ -121,6 +121,9 @@ def historical_valuation(symbol,facts,history):
         key: [_records(facts, (tag,), 'USD', True) for tag in FLOW_TAGS[key]]
         for key in ('revenue', 'capex')
     }
+    if symbol == 'CBOE':
+        # Cboe reports gross revenue including assessed regulatory fees.
+        alternatives['revenue'].append(_records(facts, ('RevenueFromContractWithCustomerIncludingAssessedTax',), 'USD', True))
     splits=[(_day(d),float(v)) for d,v in history.get('Stock Splits',pd.Series(dtype=float)).items() if _finite(v) and v>0]
     dates=sorted({r[0] for rec in records.values() for r in rec} |
                  {r[0] for options in alternatives.values() for rec in options for r in rec})

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_at": "2026-11-26",
+  "reviewed_at": "2026-11-27",
   "events": [
     {
       "id": "oklo-centrus-haleu-20261111",
@@ -2435,6 +2435,80 @@
     "SKHY": {
       "reviewed_at": "2026-11-26",
       "note": "U.S. Form 4 and comparable 13F data for this ADR were not verified. Check issuer disclosures for domestic ownership reporting."
+    },
+    "CME": {
+      "reviewed_at": "2026-11-27",
+      "insiders": [
+        {
+          "kind": "sell",
+          "name": "Derek Sammann · Senior managing director",
+          "date": "2026-11-24",
+          "filed": "2026-11-24",
+          "value": "−5,200 shares",
+          "detail": "Trust sale at a weighted average of $312.01. The separately disclosed trust transfer was a change in ownership form.",
+          "url": "https://www.sec.gov/Archives/edgar/data/1156375/000115637526000072/xslF345X06/wk-form4_1795556043.xml"
+        }
+      ],
+      "stakes": [
+        {
+          "kind": "13G",
+          "name": "Vanguard Capital Management · Investment adviser",
+          "date": "2026-03-31",
+          "filed": "2026-04-29",
+          "value": "7.45%",
+          "detail": "27,044,709 shares beneficially owned on the reporting date.",
+          "url": "https://www.sec.gov/Archives/edgar/data/1156375/000210011926000353/xslSCHEDULE_13G_X02/primary_doc.xml"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment adviser",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "-120,724 shares",
+          "detail": "23,661,856 → 23,541,132 reported shares, Q2 to Q3.",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ]
+    },
+    "CBOE": {
+      "reviewed_at": "2026-11-27",
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Janet Froetscher · Director",
+          "date": "2026-11-18",
+          "filed": "2026-11-20",
+          "value": "−1,448 shares",
+          "detail": "Sale under a Rule 10b5-1 plan adopted in February. Direct holdings after the sale were 11,422 shares.",
+          "url": "https://www.sec.gov/Archives/edgar/data/1374310/000149384826000010/0001493848-26-000010-index.htm"
+        }
+      ],
+      "stakes": [
+        {
+          "kind": "13G",
+          "name": "Vanguard Capital Management · Investment adviser",
+          "date": "2026-03-31",
+          "filed": "2026-04-29",
+          "value": "7.48%",
+          "detail": "7,836,754 shares beneficially owned on the reporting date.",
+          "url": "https://www.sec.gov/Archives/edgar/data/1374310/000210011926000277/xslSCHEDULE_13G_X02/primary_doc.xml"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment adviser",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+1,522 shares",
+          "detail": "6,835,070 → 6,836,592 reported shares, Q2 to Q3.",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ]
     }
   }
 }

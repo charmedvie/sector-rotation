@@ -12,7 +12,7 @@ from .valuation_data import historical_valuation
 from .screening_requests import fetch_requests, screening_profile
 
 PILOTS = ['IBKR','HOOD','AMZN','GOOGL','NVDA','KTOS','OKLO']
-PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT']
+PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT','ICE','NDAQ']
 FIELDS = {
  'revenue': ['Total Revenue'], 'gross_profit':['Gross Profit'],
  'operating_profit':['Operating Income'], 'pretax':['Pretax Income'],
@@ -111,7 +111,7 @@ class FilingSource:
         path = SEC_SNAPSHOT / f'CIK{cik:010d}.json.gz'
         if path.is_file():
             with gzip.open(path, 'rt', encoding='utf-8') as snapshot:
-                return json.load(snapshot), {'source': 'SEC snapshot', 'retrieved': self.snapshot['retrieved']}
+                return json.load(snapshot), {'source': 'SEC snapshot', 'retrieved': self.snapshot.get('retrieved_by_cik', {}).get(str(cik), self.snapshot['retrieved'])}
         return {}, {'source': 'Unavailable'}
 
 
@@ -269,7 +269,7 @@ def generate(output):
         peer_prior = safe(lambda:peer_comparatives(q,facts),{}) if facts else {}
         quality_prior = safe(lambda:quality_comparatives(q,facts),{}) if facts and symbol in full else {}
         valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in full and info.get('currency') == 'USD' else []
-        profile=screening_profile(info,q)
+        profile = 'exchange' if symbol in ('CME', 'CBOE', 'ICE', 'NDAQ') else screening_profile(info, q)
         if is_screening: payload['screening_requests'][symbol]='available' if q and prices else 'data_unavailable'
         payload['stocks'][symbol]={'screening':is_screening,'metadata':{'name':info.get('shortName') or info.get('longName') or watchlist_entry.get('name') or symbol,'tradingviewSymbol':watchlist_entry.get('symbol'),'sector':info.get('sector'),'industry':info.get('industry'),'exchange':info.get('exchange'),'cik':cik,'profile':profile,'currency':info.get('financialCurrency')},'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'valuation_filing_source':filing_source,'status':'available' if q else 'unavailable'}
         print(f'{symbol}: {len(q)} quarters, {len(annual)} years; valuation {filing_source["source"]} '+str({k:sum(k in r for r in valuation) for k in ('price','eps','pe','market_cap_proxy','evop','pb','pfcf','fcf')}))

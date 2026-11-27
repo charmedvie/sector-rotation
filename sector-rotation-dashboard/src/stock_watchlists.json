@@ -12,6 +12,8 @@
       "AMD",
       "AMZN",
       "AVGO",
+      "CBOE",
+      "CME",
       "GOOG",
       "IBKR",
       "META",
@@ -152,6 +154,14 @@
     "TSLA": {
       "name": "Tesla, Inc.",
       "symbol": "NASDAQ:TSLA"
+    },
+    "CME": {
+      "name": "CME Group Inc.",
+      "symbol": "NASDAQ:CME"
+    },
+    "CBOE": {
+      "name": "Cboe Global Markets, Inc.",
+      "symbol": "CBOE:CBOE"
     }
   }
 }
