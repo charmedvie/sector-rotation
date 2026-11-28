@@ -262,10 +262,36 @@ test('ASML Amsterdam shares all issuer research while retaining its own quote an
  assert.match(nodes.get('watchlist').innerHTML,/aria-pressed="true" data-symbol="ASML\.AS"/);
  assert.match(nodes.get('tradingview-link').href,/EURONEXT%3AASML/);
  assert.equal(nodes.get('price').textContent,'€1,200.00');
- assert.match(nodes.get('question').textContent,/Nasdaq listing in USD/);
+ assert.match(nodes.get('question').textContent,/Nasdaq prices converted to EUR/);
  assert.match(nodes.get('company').textContent,/ASML\.AS · ASML/);
  vm.runInContext("delete data.stocks['ASML.AS'];render()",ctx);
  assert.equal(nodes.get('price').textContent,'—');
  vm.runInContext("select('ASML')",ctx);
  assert.equal(nodes.get('price').textContent,'$1,400');
+});
+
+test('ASML keeps quarterly adjustments out of Overview and matches peer periods',()=>{
+ const {ctx,nodes}=load();
+ ctx.profile=JSON.parse(fs.readFileSync('site/data/company-research.json','utf8'));
+ vm.runInContext(`
+  setCompanyResearch(profile);
+  const quarter={period:'2026-09-30',revenue:11.662e9,operating_profit:5.1728e9,eps:12.93,ocf:11.7976e9,capex:447.2e6};
+  const prior={period:'2025-09-30',revenue:7.516e9,operating_profit:2.4684e9,eps:5.48};
+  const listing={quote:{financialCurrency:'EUR',lastClose:1400,valuationClose:1198,trailingEps:35,trailingPE:1198/35},
+   quarterly:[quarter,...['2026-06-30','2026-03-31','2025-12-31'].map(period=>({...quarter,period})),prior],annual:[],prices:[]};
+  data={watchlists:{Explore:['ASML.AS']},stocks:{ASML:listing,
+    LRCX:{quote:{trailingPE:29},quarterly:[quarter,prior]},
+    AMAT:{quote:{trailingPE:25},quarterly:[{...quarter,period:'2026-10-31'},{...prior,period:'2025-10-31'}]}}};
+  registerScreeningStocks();select('ASML.AS');
+  const graph=peerGraph('ASML',['ASML','AMAT','LRCX'],peerSettings('ASML'));
+  if(graph.points.some(x=>x.id==='AMAT')||graph.other.length!==1||graph.mx!==null)throw Error('Unmatched peer included');
+  if(!scenarioSpecs('ASML',listing,quarter).some(x=>x.title==='Working-capital sensitivity'))throw Error('Missing cash-flow sensitivity');
+ `,ctx);
+ assert.doesNotMatch(nodes.get('panel').innerHTML,/Q3 equity gain lifted reported EPS|Earnings divergence/);
+ vm.runInContext("tab='Fundamentals';render()",ctx);
+ assert.match(nodes.get('panel').innerHTML,/Q3 equity gain lifted reported EPS/);
+ assert.match(nodes.get('panel').innerHTML,/€510M/);
+ assert.match(nodes.get('panel').innerHTML,/excluding the Q3 equity gain/);
+ vm.runInContext("tab='Thesis & catalysts';render()",ctx);
+ assert.match(nodes.get('panel').innerHTML,/What to watch in the coming months/);
 });

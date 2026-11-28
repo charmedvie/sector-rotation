@@ -117,6 +117,7 @@ function reviewedThesis(panel,profile){
  panel.innerHTML='<h2>Thesis &amp; catalysts</h2><section class="thesis-section"><article class="thesis-hero"><h3>Research thesis</h3>'+
   '<p>'+esc(profile.thesis)+'</p><div class="thesis-conditions"><div><strong>WHAT WOULD SUPPORT IT</strong><p>'+esc(profile.confirmation)+'</p></div>'+
   '<div><strong>WHAT WOULD WEAKEN IT</strong><p>'+esc(profile.invalidation)+'</p></div></div></article></section>'+
+  (Array.isArray(profile.watch)?'<section class="thesis-section"><h3>What to watch in the coming months</h3>'+reviewedMetricCards(profile,profile.watch.filter(row=>Array.isArray(row)&&row.length===4&&evidenceUrl(row[3])))+'</section>':'')+
   '<section class="thesis-section"><h3>Catalyst watchlist</h3><div class="catalyst-grid">'+profile.catalysts.map(([title,detail,url])=>
    '<article class="catalyst-card"><h4>'+esc(title)+'</h4><p>'+esc(detail)+'</p><small>'+
    researchSource(url||profile.source,url?null:profile.date)+'</small></article>').join('')+'</div></section>';
@@ -177,7 +178,8 @@ function researchReviewCaption(){return researchLoad==='available'?'Evidence rev
 const el=id=>document.getElementById(id);
 const fmt=(v,d=1)=>v==null||!Number.isFinite(v)?'—':v.toLocaleString('en-US',{maximumFractionDigits:d});
 const compactAmount=v=>fmt(v,Math.abs(v)>=5?0:1);
-const money=v=>!Number.isFinite(v)?'—':(v<0?'−':'')+'$'+(Math.abs(v)>=1e9?compactAmount(Math.abs(v)/1e9)+'B':Math.abs(v)>=1e6?compactAmount(Math.abs(v)/1e6)+'M':Math.abs(v)>=1e3?compactAmount(Math.abs(v)/1e3)+'K':fmt(Math.abs(v),0));
+const financialCurrencySign=()=>symbol==='ASML'&&get(symbol).quote?.financialCurrency==='EUR'?'€':'$';
+const money=v=>!Number.isFinite(v)?'—':(v<0?'−':'')+financialCurrencySign()+(Math.abs(v)>=1e9?compactAmount(Math.abs(v)/1e9)+'B':Math.abs(v)>=1e6?compactAmount(Math.abs(v)/1e6)+'M':Math.abs(v)>=1e3?compactAmount(Math.abs(v)/1e3)+'K':fmt(Math.abs(v),0));
 const displayMoneyText=s=>String(s??'').replace(/\$([\d,]+(?:\.\d+)?)([BMK])\b/g,(_,n,u)=>'$'+compactAmount(Number(n.replaceAll(',','')))+u);
 const pct=v=>v==null?'—':fmt(v,1)+'%';
 const get=s=>data.stocks[s]||{quarterly:[],annual:[],quote:{},prices:[]};
@@ -186,7 +188,7 @@ function previous(rows,latest){if(!latest.period)return {};const target=new Date
 function growth(a,b,k){return a[k]!=null&&b[k]>0?100*(a[k]/b[k]-1):null;}
 const yoy=(s,k)=>{const q=latest(s),b=previous(get(s).quarterly,q);return growth(q,{[k]:b[k]??get(s).prior_year?.[q.period]?.[k]},k);};
 const fields=[['revenue','Revenue'],['gross_profit','Gross profit'],['operating_profit','Operating profit'],['net_income','Net income (common)'],['eps','Diluted EPS'],['gross_margin','Gross margin'],['operating_margin','Operating margin'],['ocf','Operating cash flow'],['capex','Capex'],['fcf','Free cash flow'],['assets','Assets'],['debt','Total debt'],['receivables','Receivables'],['inventory','Inventory']];
-const value=(k,v)=>k.includes('margin')?pct(v):k==='eps'?(v==null?'—':'$'+fmt(v,2)):k==='shares'?(v==null?'—':compactAmount(v/1e6)+'M'):money(v);
+const value=(k,v)=>k.includes('margin')?pct(v):k==='eps'?(v==null?'—':financialCurrencySign()+fmt(v,2)):k==='shares'?(v==null?'—':compactAmount(v/1e6)+'M'):money(v);
 const esc=s=>displayMoneyText(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function table(headers,rows){return '<div class="table-scroll"><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
 function box(title,body){return '<div class="stock-item"><h3>'+esc(title)+'</h3>'+body+'</div>';}
@@ -248,7 +250,7 @@ function median(a){const b=a.filter(Number.isFinite).sort((x,y)=>x-y);return b.l
 function valuationContext(m,p,pre){
  const d=get(symbol),hist=valHistory(d),rows=valWindow(hist,5),last=rows.at(-1),st=valStats(rows,'pe',last?.pe);
  const pe=st?last.pe:p.trailingPE>0?p.trailingPE:null,peerMed=peerBaseline(symbol,[symbol,...peerGroups[symbol].map(r=>r[0])],'pe'),med=st?.median??peerMed;
- const label=st?'5Y median':'Peer median',action='<button class="stock-action" data-target="Fundamentals" data-section="valuation-table">Explore valuation ↗</button>',start='<div class="valuation-visual"><div class="tile-kicker">VALUATION CONTEXT</div>';
+ const label=st?'5Y median':'Peer median',action='<button class="stock-action" data-target="Fundamentals" data-section="valuation-table">Explore valuation ↗</button>',start='<div class="valuation-visual"><div class="tile-kicker">'+(symbol==='ASML'?'REPORTED P/E CONTEXT':'VALUATION CONTEXT')+'</div>';
  if(pre)return start+'<strong>Milestone-based valuation</strong>'+action+'</div>';
  if(!num(pe)||pe<=0)return start+action+'</div>';
  if(!num(med)||med<=0)return start+'<strong>'+valMultiple(pe)+' trailing P/E</strong>'+action+'</div>';
@@ -259,11 +261,11 @@ function finding(title,detail,target,tone='neutral'){return {title,detail,target
 
 function overviewInsights(s,d,q){
  const f=qualitySection(deriveRows(d.quarterly||[]),true),risk=riskOverviewData(s,d,q),cfg=kpiData[s],drivers=driverBriefs[s],items=[];
- for(const r of f)items.push({...finding(r.title,r.metric+' '+r.metricLabel+' · '+r.conclusion,'Fundamentals',r.evidence.tone),rank:r.priority,source:'financial',evidence:r.evidence.label});
+ for(const r of f.filter(row=>s!=='ASML'||row.id!=='earnings'&&['Structural improvement','Sustained improvement','Sustained deterioration'].includes(row.evidence.label)))items.push({...finding(r.title,r.metric+' '+r.metricLabel+' · '+r.conclusion,'Fundamentals',r.evidence.tone),rank:r.priority,source:'financial',evidence:r.evidence.label});
  for(const r of risk.map.filter(r=>['watch','high'].includes(r.status)))items.push({...finding(r.title,r.metric+' · '+r.conclusion,'Financial risk','caution'),rank:r.status==='high'?120:99,source:'risk'});
  for(const r of risk.extra.filter(r=>r.status==='Monitor'))items.push({...finding(r.title,r.metric+' · '+r.impact,'Financial risk','caution'),rank:99,source:'risk'});
  if(cfg&&drivers&&q.period===cfg.period){for(let i=0;i<drivers.length;i++){const b=drivers[i],h=driverHorizon(s,i,cfg,false);if(h.tone==='unknown')continue;items.push({...finding(b.headline,b.points[0]||driverGroups[s][i].watch,'Business Drivers',h.tone==='positive'?'positive':'neutral'),rank:h.tone==='positive'?95:86,source:'driver',evidence:h.label});}}
- const val=valuationSignal(s,d,5);if(val?.st)items.push({...finding(val.title,val.detail,'Fundamentals',val.tone),rank:83,source:'valuation'});
+ const val=valuationSignal(s,d,5);if(val?.st&&s!=='ASML')items.push({...finding(val.title,val.detail,'Fundamentals',val.tone),rank:83,source:'valuation'});
  const checks=(thesisConfig[s]?.checks||[]).map(c=>thesisCheck(s,d,c)).filter(c=>c.status==='pressure');
  items.push(...evidenceOverview(s));
  const independent=checks.filter(c=>!items.some(i=>i.title.toLowerCase().includes(c.name.toLowerCase())||i.detail.toLowerCase().includes(c.name.toLowerCase())));
@@ -323,7 +325,7 @@ function overviewPanel(panel,m,d,q,p,source){
  summaryTile('Profitability',profitLabel,broker(s)&&num(q.pretax_margin)?'Pretax margin '+pct(q.pretax_margin):num(margin)?'Operating margin '+pct(margin):'Margin unavailable','Fundamentals',tone(core))+
  summaryTile('Momentum',evidenceClass(ev),ev.count?ev.count+' comparable YoY periods':'History unavailable','Fundamentals',ev.kind==='sustained'||ev.kind==='structural'?ev.direction<0?'caution':ev.direction>0||ev.persistence>0?'positive':'neutral':'neutral')+
  summaryTile('Financial risk',riskLabel,riskDetail,'Financial risk',riskHigh||riskWatch?'caution':'neutral')+
- summaryTile('Valuation',pre?'Milestones':val?.st?val.st.premium>10?'Above history':val.st.premium< -10?'Below history':'Near history':pe>0?'Current P/E':'N/A',pe>0?fmt(pe)+'x trailing P/E':'P/E unavailable / not relevant','Fundamentals',val?.tone||'neutral')+'</div>'+
+ summaryTile('Valuation',pre?'Milestones':val?.st?val.st.premium>10?'Above history':val.st.premium< -10?'Below history':'Near history':pe>0?'Current P/E':'N/A',pe>0?fmt(pe)+'x '+(s==='ASML'?'reported ':'')+'trailing P/E':'P/E unavailable / not relevant','Fundamentals',val?.tone||'neutral')+'</div>'+
  '<section class="attention-section" aria-labelledby="attention-title"><div class="attention-heading"><div><h2 id="attention-title">What deserves your attention</h2></div></div><div class="attention-content"><div class="findings-list">'+(priority.length?priority.map(f=>'<button class="finding finding-'+f.tone+'" data-target="'+esc(f.target)+'"><span class="finding-symbol" aria-hidden="true">'+(f.news?newsIcon():f.tone==='caution'?'!':f.tone==='positive'?'↑':'•')+'</span><span class="finding-copy"><span class="finding-label">'+(f.news?'NEWS · ':'')+esc(f.target)+(f.evidence?' · '+esc(f.evidence):'')+'</span><strong>'+esc(f.title)+'</strong><small>'+(f.news?'Our assessment: ':'')+esc(f.detail)+'</small></span><span class="finding-arrow" aria-hidden="true">›</span></button>').join(''):'<p class="stock-note">No current material findings.</p>')+'</div><aside class="diligence"><div class="tile-kicker">'+(profile?'THESIS &amp; CATALYSTS':isScreening(s)?'DEEP RESEARCH CHECKLIST':'THESIS PRESSURE / WATCH')+'</div>'+list(isScreening(s)?m.kpis:analysis.checks.length?analysis.checks.slice(0,3).map(c=>c.name+' · '+c.value):m.risks.slice(0,3))+(profile?'<p>'+esc(profile.thesis)+'</p><button class="stock-action" data-target="Thesis &amp; catalysts">Review thesis ↗</button>':isScreening(s)?'<p class="stock-note">Company-specific KPIs, filing exposures and thesis not yet reviewed.</p>':'<button class="stock-action" data-target="Thesis & catalysts">Review thesis ↗</button>')+'</aside></div></section>'+
  (Array.isArray(profile?.updates)?'<section class="attention-section"><h2>Latest company updates</h2>'+reviewedMetricCards(profile,profile.updates.filter(row=>Array.isArray(row)&&row.length===4&&evidenceUrl(row[3])))+'</section>':'')+
  ownershipPanel(s)+
@@ -522,6 +524,15 @@ const qualityDisclosures={
  AMZN:{period:'2026-09-30',url:'https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/',q:{operating_profit:28076e6,pretax:26869e6,net_income:20685e6,total_net_income:20685e6,tax_expense:6184e6,eps:1.89,interest_expense:1691e6},prior:{operating_profit:17422e6,pretax:28170e6,net_income:21187e6,total_net_income:21187e6,tax_expense:6983e6,eps:1.95,interest_expense:538e6},ttm:{ocf:168300e6,total_net_income:134779e6,net_capex:210657e6,fcf:-42357e6,old_ocf:130700e6,old_fcf:14788e6},note:'Management attributes the decline in reported net income primarily to $9.5B of pre-tax Anthropic investment gains in Q3 2025.'}
 };
 
+const asmlQ3Evidence={period:'2026-09-30',gain:509.7e6,taxRate:.161,dilutedShares:383.5e6,workingCapital:7009e6,url:'https://live.euronext.com/sites/default/files/company_press_releases/attachments/2026/10/14/cpr01_notified_Financial%20statements%20US%20GAAP%20Q3%202026.pdf'};
+function asmlValuationSensitivity(d){
+ const p=d.quote||{},e=asmlQ3Evidence,rows=d.quarterly||[];
+ if(p.financialCurrency!=='EUR'||!rows.slice(0,4).some(r=>r.period===e.period)||!(p.valuationClose>0&&p.trailingEps>0))return '';
+ const adjustedEPS=p.trailingEps-e.gain*(1-e.taxRate)/e.dilutedShares;
+ if(adjustedEPS<=0)return '';
+ return '<p class="stock-note">Reported trailing P/E '+valMultiple(p.trailingPE)+' · approximately '+valMultiple(p.valuationClose/adjustedEPS)+
+ ' excluding the Q3 equity gain. Sensitivity uses the quarter’s 16.1% effective tax rate; the gain’s specific tax effect is unverified. The historical median uses reported earnings. '+researchSource(e.url,'2026-10-14')+'</p>';
+}
 function qualitySection(qrows,returnData=false){
  const s=symbol,d=get(s),q=qrows[0]||{},prev=previous(qrows,q),snapshot=qualityDisclosures[s],disc=snapshot?.period===q.period?snapshot:null,financial=broker(s),findings=[],missing=[];
  const v=k=>disc&&num(disc.q[k])?disc.q[k]:q[k],p=k=>disc&&num(disc.prior[k])?disc.prior[k]:num(prev[k])?prev[k]:d.quality_prior?.[q.period]?.[k]??d.peer_prior?.[q.period]?.[k]??periodBase(qrows,q,k);
@@ -533,7 +544,14 @@ function qualitySection(qrows,returnData=false){
  const taxImpact=taxShift&&num(v('pretax'))?(oldTr-tr)*v('pretax')/100:null;
  const pt=delta('pretax'),op=delta('operating_profit'),tax=delta('tax_expense'),ni=delta('net_income');
  // A material EPS/core-profit divergence or tax shift gets one earnings-quality card.
- if((num(eg)&&num(og)&&Math.abs(eg-og)>15)||taxShift){
+ if(s==='ASML'&&q.period===asmlQ3Evidence.period){
+  const e=asmlQ3Evidence;
+  add('earnings','Q3 equity gain lifted reported EPS',money(e.gain),'Pretax equity-investment gain',[
+   'Diluted EPS '+signed(eg)+' YoY vs operating profit '+signed(og),
+   'Effective tax rate 16.1% vs 17.8% a year earlier',
+   'The investment gain sits outside operating profit.'
+  ],'Use operating growth to assess the business. The investment gain also affects the reported P/E denominator.','caution',100,e.url);
+ }else if((num(eg)&&num(og)&&Math.abs(eg-og)>15)||taxShift){
   const bullets=[],diverge=num(eg)&&num(og)&&Math.abs(eg-og)>15;
   if(num(eg))bullets.push('Diluted EPS '+signed(eg)+' YoY'+(num(og)?' vs '+label.toLowerCase()+' '+signed(og):''));
   if(disc)bullets.push('Prior-year Anthropic investment gains: $9.5B pre-tax (issuer disclosure)');
@@ -618,6 +636,7 @@ function qualitySection(qrows,returnData=false){
   }
  }
  const evidenceFor=f=>{
+  if(f.id==='earnings'&&s==='ASML')return {label:'Quarter-specific earnings context',detail:'Compare sustained operating performance across reporting periods.',tone:'neutral'};
   if(f.id==='earnings'&&disc)return {label:'One-off event',detail:'Dated issuer disclosure; not evidence of a lasting trend.',tone:'neutral'};
   if(f.id==='earnings'||f.id==='leverage'||f.id==='growth'||f.id==='shares'){
    const key=f.id==='growth'?'revenue':f.id==='shares'?'shares':core,e=financialEvidence(d,qrows,key,0,f.id==='shares'?-1:1);
@@ -642,7 +661,7 @@ function qualitySection(qrows,returnData=false){
 function fundamentalsPanel(panel,d,note,source){
  const qrows=deriveRows(d.quarterly),annual=deriveRows(d.annual,true),rows=frequency==='annual'?annual:qrows,vc=valuationCharts(d);
  panel.innerHTML='<h2>Fundamentals</h2>'+(d.statement_note?'<p class="stock-note">'+esc(d.statement_note)+'</p>':'')+'<section class="fund-section"><h3>Key fundamental insights</h3>'+qualitySection(qrows)+'</section>'+
- '<section class="fund-section"><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<details class="risk-method"><summary>Financial definitions &amp; data</summary><p>Quarterly colours: consecutive quarterly movements; latest YoY is a separate comparison. Long-term C = CAGR; rates in pp. Annual colours use consecutive annual movements. ROE = TTM common earnings / average common equity. ROIC = after-tax operating profit / average invested capital. Missing or ambiguous values are neutral. Valuation: the current column uses latest market data; fiscal-date columns use the last available weekly close before or on each period end and only then-known filing information. Historical multiples use positive denominators; share counts approximate market cap. Long-term multiples compare the latest reconstructed value with its own available median (up to 5 years); PEG 1Y = P/E / TTM diluted EPS YoY growth; PEG 3Y = P/E / 3Y TTM diluted EPS CAGR; P/E / operating profit growth is diagnostic, not PEG. Growth uses percent units. PEG colours: below 1 potentially inexpensive; 1–1.5 reasonable; above 1.5–2 premium; above 2 demanding. Non-positive denominators are N/A; extreme growth, material earnings-quality divergence, tax shifts or missing comparable checks are unclassified. No forecast or buy/sell signal.</p>'+note+source+'</details>'+'</section>'+vc.html;
+ '<section class="fund-section"><div class="fund-table-heading"><h3>Detailed financials</h3><label>Period <select id="freq"><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></label></div><div class="trend-legend"><span class="trend-good">Improving</span><span class="trend-bad">Deteriorating</span><span class="trend-muted">Stable / inconclusive</span><span class="trend-investigate">Investigate</span></div>'+detailedTable(rows,frequency==='annual',annual)+'<details class="risk-method"><summary>Financial definitions &amp; data</summary><p>Quarterly colours: consecutive quarterly movements; latest YoY is a separate comparison. Long-term C = CAGR; rates in pp. Annual colours use consecutive annual movements. ROE = TTM common earnings / average common equity. ROIC = after-tax operating profit / average invested capital. Missing or ambiguous values are neutral. Valuation: the current column uses latest market data; fiscal-date columns use the last available weekly close before or on each period end and only then-known filing information. Historical multiples use positive denominators; share counts approximate market cap. Long-term multiples compare the latest reconstructed value with its own available median (up to 5 years); PEG 1Y = P/E / TTM diluted EPS YoY growth; PEG 3Y = P/E / 3Y TTM diluted EPS CAGR; P/E / operating profit growth is diagnostic, not PEG. Growth uses percent units. PEG colours: below 1 potentially inexpensive; 1–1.5 reasonable; above 1.5–2 premium; above 2 demanding. Non-positive denominators are N/A; extreme growth, material earnings-quality divergence, tax shifts or missing comparable checks are unclassified. No forecast or buy/sell signal.</p>'+note+source+'</details>'+'</section>'+(symbol==='ASML'?asmlValuationSensitivity(d):'')+vc.html;
  el('freq').value=frequency;el('freq').onchange=e=>{frequency=e.target.value;render();};vc.bind(panel);
 }
 
@@ -761,6 +780,12 @@ function scenarioSpecs(s,d,q){
  if(num(cash))add('Deployment delay / historical burn','Additional months of burn','months',36,1,12,num(burn)&&burn<0?-burn/12:null,num(burn)?money(-burn/12)+' monthly trailing free cash burn':'','Constant historical burn excludes future construction costs.',(v,b)=>['Additional cash consumption',money(-b*v),'Remaining reported cash proxy '+money(cash-b*v)],same?e.url:'');
  if(same)add('Deployment funding sufficiency','Hypothetical project cash needs','%',200,5,100,cash,money(cash)+' cash and marketable debt securities','Not a project budget; excludes other obligations.',(v,b)=>['Hypothetical project cash requirement',money(b*v/100),'Remaining liquidity before other obligations '+money(b-b*v/100)],e.url);
  if(q.period)add('Equity financing dilution','New shares as % of existing shares','%',100,5,20,1,'Existing ownership normalised to 100%','Illustrative primary issuance; excludes warrants and share price changes.',(v,b)=>['Existing ownership diluted by',pct(100*v/(100+v)),'Existing holders retain '+pct(10000/(100+v))+' of post-issue equity']);}
+ if(s==='ASML'&&d.quote?.financialCurrency==='EUR'&&rows.slice(0,4).some(r=>r.period===asmlQ3Evidence.period)){
+  const ocf=ttm('ocf'),cap=ttm('capex'),wc=asmlQ3Evidence.workingCapital;
+  if(num(cap))add('Working-capital sensitivity','Share of Q3 working-capital inflow removed','%',100,10,50,ocf,money(ocf)+' reported TTM OCF · '+money(cap)+' capex',
+   'Changes only the Q3 2026 working-capital contribution. Other quarters and capex are held fixed.',
+   (v,b)=>['Illustrative TTM free cash flow',money(b-cap-wc*v/100),'Reported TTM FCF '+money(b-cap)+' · contribution removed '+money(wc*v/100)],asmlQ3Evidence.url);
+ }
  if(isScreening(s)&&!restrictedProfile(s)){const ocf=ttm('ocf'),cap=ttm('capex');if(num(cap))add('Operating cash-flow slowdown','TTM operating cash flow haircut','%',60,5,20,ocf,money(ocf)+' TTM OCF · '+money(cap)+' capex','Holds capex fixed.',(v,b)=>['Illustrative annual free cash flow',money(b*(1-v/100)-cap),'Hypothetical sensitivity, not a forecast']);}
  return specs;
 }
@@ -1320,7 +1345,7 @@ function valAttributionHtml(a){
 }
 
 function currentValMetrics(s,d,last){
- const p=d.quote||{},q=d.quarterly?.[0]||{},rows=d.quarterly||[],annual=deriveRows(rows),price=p.lastClose??last?.price;
+ const p=d.quote||{},q=d.quarterly?.[0]||{},rows=d.quarterly||[],annual=deriveRows(rows),price=p.valuationClose??p.lastClose??last?.price;
  const aligned=last&&q.period&&last.date&&last.date>=q.period,sec=(k)=>aligned&&last[k+'_period']===q.period&&num(last[k])?last[k]:null;
  const tt=(k,h=k)=>ttmAt(rows,0,k)??sec(h),eps=tt('eps')??p.trailingEps,op=tt('operating_profit','op'),revenue=tt('revenue'),fcf=tt('fcf'),equity=q.equity??sec('equity');
  const single=['AMZN','NVDA','KTOS','OKLO'].includes(s),shareCount=single&&num(p.sharesOutstanding)&&p.sharesOutstanding>0?p.sharesOutstanding:null;
@@ -1442,7 +1467,7 @@ function valuationTableRows(s,d,rows){
  const hist=valHistory(d),last=hist.at(-1),current=currentValMetrics(s,d,last),hrows=rows.map(r=>valuationAt(hist,r.period));
  const five=valWindow(hist,5),keys=valTableKeys[s]||[];
  const filings=d.valuation_filing_source;
- const filingNote=filings?.source==='ASML quarterly results'?'ASML dated quarterly results, translated at historical EUR/USD':filings?.retrieved?'SEC filing snapshot retrieved '+filings.retrieved:filings?.source==='SEC live'?'Live SEC filings':'SEC filing source unavailable';
+ const filingNote=filings?.source==='ASML quarterly results'?'ASML dated EUR quarterly results and Nasdaq prices converted to EUR':filings?.retrieved?'SEC filing snapshot retrieved '+filings.retrieved:filings?.source==='SEC live'?'Live SEC filings':'SEC filing source unavailable';
  const body=keys.map(k=>{
   const vals=hrows.map(r=>historicalValValue(k,r,hist,s)),item=current[k],now=item?.[1],validCurrent=now&&!['Unavailable','—'].includes(now),latest=historicalValValue(k,last,hist,s);
   if(!validCurrent&&!vals.some(num)&&!num(latest)&&!(growthRatioKeys.has(k)&&current.pe?.[1]&&!['Unavailable','—','N/A'].includes(current.pe[1])))return '';
@@ -1521,7 +1546,7 @@ const peerSpecs={
 };
 function peerSettings(s){
  const financial=peerFinance.has(s),dev=s==='OKLO';
- return peerState[s]||(peerState[s]={enabled:peerGroups[s].map(r=>r[0]),x:dev?'cash':'rev',y:dev?'marketcap':'pe',trend:dev?'cash':'rev'});
+ return peerState[s]||(peerState[s]={enabled:peerGroups[s].map(r=>r[0]),x:dev?'cash':s==='ASML'?'op':'rev',y:dev?'marketcap':'pe',trend:dev?'cash':'rev'});
 }
 function peerMedian(values){const a=values.filter(num).sort((x,y)=>x-y),i=a.length>>1;return a.length?(a.length%2?a[i]:(a[i-1]+a[i])/2):null;}
 function peerPrior(s,r,k){
@@ -1552,9 +1577,15 @@ function peerValue(s,r,k){
  return null;
 }
 function peerFmt(k,v){if(!num(v))return '—';const u=peerSpecs[k].unit;return u==='%'?pct(v):u==='x'?valMultiple(v):u==='$'?money(v):fmt(v,1)+' mo';}
+const asmlPeerDates={
+ ASML:{'2026-09-30':'2026-09-27'},
+ AMAT:{'2026-10-31':'2026-10-25'},
+ LRCX:{'2026-09-30':'2026-09-27'}
+};
+function peerReportDate(s,period,focus){return focus==='ASML'?asmlPeerDates[s]?.[period]||period:period;}
 function peerCompatible(s,focus){
- const a=latest(s).period,b=latest(focus).period;if(!a||!b)return false;
- return Math.abs(new Date(a)-new Date(b))/86400000<=62;
+ const a=peerReportDate(s,latest(s).period,focus),b=peerReportDate(focus,latest(focus).period,focus);if(!a||!b)return false;
+ return Math.abs(new Date(a)-new Date(b))/86400000<=(focus==='ASML'?14:62);
 }
 function peerBaseline(s,ids,k){
  const a=ids.filter(x=>x!==s&&peerCompatible(x,s)).map(x=>peerValue(x,latest(x),k)).filter(num);
@@ -1570,7 +1601,7 @@ function peerTone(k,v,med){
 function peerSelect(id,keys,current){return '<select id="'+id+'">'+keys.map(k=>'<option value="'+k+'"'+(k===current?' selected':'')+'>'+esc(peerSpecs[k].label)+'</option>').join('')+'</select>';}
 function peerGraph(s,ids,st,access=null){
  const last=access?access.last:latest,value=access?access.value:peerValue,compatible=access?access.compatible:peerCompatible;
- const points=ids.map((id,i)=>({id,i,x:value(id,last(id),st.x),y:value(id,last(id),st.y),date:last(id).period})).filter(p=>num(p.x)&&num(p.y)&&compatible(p.id,s));
+ const points=ids.map((id,i)=>({id,i,x:value(id,last(id),st.x),y:value(id,last(id),st.y),date:peerReportDate(id,last(id).period,s)})).filter(p=>num(p.x)&&num(p.y)&&compatible(p.id,s));
  const other=points.filter(p=>p.id!==s),context=access&&[st.x,st.y].some(k=>['sellerRevenue','sellerGrowth','cloudBacklog','onlineGrowth','commerceMargin'].includes(k)),mx=other.length>=2&&!context?peerMedian(other.map(p=>p.x)):null,my=other.length>=2&&!context?peerMedian(other.map(p=>p.y)):null;
  const layout={paper_bgcolor:'transparent',plot_bgcolor:'#101a28',font:{color:'#b7c6db'},margin:{l:76,r:35,t:16,b:58},xaxis:{title:peerSpecs[st.x].label,gridcolor:'#29394c',zerolinecolor:'#536378',automargin:true},yaxis:{title:peerSpecs[st.y].label,gridcolor:'#29394c',automargin:true},showlegend:false,hovermode:'closest',shapes:[]};
  if(mx!=null&&my!=null)layout.shapes=[{type:'line',xref:'x',yref:'paper',x0:mx,x1:mx,y0:0,y1:1,line:{color:'#91a5bf',dash:'dot',width:1}},{type:'line',xref:'paper',yref:'y',x0:0,x1:1,y0:my,y1:my,line:{color:'#91a5bf',dash:'dot',width:1}}];
@@ -1703,7 +1734,7 @@ function segmentAssessment(access,ids){
 
 // A comparison must include the focus and two independent selected peers.
 function peerScatterReady(graph,focus){
- return graph.points.some(p=>p.id===focus)&&graph.points.filter(p=>p.id!==focus).length>=2;
+ return graph.points.some(p=>p.id===focus)&&graph.points.filter(p=>p.id!==focus).length>=(focus==='ASML'?1:2);
 }
 function peerTrendCoverage(series,focus){
  const observed=t=>t.x.map((date,i)=>({date,value:t.y[i]})).filter(p=>p.date&&num(p.value));
@@ -1713,7 +1744,7 @@ function peerTrendCoverage(series,focus){
   // Match distinct fiscal observations; tolerate month-end calendar differences.
   const remaining=observed(t).slice();let matches=0;
   for(const a of dates){
-   const choices=remaining.map((b,i)=>({i,days:Math.abs(new Date(a.date)-new Date(b.date))/86400000})).filter(b=>b.days<=45).sort((a,b)=>a.days-b.days);
+   const choices=remaining.map((b,i)=>({i,days:Math.abs(new Date(a.date)-new Date(b.date))/86400000})).filter(b=>b.days<=(focus==='ASML'?14:45)).sort((a,b)=>a.days-b.days);
    if(choices.length){remaining.splice(choices[0].i,1);matches++;}
   }
   return matches>=2;
@@ -1738,14 +1769,14 @@ function peerPanel(panel,m,d,source){
  const validTrends=trendKeys.filter(k=>peerTrendCoverage(buildTrendSeries(k),s).length>=3);
  if(!validTrends.includes(st.trend)&&validTrends.length)st.trend=validTrends[0];
  const comparableTrends=peerTrendCoverage(buildTrendSeries(st.trend),s),trendHas=comparableTrends.length>=3;
- const comparison=!qualityKeys.length?'<p class="stock-note">No comparison metrics with two disclosed values for the selected peers.</p>':'<div class="table-scroll"><table class="fund-table peer-table"><thead><tr><th>Metric</th>'+ids.map(id=>'<th class="'+(id===s?'peer-selected':'')+'">'+esc(id)+'<small>'+esc(last(id).period||'Unavailable')+(id!==s&&!compatible(id,s)?' · outside window':'')+'</small></th>').join('')+'</tr></thead><tbody>'+qualityKeys.map(k=>{const med=baseline(s,ids,k);return '<tr><th scope="row">'+esc(peerSpecs[k].label)+(num(med)?'<small>Peer median '+esc(peerFmt(k,med))+'</small>':'')+'</th>'+ids.map(id=>{const v=value(id,last(id),k),tone=compatible(id,s)?peerTone(k,v,med):'neutral',cell=segment?access.cell(id,k):null;return '<td class="peer-cell peer-'+tone+(id===s?' peer-selected':'')+'" title="'+esc(cell?.note||(!compatible(id,s)?'Period unavailable or outside comparison window':num(med)?'Relative to included peer median':'Insufficient peers for benchmark'))+'">'+esc(cell?cell.display:peerFmt(k,v))+(cell?.source?' '+segmentSource(cell.source):'')+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>';
- panel.innerHTML='<h2>Peers</h2>'+(symbol==='AMZN'?amazonPeerNav():'')+'<p class="stock-note">'+esc(segment?((d.quarterly?.[0]?.period>'2026-09-30'?'Historical snapshot · newer Amazon quarter exists. ':'Dated segment snapshot · ')+access.lens.description):'Compare operating economics and valuation without composite rankings or an automatic winner.')+'</p>'+
+ const comparison=!qualityKeys.length?'<p class="stock-note">No comparison metrics with two disclosed values for the selected peers.</p>':'<div class="table-scroll"><table class="fund-table peer-table"><thead><tr><th>Metric</th>'+ids.map(id=>'<th class="'+(id===s?'peer-selected':'')+'">'+esc(id)+'<small>'+esc(peerReportDate(id,last(id).period,s)||'Unavailable')+(id!==s&&!compatible(id,s)?' · outside window':'')+'</small></th>').join('')+'</tr></thead><tbody>'+qualityKeys.map(k=>{const med=baseline(s,ids,k);return '<tr><th scope="row">'+esc(peerSpecs[k].label)+(num(med)?'<small>Peer median '+esc(peerFmt(k,med))+(s==='ASML'?' · '+ids.filter(id=>id!==s&&compatible(id,s)&&num(value(id,last(id),k))).length+' peers':'')+'</small>':'')+'</th>'+ids.map(id=>{const v=s==='ASML'&&!compatible(id,s)?null:value(id,last(id),k),tone=compatible(id,s)?peerTone(k,v,med):'neutral',cell=segment?access.cell(id,k):null;return '<td class="peer-cell peer-'+tone+(id===s?' peer-selected':'')+'" title="'+esc(cell?.note||(!compatible(id,s)?'Period unavailable or outside comparison window':num(med)?'Relative to included peer median':'Insufficient peers for benchmark'))+'">'+esc(cell?cell.display:peerFmt(k,v))+(cell?.source?' '+segmentSource(cell.source):'')+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>';
+ panel.innerHTML='<h2>Peers</h2>'+(symbol==='AMZN'?amazonPeerNav():'')+'<p class="stock-note">'+esc(segment?((d.quarterly?.[0]?.period>'2026-09-30'?'Historical snapshot · newer Amazon quarter exists. ':'Dated segment snapshot · ')+access.lens.description):s==='ASML'?'Adjacent equipment peers. Latest periods must fall within 14 days of ASML. At least two comparable peers are required for a median.':'Compare operating economics and valuation without composite rankings or an automatic winner.')+'</p>'+
  '<section class="peer-section"><h3>Comparison universe</h3><div class="peer-list"><article class="peer-company peer-focus"><div class="peer-ticker" style="color:'+peerPalette[0]+'">'+esc(s)+'</div><div><strong>'+esc(focusName)+'</strong><small>Selected company · '+esc(focusIndustry)+'</small></div><span>Selected</span></article>'+group.map(([id,name,type,desc],i)=>'<label class="peer-company"><div class="peer-ticker">'+esc(id)+'</div><div title="'+esc(desc)+'"><strong>'+esc(name)+'</strong></div><span class="peer-relation">'+esc(type)+'</span><input type="checkbox" data-peer="'+id+'" aria-label="Include '+esc(id)+'" '+(st.enabled.includes(id)?'checked':'')+'></label>').join('')+'</div></section>'+
- (scatterHas?'<section class="peer-section"><h3>'+esc(segment?'Growth versus business economics map':dev?'Capital and valuation map':'Growth versus valuation map')+'</h3><div class="peer-controls"><label>X axis '+peerSelect('peer-x',growthKeys.filter(x=>validPairs.some(pair=>pair.x===x)),st.x)+'</label><label>Y axis '+peerSelect('peer-y',multipleKeys.filter(y=>validPairs.some(pair=>pair.x===st.x&&pair.y===y)),st.y)+'</label></div>'+'<div id="peer-scatter" class="stock-chart peer-chart"></div>'+(scatterHas&&num(graph.mx)&&num(graph.my)?'<p class="stock-note">Peer medians · '+esc(peerFmt(st.x,graph.mx))+' / '+esc(peerFmt(st.y,graph.my))+'</p>':scatterHas?'':'')+(scatterHas&&excluded.length?'<p class="stock-note">Not plotted (unavailable, nonpositive multiple or unmatched reporting period): '+esc(excluded.join(', '))+'.</p>':'')+'</section>':'')+
+ (scatterHas?'<section class="peer-section"><h3>'+esc(segment?'Growth versus business economics map':dev?'Capital and valuation map':'Growth versus valuation map')+'</h3><div class="peer-controls"><label>X axis '+peerSelect('peer-x',growthKeys.filter(x=>validPairs.some(pair=>pair.x===x)),st.x)+'</label><label>Y axis '+peerSelect('peer-y',multipleKeys.filter(y=>validPairs.some(pair=>pair.x===st.x&&pair.y===y)),st.y)+'</label></div>'+'<div id="peer-scatter" class="stock-chart peer-chart"></div>'+(scatterHas&&num(graph.mx)&&num(graph.my)?'<p class="stock-note">Peer medians · '+esc(peerFmt(st.x,graph.mx))+' / '+esc(peerFmt(st.y,graph.my))+(s==='ASML'?' · '+graph.other.length+' peers':'')+'</p>':scatterHas?'':'')+(scatterHas&&excluded.length?'<p class="stock-note">Not plotted (unavailable, nonpositive multiple or unmatched reporting period): '+esc(excluded.join(', '))+'.</p>':'')+'</section>':'')+
  (qualityKeys.length?'<section class="peer-section"><h3>'+esc(segment?'Business economics':'Business economics and valuation')+'</h3><div class="peer-legend"><span class="peer-above">Higher operating metric</span><span class="peer-below">Lower operating metric</span><span class="peer-lower">Lower multiple</span><span class="peer-higher">Higher multiple</span><span>Neutral / unavailable</span></div>'+comparison+'</section>':'')+
  (trendHas?'<section class="peer-section"><div class="val-range-head"><h3>Relative momentum · last four quarters</h3><label>Metric '+peerSelect('peer-trend',validTrends,st.trend)+'</label></div>'+'<div id="peer-trend-chart" class="stock-chart peer-chart"></div>'+'</section>':'')+
  '<section class="peer-section"><h3>Competitive assessment</h3>'+(segment?segmentAssessment(access,ids):peerAssessment(s,ids))+evidenceBlock(symbol,'peer',symbol==='AMZN'?amazonPeerLens:'consolidated')+'</section>'+
- (segment?'<details class="risk-method"><summary>Data methodology & sources</summary><p>Dated segment disclosures; compare only matching scopes and currency bases. GMV is peer-only context when Amazon does not disclose it. Colours require two valid peers. No parent-company multiple is applied to a segment. Stored snapshots require refresh.</p></details>':'<details class="risk-method"><summary>Data methodology & sources</summary><p>Standardized quarterly statements and provider multiples; SEC prior-year comparatives used only when compatible with matching provider observations. ROE = TTM common net income / average current and year-ago common equity; FCF margin = TTM reported FCF / TTM revenue. Runway proxy = reported cash and investments / trailing monthly free cash burn, not committed project funding. Generic operating margins, EV multiples and FCF metrics are not used for financial-company comparisons. Data for different fiscal periods, currencies and business mixes may not be fully comparable. Colours require two valid peer observations within 62 days; missing rows are hidden.</p>'+source+'</details>');
+ (segment?'<details class="risk-method"><summary>Data methodology & sources</summary><p>Dated segment disclosures; compare only matching scopes and currency bases. GMV is peer-only context when Amazon does not disclose it. Colours require two valid peers. No parent-company multiple is applied to a segment. Stored snapshots require refresh.</p></details>':'<details class="risk-method"><summary>Data methodology & sources</summary><p>Standardized quarterly statements and provider multiples; SEC prior-year comparatives used only when compatible with matching provider observations. ROE = TTM common net income / average current and year-ago common equity; FCF margin = TTM reported FCF / TTM revenue. Runway proxy = reported cash and investments / trailing monthly free cash burn, not committed project funding. Generic operating margins, EV multiples and FCF metrics are not used for financial-company comparisons. Data for different fiscal periods, currencies and business mixes may not be fully comparable. Colours require two valid peer observations. The comparison window is 14 days for ASML and 62 days otherwise; missing rows are hidden.</p>'+source+'</details>');
  if(symbol==='AMZN')bindAmazonPeerNav(panel);
  panel.querySelectorAll('[data-peer]').forEach(b=>b.onchange=()=>{const id=b.dataset.peer;if(b.checked&&!st.enabled.includes(id))st.enabled.push(id);if(!b.checked)st.enabled=st.enabled.filter(x=>x!==id);render();});
  for(const [id,k] of [['peer-x','x'],['peer-y','y'],['peer-trend','trend']]){if(k==='trend'?!trendHas:!scatterHas)continue;el(id).value=st[k];el(id).onchange=e=>{st[k]=e.target.value;if(k==='x'&&!validPairs.some(pair=>pair.x===st.x&&pair.y===st.y)){const pair=validPairs.find(pair=>pair.x===st.x);if(pair)st.y=pair.y;}render();};}
@@ -1872,7 +1903,7 @@ const price=listing&&listingQuote?.currency!==listing.currency?null:listingQuote
 el('tradingview-link').href='https://www.tradingview.com/chart/?symbol='+encodeURIComponent(listing?.symbol||d.metadata?.tradingviewSymbol||(exchange?exchange+':'+symbol:symbol));
 el('company').textContent=(listing?.ticker||symbol)+' · '+m.name;
 el('industry').textContent=m.industry+(companyResearch[symbol]?' · Filing-backed research':isScreening(symbol)?' · Automatic screening':' · Deep research');
-el('question').textContent=listing?'Company research is shared across listings. Valuation uses the Nasdaq listing in USD.':'';
+el('question').textContent=listing?'Company research is shared across listings. Valuation uses Nasdaq prices converted to EUR.':'';
 el('price').textContent=price==null?'—':listing?new Intl.NumberFormat('en-US',{style:'currency',currency:listing.currency}).format(price):'$'+fmt(price,2);
 el('price-date').textContent=(listing?listing.exchange+' · ':'')+(listingQuote?.date?'Close · '+listingQuote.date:'Price unavailable');
 el('overview').innerHTML=Object.keys(M).map(s=>'<tr tabindex="0" data-symbol="'+s+'">'+[s,latest(s).period||'—',pct(yoy(s,'revenue')),pct(latest(s).operating_margin),pct(yoy(s,'eps')),fmt(get(s).quote.trailingPE)].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');

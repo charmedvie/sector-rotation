@@ -1169,13 +1169,13 @@
       "date": "2026-10-14",
       "source": "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026",
       "thesis": "Chipmakers can add wafer capacity by installing ASML scanners or upgrading machines they already own. Q3 showed both routes working. The investment case now depends on ASML delivering more systems while keeping the higher-margin upgrade business strong.",
-      "confirmation": "New system volumes rise from 113, service and upgrade sales hold near €3.3B, and gross margin stays close to the 57% Q4 target.",
-      "invalidation": "Customer fab delays, export licence restrictions or bottlenecks push deliveries out. A drop in upgrade sales alongside falling margins would weaken the case even if orders stay strong.",
+      "confirmation": "First check Q4 revenue against €14.2–15.2B guidance and gross margin against roughly 57%. Over the next few quarters, look for rising system deliveries, resilient upgrade sales, and margins that hold as capacity expands.",
+      "invalidation": "A sustained drop in upgrade sales and margins, repeated shipment or acceptance delays, or weak collections despite rising sales would weaken the thesis. Check mix and timing before drawing a conclusion from an isolated quarter.",
       "drivers": [
         [
           "New lithography systems",
           "113 sold in Q3",
-          "Up from 86 in Q2. Watch units alongside product mix because different scanners command different prices.",
+          "Up from 86 in Q2. Track units together with EUV and DUV mix and system sales. Higher unit volumes alone cannot explain the margin change.",
           "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
         ],
         [
@@ -1187,13 +1187,13 @@
         [
           "Production capacity",
           "30% planned increase for 2027",
-          "The plan covers conventional EUV and immersion DUV. Management expects customer demand to exceed planned supply into 2028.",
+          "Management plans roughly 30% more low-NA EUV and immersion DUV capacity in 2027. Capacity, factory output, and customer-accepted deliveries are different milestones.",
           "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
         ],
         [
           "Orders entering 2026",
           "€38.8B backlog at December 2025",
-          "This year-end order book gives a starting point. Later customer expressions of interest for 2029–30 still need to become orders.",
+          "Dated December 2025 order book. Keep booked orders separate from later expressions of customer interest for 2029–30.",
           "https://www.asml.com/news/press-releases/2026/q4-2025-financial-results"
         ]
       ],
@@ -1201,7 +1201,7 @@
         [
           "Cash conversion",
           "€11.35B Q3 free cash flow",
-          "Changes in operating assets and liabilities contributed €7.01B. Compare cash generation over four quarters before extrapolating this quarter.",
+          "Operating assets and liabilities contributed €7.01B. Removing only that contribution would put Q3 FCF at about €4.34B, an illustrative sensitivity. The stress test shows how much the trailing baseline depends on it.",
           "https://live.euronext.com/sites/default/files/company_press_releases/attachments/2026/10/14/cpr01_notified_Financial%20statements%20US%20GAAP%20Q3%202026.pdf"
         ],
         [
@@ -1221,6 +1221,12 @@
           "Fab ramps set the pace",
           "A customer can defer tools if its fabrication plant or process is late. Track confirmed production schedules alongside ASML’s capacity additions.",
           "https://pr.tsmc.com/english/news/3338"
+        ],
+        [
+          "Receivables growth",
+          "€9.25B at Q3 end",
+          "Up about 72.5% YoY versus 55.2% sales growth. Check collections and aging in subsequent quarters before concluding payment quality is weakening.",
+          "https://live.euronext.com/sites/default/files/company_press_releases/attachments/2026/10/14/cpr01_notified_Financial%20statements%20US%20GAAP%20Q3%202026.pdf"
         ]
       ],
       "catalysts": [
@@ -1241,7 +1247,7 @@
         ],
         [
           "2028 · Samsung memory adoption",
-          "Samsung targets high-volume DRAM production using High NA EUV by 2028. Qualification and tool acceptance are the milestones before volume sales.",
+          "Samsung targets high-volume DRAM production using High NA EUV by 2028. Treat it as a customer target and track qualification, tool acceptance, and production ramp.",
           "https://news.samsungsemiconductor.com/global/samsung-electronics-and-asml-expand-strategic-collaboration-for-next-generation-semiconductor-manufacturing/"
         ],
         [
@@ -1268,6 +1274,26 @@
           "€11.66B sales · €4.96B net income",
           "Stronger upgrade demand lifted gross margin from 54.0% to 57.5%. Q3 operating profit reached €5.17B.",
           "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
+        ]
+      ],
+      "watch": [
+        [
+          "27 January results",
+          "Q4 guidance and 2027 outlook",
+          "Compare Q4 sales and gross margin with guidance. Look for 2027 capacity and delivery milestones, and any quantified impact from export licences.",
+          "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
+        ],
+        [
+          "Working capital and collections",
+          "Next two reporting cycles",
+          "Watch receivables, collections, and whether Q3’s working-capital inflow reverses. Follow cash conversion across multiple quarters.",
+          "https://live.euronext.com/sites/default/files/company_press_releases/attachments/2026/10/14/cpr01_notified_Financial%20statements%20US%20GAAP%20Q3%202026.pdf"
+        ],
+        [
+          "28 April results",
+          "System mix and upgrade demand",
+          "Check whether low-NA EUV and immersion DUV deliveries are scaling and whether installed-base sales and gross margin hold as the mix changes.",
+          "https://investor.asml.com/"
         ]
       ]
     },

@@ -10,9 +10,8 @@ RATIOS = {'gross_margin': 'gross_profit', 'operating_margin': 'operating_profit'
           'net_margin': 'net_income', 'pretax_margin': 'pretax'}
 
 
-def translated(row, rate):
-    result = {k: v if k in ('period', 'shares', 'equity_assets') or k.endswith('_margin')
-              else v * rate for k, v in row.items()}
+def with_ratios(row):
+    result = dict(row)
     if row.get('revenue', 0) > 0:
         for k, field in RATIOS.items():
             if field in row:
@@ -55,10 +54,10 @@ def asml_financials(q, annual, quote, history, fx):
                 ttm[key] = sum(row[field] for row in quarters[-4:])
         snapshots[period] = ttm
         releases.append((released, period, quarters[-1]))
-    translated_rows = {p: translated(r, rate) for p, r in rows.items()}
-    quarters = [translated_rows[p] for p in sorted(rows, reverse=True) if 'revenue' in rows[p]]
-    prior = {p: translated_rows[str(int(p[:4])-1)+p[4:]] for p in rows
-             if str(int(p[:4])-1)+p[4:] in translated_rows}
+    statement_rows = {p: with_ratios(r) for p, r in rows.items()}
+    quarters = [statement_rows[p] for p in sorted(rows, reverse=True) if 'revenue' in rows[p]]
+    prior = {p: statement_rows[str(int(p[:4])-1)+p[4:]] for p in rows
+             if str(int(p[:4])-1)+p[4:] in statement_rows}
 
     release_dates = [r[0] for r in releases]
     weekly = {}
@@ -75,44 +74,46 @@ def asml_financials(q, annual, quote, history, fx):
         released, period, last = releases[i]
         if (day - date.fromisoformat(period)).days > 180:
             continue
-        obs = {'date': day.isoformat(), 'price': price, 'asof': released.isoformat()}
+        obs = {'date': day.isoformat(), 'price': price / spot, 'asof': released.isoformat()}
         for key, value in snapshots[period].items():
-            obs[key] = value * spot
+            obs[key] = value
             obs[key+'_period'] = period
             for years in (1, 3):
                 old_period = str(int(period[:4])-years)+period[4:]
                 if key in snapshots.get(old_period, {}):
                     name = f'{key}_prior{years}'
-                    obs[name] = snapshots[old_period][key] * spot
+                    obs[name] = snapshots[old_period][key]
                     obs[name+'_period'] = old_period
-        cap = price * last['shares']
+        cap = obs['price'] * last['shares']
         obs.update(market_cap_proxy=cap, shares=last['shares'], shares_period=period,
-                   pb=cap/(last['equity']*spot), equity=last['equity']*spot, equity_period=period)
+                   pb=cap/last['equity'], equity=last['equity'], equity_period=period)
         if obs['eps'] > 0:
-            obs['pe'] = price / obs['eps']
+            obs['pe'] = obs['price'] / obs['eps']
         if obs['fcf'] > 0:
             obs['pfcf'] = cap / obs['fcf']
         if obs['op'] > 0:
-            obs['evop'] = (cap + (last['long_term_debt'] - last['cash'])*spot) / obs['op']
+            obs['evop'] = (cap + last.get('debt', last['long_term_debt']) - last['cash']) / obs['op']
         observations.append(obs)
 
     last = quarters[0]
     if not quote.get('sharesOutstanding'):
         raise ValueError('Current ASML outstanding share count unavailable')
-    cap = quote['lastClose'] * quote['sharesOutstanding']
+    valuation_close = quote['lastClose'] / rate
+    cap = valuation_close * quote['sharesOutstanding']
     eps = sum(r['eps'] for r in quarters[:4])
     sales = sum(r['revenue'] for r in quarters[:4])
     debt = last.get('debt', last.get('long_term_debt'))
     ev = cap + debt - last['cash'] if debt is not None and 'cash' in last else None
     ebitda = sum(r['operating_profit']+r['depreciation'] for r in quarters[:4]) if all('depreciation' in r for r in quarters[:4]) else None
-    quote.update(financialCurrency='USD', reportedCurrency='EUR', marketCap=cap,
-                 trailingEps=eps, trailingPE=quote['lastClose']/eps if eps>0 else None,
+    quote.update(financialCurrency='EUR', reportedCurrency='EUR', valuationClose=valuation_close, marketCap=cap,
+                 trailingEps=eps, trailingPE=valuation_close/eps if eps>0 else None,
                  priceToBook=cap/last['equity'] if last.get('equity',0)>0 else None,
                  priceToSalesTrailing12Months=cap/sales, enterpriseValue=ev,
                  enterpriseToRevenue=ev/sales if ev else None,
                  enterpriseToEbitda=ev/ebitda if ev and ebitda and ebitda>0 else None)
-    note = (f'ASML reports in euros. Statement tables use a constant exchange rate of '
-            f'${rate:.4f} per €1 on {fx_day}. Historical multiples use each week’s EUR/USD rate, '
-            'the last published four quarters and diluted shares as a market-cap estimate. '
-            'Historical enterprise value uses disclosed long-term debt. Dates label calendar quarter ends.')
-    return quarters, [translated(r, rate) for r in annual if 'revenue' in r], prior, observations, note
+    note = ('Statements and valuation amounts are in EUR. Nasdaq prices used for valuation '
+            f'are converted at the observation-date EUR/USD rate (latest: {rate:.4f} USD per EUR on {fx_day}). '
+            'Historical multiples use the last published four quarters and diluted shares as a market-cap proxy. '
+            'Historical enterprise value uses disclosed debt, with long-term debt as the fallback. '
+            'Statement dates are calendar-quarter labels.')
+    return quarters, [with_ratios(r) for r in annual if 'revenue' in r], prior, observations, note
