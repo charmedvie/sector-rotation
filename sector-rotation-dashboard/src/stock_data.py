@@ -263,7 +263,8 @@ def generate(output):
         quote={k:number(info.get(k)) for k in ['trailingPE','priceToBook','enterpriseToRevenue','enterpriseToEbitda','priceToSalesTrailing12Months','marketCap','enterpriseValue','trailingEps','sharesOutstanding']}
         quote['currency']=info.get('currency')
         quote['financialCurrency']=info.get('financialCurrency')
-        if watchlist_entry and symbol not in PILOTS and info.get('currency')!='USD':
+        verified_amsterdam_quote = watchlist_entry.get('symbol') == 'EURONEXT:ASML' and info.get('currency') == 'EUR'
+        if watchlist_entry and symbol not in PILOTS and info.get('currency') != 'USD' and not verified_amsterdam_quote:
             prices=[]
         if prices: quote['lastClose']=prices[-1]['close']; quote['date']=prices[-1]['date']
         cik=CIKS.get(symbol,peer_ciks.get(symbol) or peer_ciks.get(symbol.replace('-','.')) or peer_ciks.get(symbol.replace('.','-')))

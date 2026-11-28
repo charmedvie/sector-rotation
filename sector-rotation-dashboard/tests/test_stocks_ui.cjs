@@ -238,3 +238,34 @@ test('filing-backed profiles render drivers, risks and thesis for every newly re
   }
  }
 });
+
+test('ASML Amsterdam shares all issuer research while retaining its own quote and link',()=>{
+ const {ctx,nodes}=load();
+ ctx.research=JSON.parse(fs.readFileSync('site/data/company-research.json','utf8'));
+ ctx.evidence=JSON.parse(fs.readFileSync('site/data/research-evidence.json','utf8'));
+ vm.runInContext(`
+  setCompanyResearch(research);setResearchEvidence(evidence);
+  data={watchlists:{Explore:['ASML.AS']},stocks:{
+   ASML:{quote:{lastClose:1400,date:'2026-11-27'},quarterly:[],annual:[],prices:[]},
+   'ASML.AS':{quote:{lastClose:1200,date:'2026-11-27',currency:'EUR'},quarterly:[],annual:[],prices:[]}
+  }};
+  registerScreeningStocks();
+  select('ASML');
+  if(screeningTabs('ASML').length!==6)throw Error('Missing research tabs');
+  const originalPanels=tabs.map(name=>{tab=name;render();return el('panel').innerHTML;});
+  select('ASML.AS');
+  for (const [i,name] of tabs.entries()){
+   tab=name;render();
+   if(el('panel').innerHTML!==originalPanels[i])throw Error(name+' differs from issuer research');
+  }
+ `,ctx);
+ assert.match(nodes.get('watchlist').innerHTML,/aria-pressed="true" data-symbol="ASML\.AS"/);
+ assert.match(nodes.get('tradingview-link').href,/EURONEXT%3AASML/);
+ assert.equal(nodes.get('price').textContent,'€1,200.00');
+ assert.match(nodes.get('question').textContent,/Nasdaq listing in USD/);
+ assert.match(nodes.get('company').textContent,/ASML\.AS · ASML/);
+ vm.runInContext("delete data.stocks['ASML.AS'];render()",ctx);
+ assert.equal(nodes.get('price').textContent,'—');
+ vm.runInContext("select('ASML')",ctx);
+ assert.equal(nodes.get('price').textContent,'$1,400');
+});
