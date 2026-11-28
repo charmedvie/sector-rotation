@@ -6,7 +6,8 @@ from scripts.watchlist_request import apply, CONFIG, LIST_IDS
 def test_sync_preserves_local_changes_and_removes_upstream_deletions():
     data=json.loads(CONFIG.read_text())
     apply(data,'Watchlist | remove | Stablish | AMD')
-    apply(data,'Watchlist | add | Stablish | IBM')
+    for ticker in ('ASML', 'CME', 'CBOE', 'FTNT', 'PANW', 'IBM'):
+        apply(data, f'Watchlist | add | Stablish | {ticker}')
     remote={'id':LIST_IDS['Stablish'],'name':'Stablish','symbols':['NASDAQ:AMD','NASDAQ:META','NASDAQ:ZS']}
     apply(data,'Watchlist | sync | Stablish',remote)
     assert {'ASML','CME','CBOE','FTNT','PANW','IBM','META','ZS'} <= set(data['watchlists']['Stablish'])

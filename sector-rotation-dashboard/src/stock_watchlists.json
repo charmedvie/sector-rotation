@@ -11,17 +11,12 @@
       "AAPL",
       "AMD",
       "AMZN",
-      "ASML",
       "AVGO",
-      "CBOE",
-      "CME",
-      "FTNT",
       "GOOG",
       "IBKR",
       "META",
       "MSFT",
       "NVDA",
-      "PANW",
       "PLTR",
       "TSM"
     ],
@@ -179,15 +174,7 @@
       "symbol": "NASDAQ:PANW"
     }
   },
-  "manual_memberships": {
-    "Stablish": [
-      "ASML",
-      "CBOE",
-      "CME",
-      "FTNT",
-      "PANW"
-    ]
-  },
+  "manual_memberships": {},
   "tradingview_baseline": {
     "Defensive": [
       "JNJ",
