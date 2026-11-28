@@ -15,11 +15,13 @@
       "AVGO",
       "CBOE",
       "CME",
+      "FTNT",
       "GOOG",
       "IBKR",
       "META",
       "MSFT",
       "NVDA",
+      "PANW",
       "PLTR",
       "TSM"
     ],
@@ -167,6 +169,60 @@
     "ASML": {
       "name": "ASML Holding N.V.",
       "symbol": "NASDAQ:ASML"
+    },
+    "FTNT": {
+      "name": "Fortinet, Inc.",
+      "symbol": "NASDAQ:FTNT"
+    },
+    "PANW": {
+      "name": "Palo Alto Networks, Inc.",
+      "symbol": "NASDAQ:PANW"
     }
+  },
+  "manual_memberships": {
+    "Stablish": [
+      "ASML",
+      "CBOE",
+      "CME",
+      "FTNT",
+      "PANW"
+    ]
+  },
+  "tradingview_baseline": {
+    "Defensive": [
+      "JNJ",
+      "KO",
+      "PG",
+      "RTX",
+      "WMT"
+    ],
+    "Stablish": [
+      "AAPL",
+      "AMD",
+      "AMZN",
+      "AVGO",
+      "GOOG",
+      "IBKR",
+      "META",
+      "MSFT",
+      "NVDA",
+      "PLTR",
+      "TSM"
+    ],
+    "Volatile": [
+      "AFRM",
+      "ANT",
+      "ASTS",
+      "HIMS",
+      "HOOD",
+      "KTOS",
+      "NBIS",
+      "OKLO",
+      "ONDS",
+      "RKLB",
+      "SKHY",
+      "SPCX",
+      "TSLA"
+    ]
   }
 }

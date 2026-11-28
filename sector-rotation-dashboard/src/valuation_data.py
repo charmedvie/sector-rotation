@@ -26,7 +26,7 @@ BAL_TAGS = {
 }
 # Class structures and issuer-wide share counts must be checked before adding symbols.
 SINGLE_CLASS = {
-    'AAPL', 'AMD', 'AMZN', 'AVGO', 'CBOE', 'JNJ', 'KO', 'KTOS', 'MSFT', 'NVDA',
+    'AAPL', 'AMD', 'AMZN', 'AVGO', 'CBOE', 'FTNT', 'PANW', 'JNJ', 'KO', 'KTOS', 'MSFT', 'NVDA',
     'OKLO', 'PG', 'RTX', 'TSLA', 'WMT',
 }
 

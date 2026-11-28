@@ -2536,6 +2536,60 @@
           "priorUrl": "https://www.sec.gov/Archives/edgar/data/1731216/000173121626000003/0001731216-26-000003-index.htm"
         }
       ]
+    },
+    "FTNT": {
+      "reviewed_at": "2026-11-28",
+      "insiders": [
+        {
+          "kind": "other",
+          "name": "Ken Xie · President and CEO",
+          "date": "2026-11-20",
+          "filed": "2026-11-24",
+          "value": "168,000 shares gifted",
+          "detail": "Code G records a gift at zero consideration.",
+          "url": "https://www.sec.gov/Archives/edgar/data/1262039/000147558726000017/xslF345X06/form4-11242026_041101.xml"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment adviser",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "-94,424 shares",
+          "detail": "40,663,961 to 40,569,537 reported shares, June to September 2026. One investment adviser’s quarter-end position.",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "stakes": []
+    },
+    "PANW": {
+      "reviewed_at": "2026-11-28",
+      "insiders": [
+        {
+          "kind": "planned",
+          "name": "Josh D. Paul · Chief accounting officer",
+          "date": "2026-11-20",
+          "filed": "2026-11-24",
+          "value": "−1,100 shares",
+          "detail": "Shares sold at $358.67 under a September 2025 Rule 10b5-1 plan.",
+          "url": "https://www.sec.gov/Archives/edgar/data/1327567/000149315226054010/ownership.xml"
+        }
+      ],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Vanguard Capital Management · Investment adviser",
+          "date": "2026-09-30",
+          "filed": "2026-11-13",
+          "value": "+213,786 shares",
+          "detail": "53,129,128 to 53,342,914 reported shares, June to September 2026. One investment adviser’s quarter-end position.",
+          "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ],
+      "stakes": []
     }
   }
 }

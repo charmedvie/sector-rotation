@@ -59,6 +59,13 @@ function registerScreeningStocks(){
     if(restrictedProfile(s))peerFinance.add(id);
    }
   }
+  if(['FTNT','PANW'].includes(s)){
+   group.length=0;
+   const peers={FTNT:'Network firewalls, appliances and services',PANW:'Network, cloud and security operations platforms',CRWD:'Endpoint and security operations software',ZS:'Cloud-delivered access security'};
+   for(const [id,reason] of Object.entries(peers)){
+    if(id!==s&&get(id)?.quarterly?.length)group.push([id,get(id).metadata?.name||id,'Cybersecurity',reason]);
+   }
+  }
   peerGroups[s]=group.slice(0,6);M[s].peers=peerGroups[s].map(r=>r[0]);
   if(peerState[s])peerState[s].enabled=peerState[s].enabled.filter(id=>M[s].peers.includes(id));
  }
@@ -177,11 +184,12 @@ function box(title,body){return '<div class="stock-item"><h3>'+esc(title)+'</h3>
 function list(arr){return '<ul>'+arr.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';}
 function chart(id,traces,ytitle){if(!window.Plotly)return;Plotly.react(id,traces,{paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#b7c6db'},margin:{l:64,r:18,t:18,b:45},legend:{orientation:'h'},xaxis:{gridcolor:'#28364a'},yaxis:{title:ytitle,gridcolor:'#28364a'},hovermode:'x unified'},{responsive:true,displayModeBar:false});}
 function controls(){
+ window.refreshStockListManager?.();
  const tickerButton=s=>'<button aria-pressed="'+(s===symbol)+'" data-symbol="'+esc(s)+'">'+esc(s)+'</button>';
  const groups=Object.entries(data.watchlists||{});
  const grouped=new Set(groups.flatMap(([,tickers])=>tickers));
  const other=Object.keys(M).filter(s=>!lookupOnlyTickers.has(s)&&!grouped.has(s));
- const row=(name,tickers)=>'<div class="stock-watchlist-group" role="group" aria-label="'+esc(name)+'"><span>'+esc(name)+'</span><div>'+tickers.filter(s=>Object.hasOwn(M,s)).map(tickerButton).join('')+'</div></div>';
+ const row=(name,tickers)=>'<div class="stock-watchlist-group" role="group" aria-label="'+esc(name)+'"><span>'+esc(name)+'</span><div>'+tickers.filter(s=>Object.hasOwn(M,s)&&!window.stockListHidden?.(name,s)).map(tickerButton).join('')+'</div></div>';
  el('watchlist').innerHTML=groups.length?groups.map(([name,tickers])=>row(name,tickers)).join('')+
   (other.length?row('Other research',other):''):other.map(tickerButton).join('');
  el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=screeningTabs(symbol).map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}

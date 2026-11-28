@@ -168,7 +168,8 @@ test('every watchlist company shows reviewed ownership records and manager sampl
   vm.runInContext("symbol=ticker;render()",ctx);
   assert.ok(nodes.get('panel').innerHTML.includes(snapshot.insiders[0].name));
  }
- assert.equal(Object.keys(ctx.payload.ownership).length,33);
+ const configured=JSON.parse(fs.readFileSync('src/stock_watchlists.json','utf8')).stocks;
+ for(const ticker of Object.keys(configured))assert.ok(ctx.payload.ownership[ticker],ticker+' ownership');
  vm.runInContext("symbol='KTOS';render()",ctx);
  const page=nodes.get('panel').innerHTML;
  assert.match(page,/\+581,876 shares/);
@@ -215,7 +216,7 @@ test('filing-backed profiles render drivers, risks and thesis for every newly re
  const {ctx,nodes}=load();
  ctx.payload=JSON.parse(fs.readFileSync('site/data/company-research.json','utf8'));
  assert.ok(vm.runInContext('setCompanyResearch(payload)',ctx));
- assert.equal(vm.runInContext('Object.keys(companyResearch).length',ctx),26);
+ assert.equal(vm.runInContext('Object.keys(companyResearch).length',ctx),Object.keys(ctx.payload.companies).length);
  for(const [ticker,profile] of Object.entries(ctx.payload.companies)){
   ctx.ticker=ticker;
   vm.runInContext(`

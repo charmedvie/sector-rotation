@@ -105,3 +105,14 @@ a{color:#a9c9ff}.stock-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0
 .stock-watchlist-group>div{display:flex;flex-wrap:wrap;gap:5px}
 .stock-watchlist-group button{padding:5px 9px}
 @media(max-width:550px){.stock-watchlist-group{grid-template-columns:1fr}}
+
+.list-manager { margin:.65rem 0; color:#c8d6e6; }
+.list-manager summary { cursor:pointer; width:fit-content; }
+.list-manager form { display:flex; align-items:end; flex-wrap:wrap; gap:.65rem; margin:.8rem 0; }
+.list-manager label { display:grid; gap:.25rem; font-size:.85rem; }
+.list-manager label[hidden] { display:none; }
+.list-manager select,.list-manager input { font:inherit; color:inherit; background:#142236; border:1px solid #52647b; border-radius:5px; padding:.5rem; }
+.list-manager a { color:#8ccfeb; }
+.list-manager p:empty { display:none; }
+
+#request-text { display:block; width:100%; max-width:64em; background:#142236; color:inherit; padding:.5rem; margin:.4rem 0; }

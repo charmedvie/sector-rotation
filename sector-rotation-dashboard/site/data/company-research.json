@@ -1265,6 +1265,202 @@
           "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
         ]
       ]
+    },
+    "FTNT": {
+      "date": "2026-10-28",
+      "source": "https://investor.fortinet.com/news-releases/news-release-details/fortinet-reports-strong-third-quarter-2026-financial-results",
+      "thesis": "Fortinet’s firewall refresh creates a second sale when customers activate security and support subscriptions. Hardware demand is already visible. The next test is whether service growth accelerates as those installations go live.",
+      "confirmation": "Service growth rises above Q3’s 13% while billings stay ahead of revenue and operating margins hold near guidance.",
+      "invalidation": "Product demand slows before new service contracts ramp, or component costs and discounting erode margin as volumes rise.",
+      "drivers": [
+        [
+          "Firewall demand",
+          "$765M product revenue",
+          "Up 37% year over year. Both unit shipments and average selling prices rose as buyers moved toward higher-performance systems.",
+          "https://www.sec.gov/Archives/edgar/data/1262039/000126203926000027/ftnt-20260930.htm"
+        ],
+        [
+          "Service attachment",
+          "$1.31B service revenue",
+          "Up 13%. Staggered activations on large enterprise contracts delay the revenue benefit of new hardware.",
+          "https://investor.fortinet.com/static-files/4c66c3b5-3dc7-4bfa-ab92-c021c681dc7b"
+        ],
+        [
+          "Cloud-delivered access",
+          "$1.44B Unified SASE ARR",
+          "Up from $1.22B a year earlier. This annualized contract measure covers one business line. Total quarterly billings include hardware and contract timing.",
+          "https://investor.fortinet.com/static-files/0b752936-106e-4177-8a6e-c4ed0f4d4e52"
+        ],
+        [
+          "Large enterprises",
+          "51% growth in value of deals above $1M",
+          "A stronger large-deal pipeline supports expansion, though a handful of closing dates can move quarterly billings.",
+          "https://investor.fortinet.com/static-files/4c66c3b5-3dc7-4bfa-ab92-c021c681dc7b"
+        ]
+      ],
+      "risks": [
+        [
+          "Cash flow quality",
+          "$946M operating cash flow",
+          "Purchases of property and equipment were $64.2M. Fortinet’s $865M adjusted free cash flow also excludes a $17M escrow settlement.",
+          "https://www.sec.gov/Archives/edgar/data/1262039/000126203926000027/ftnt-20260930.htm"
+        ],
+        [
+          "Hardware economics",
+          "37% product growth vs. 13% services",
+          "Higher-performance models lifted average selling prices. Longer component lead times or an easing refresh cycle could reverse part of the benefit.",
+          "https://investor.fortinet.com/static-files/4c66c3b5-3dc7-4bfa-ab92-c021c681dc7b"
+        ],
+        [
+          "Contract timing",
+          "$7.93B deferred revenue",
+          "This balance supports future revenue. Large deals, contract length and activation timing can change billings before service revenue follows.",
+          "https://www.sec.gov/Archives/edgar/data/1262039/000126203926000027/ftnt-20260930.htm"
+        ]
+      ],
+      "catalysts": [
+        [
+          "Q4 2026 · Billings conversion",
+          "Compare billings with the $2.775–2.925B guide and revenue with $2.155–2.245B. A billings beat is stronger if service growth also accelerates.",
+          "https://investor.fortinet.com/news-releases/news-release-details/fortinet-reports-strong-third-quarter-2026-financial-results"
+        ],
+        [
+          "FY 2026 · Service growth",
+          "Check full-year service revenue against $5.15–5.17B. Watch whether new customers activate subscriptions after installation.",
+          "https://investor.fortinet.com/news-releases/news-release-details/fortinet-reports-strong-third-quarter-2026-financial-results"
+        ],
+        [
+          "Next margin print · Hardware mix",
+          "Management guides to a 35.5–37.5% adjusted operating margin in Q4. Track GAAP margin and product costs alongside it.",
+          "https://investor.fortinet.com/news-releases/news-release-details/fortinet-reports-strong-third-quarter-2026-financial-results"
+        ],
+        [
+          "Distribution · Equinix AI Hub",
+          "Look for paid deployments or an attributed sales figure following integration. Product availability alone gives no estimate of incremental revenue.",
+          "https://investor.fortinet.com/news-releases/news-release-details/fortinet-and-equinix-secure-distributed-ai-scale/"
+        ]
+      ],
+      "updates": [
+        [
+          "5 Nov 2026",
+          "Equinix adds FortiAIGate",
+          "Fortinet made its AI governance product available on the Equinix Distributed AI Hub.",
+          "https://investor.fortinet.com/news-releases/news-release-details/fortinet-and-equinix-secure-distributed-ai-scale/"
+        ],
+        [
+          "28 Oct 2026",
+          "Billings grew 29%",
+          "Q3 billings reached $2.34B on $2.08B revenue. GAAP operating margin was 34%.",
+          "https://investor.fortinet.com/news-releases/news-release-details/fortinet-reports-strong-third-quarter-2026-financial-results"
+        ],
+        [
+          "28 Oct 2026",
+          "Buyback capacity increased",
+          "The board added $1.2B to authorization, leaving $2B available. Future repurchases depend on execution.",
+          "https://investor.fortinet.com/news-releases/news-release-details/fortinet-reports-strong-third-quarter-2026-financial-results"
+        ]
+      ]
+    },
+    "PANW": {
+      "date": "2026-11-18",
+      "source": "https://investors.paloaltonetworks.com/news-releases/news-release-details/palo-alto-networks-reports-fiscal-first-quarter-2027-financial",
+      "thesis": "Palo Alto can earn more from each customer by combining network security, security operations and identity. Acquisitions accelerate the expansion. The shareholder test is whether recurring contracts grow faster than integration costs and dilution.",
+      "confirmation": "Next-generation security ARR reaches the Q2 guide and contracted work converts to revenue. GAAP operating profit recovers as acquired businesses scale.",
+      "invalidation": "Acquired revenue accounts for the gains while margins remain compressed, or share issuance and AI infrastructure spending absorb the benefit of growth.",
+      "drivers": [
+        [
+          "Recurring contracts",
+          "$9.73B NGS ARR",
+          "Up 66% year over year. This annualized measure covers qualifying active contracts across the platform and excludes hardware and legacy offerings.",
+          "https://investors.paloaltonetworks.com/news-releases/news-release-details/palo-alto-networks-reports-fiscal-first-quarter-2027-financial"
+        ],
+        [
+          "Contracted demand",
+          "$21.0B remaining obligations",
+          "Up 35%. This is contracted revenue awaiting recognition. Contract duration and timing affect when it reaches earnings.",
+          "https://investors.paloaltonetworks.com/news-releases/news-release-details/palo-alto-networks-reports-fiscal-first-quarter-2027-financial"
+        ],
+        [
+          "Network and cloud security",
+          "$2.28B network & AI security sales",
+          "Up 20%. Cortex added $647M, up 53%, helped by acquired observability revenue. Compare the growth contribution of each business.",
+          "https://www.sec.gov/Archives/edgar/data/1327567/000132756726000033/panw-20261031.htm"
+        ],
+        [
+          "Identity security",
+          "$353M Idira revenue",
+          "The comparative quarter shows no Idira revenue. CyberArk changes the comparison base, making consolidated growth an imperfect measure of organic demand.",
+          "https://www.sec.gov/Archives/edgar/data/1327567/000132756726000033/panw-20261031.htm"
+        ]
+      ],
+      "risks": [
+        [
+          "Profit quality",
+          "$96M GAAP operating profit",
+          "Down from $309M a year earlier despite 39% revenue growth. A $457M tax benefit lifted reported net income to $482M.",
+          "https://www.sec.gov/Archives/edgar/data/1327567/000132756726000033/panw-20261031.htm"
+        ],
+        [
+          "Acquisition and dilution",
+          "$4.5B proposed stock deal",
+          "Applied Compute adds execution risk and potential dilution. Management expects closing in fiscal Q3 2027, subject to conditions.",
+          "https://investors.paloaltonetworks.com/static-files/ba371128-3ec5-4f39-be80-d2ec1fc99254"
+        ],
+        [
+          "Cash flow seasonality",
+          "56.2% adjusted Q1 FCF margin",
+          "Management guides to 38% for the full year. Track cash spending and share-based compensation alongside adjusted cash flow.",
+          "https://investors.paloaltonetworks.com/news-releases/news-release-details/palo-alto-networks-reports-fiscal-first-quarter-2027-financial"
+        ],
+        [
+          "Cloud delivery costs",
+          "Migration weighs on Cortex margins",
+          "Management cited hosting mix and the Prisma-to-Cortex transition. Check whether margins improve as workload migration advances.",
+          "https://investors.paloaltonetworks.com/static-files/ba371128-3ec5-4f39-be80-d2ec1fc99254"
+        ]
+      ],
+      "catalysts": [
+        [
+          "Fiscal Q2 · Contract growth",
+          "Compare NGS ARR with $10.20–10.22B and remaining obligations with $21.5–21.6B. Check both against revenue of $3.53–3.55B.",
+          "https://investors.paloaltonetworks.com/news-releases/news-release-details/palo-alto-networks-reports-fiscal-first-quarter-2027-financial"
+        ],
+        [
+          "Fiscal Q3 · Applied Compute decision",
+          "Watch closing conditions, shares issued and the revised investment budget. Management’s November guidance excludes the proposed transaction.",
+          "https://investors.paloaltonetworks.com/static-files/ba371128-3ec5-4f39-be80-d2ec1fc99254"
+        ],
+        [
+          "Fiscal 2027 · Profit and cash conversion",
+          "Compare GAAP profit with the 29.5% adjusted operating margin target and 38% adjusted free cash flow margin target.",
+          "https://investors.paloaltonetworks.com/news-releases/news-release-details/palo-alto-networks-reports-fiscal-first-quarter-2027-financial"
+        ],
+        [
+          "Next segment report · Cross-selling",
+          "Track network, Cortex and Idira separately. Customer expansion and stronger operating profit would give more support than acquisition-driven revenue alone.",
+          "https://www.sec.gov/Archives/edgar/data/1327567/000132756726000033/panw-20261031.htm"
+        ]
+      ],
+      "updates": [
+        [
+          "19 Nov 2026",
+          "Quarterly filing details profit drivers",
+          "Pretax income fell to $25M from $412M. The tax benefit explains why net income rose as operating profit declined.",
+          "https://www.sec.gov/Archives/edgar/data/1327567/000132756726000033/panw-20261031.htm"
+        ],
+        [
+          "18 Nov 2026",
+          "Applied Compute agreement announced",
+          "Palo Alto plans to acquire the open-weight AI platform in an all-stock transaction.",
+          "https://investors.paloaltonetworks.com/news-releases/news-release-details/palo-alto-networks-acquire-applied-compute-bringing-secure-open"
+        ],
+        [
+          "18 Nov 2026",
+          "Fiscal Q1 results and higher outlook",
+          "Revenue reached $3.445B. Full-year revenue guidance moved to $14.52–14.57B.",
+          "https://investors.paloaltonetworks.com/news-releases/news-release-details/palo-alto-networks-reports-fiscal-first-quarter-2027-financial"
+        ]
+      ]
     }
   }
 }

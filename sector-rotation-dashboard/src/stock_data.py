@@ -8,12 +8,13 @@ import os
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import pandas as pd
+from .filing_quarters import filing_quarters
 from .asml_data import asml_financials
 from .valuation_data import historical_valuation
 from .screening_requests import fetch_requests, screening_profile
 
 PILOTS = ['IBKR','HOOD','AMZN','GOOGL','NVDA','KTOS','OKLO']
-PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT','ICE','NDAQ','AMAT','LRCX']
+PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT','ICE','NDAQ','AMAT','LRCX','CRWD','ZS']
 FIELDS = {
  'revenue': ['Total Revenue'], 'gross_profit':['Gross Profit'],
  'operating_profit':['Operating Income'], 'pretax':['Pretax Income'],
@@ -267,6 +268,9 @@ def generate(output):
         if prices: quote['lastClose']=prices[-1]['close']; quote['date']=prices[-1]['date']
         cik=CIKS.get(symbol,peer_ciks.get(symbol) or peer_ciks.get(symbol.replace('-','.')) or peer_ciks.get(symbol.replace('.','-')))
         facts, filing_source = filings.get(symbol, cik) if cik is not None else ({}, {'source': 'Unavailable'})
+        if symbol in ('FTNT','PANW') and info.get('financialCurrency') == 'USD':
+            q = filing_quarters(q, facts, h) if any('revenue' in row for row in q) else q
+            annual = [row for row in annual if 'revenue' in row]
         prior = safe(lambda:prior_year_comparatives(q,facts),{}) if facts and symbol in full else {}
         peer_prior = safe(lambda:peer_comparatives(q,facts),{}) if facts else {}
         quality_prior = safe(lambda:quality_comparatives(q,facts),{}) if facts and symbol in full else {}
