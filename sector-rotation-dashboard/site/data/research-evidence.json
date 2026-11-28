@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_at": "2026-11-27",
+  "reviewed_at": "2026-11-28",
   "events": [
     {
       "id": "oklo-centrus-haleu-20261111",
@@ -2507,6 +2507,33 @@
           "detail": "6,835,070 → 6,836,592 reported shares, Q2 to Q3.",
           "url": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001711/xslForm13F_X02/13F_0002100119_20260930.xml",
           "priorUrl": "https://www.sec.gov/Archives/edgar/data/2100119/000210011926001527/xslForm13F_X02/13F_0002100119_20260630.xml"
+        }
+      ]
+    },
+    "ASML": {
+      "reviewed_at": "2026-11-28",
+      "insiders": [
+        {
+          "kind": "other",
+          "register": "AFM",
+          "name": "B.M. Conix · Supervisory board",
+          "date": "2026-10-15",
+          "value": "+130 shares",
+          "detail": "Reported holding rose from 379 to 509 ordinary shares at €1,447.12 per share. The register entry does not specify an open-market purchase.",
+          "url": "https://www.afm.nl/en/sector/registers/meldingenregisters/bestuurders-commissarissen/details?id=201718"
+        }
+      ],
+      "stakes": [],
+      "managerPositions": [
+        {
+          "kind": "13F",
+          "name": "Martin Capital Partners · Investment manager",
+          "date": "2026-09-30",
+          "filed": "2026-10-07",
+          "value": "+63 shares",
+          "detail": "5,180 to 5,243 New York registered shares from June to September. These are quarter-end positions.",
+          "url": "https://www.sec.gov/Archives/edgar/data/1731216/000173121626000004/q3_2026_mcp.xml",
+          "priorUrl": "https://www.sec.gov/Archives/edgar/data/1731216/000173121626000003/0001731216-26-000003-index.htm"
         }
       ]
     }

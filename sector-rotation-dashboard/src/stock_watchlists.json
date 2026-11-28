@@ -11,6 +11,7 @@
       "AAPL",
       "AMD",
       "AMZN",
+      "ASML",
       "AVGO",
       "CBOE",
       "CME",
@@ -162,6 +163,10 @@
     "CBOE": {
       "name": "Cboe Global Markets, Inc.",
       "symbol": "CBOE:CBOE"
+    },
+    "ASML": {
+      "name": "ASML Holding N.V.",
+      "symbol": "NASDAQ:ASML"
     }
   }
 }

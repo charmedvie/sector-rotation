@@ -8,11 +8,12 @@ import os
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import pandas as pd
+from .asml_data import asml_financials
 from .valuation_data import historical_valuation
 from .screening_requests import fetch_requests, screening_profile
 
 PILOTS = ['IBKR','HOOD','AMZN','GOOGL','NVDA','KTOS','OKLO']
-PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT','ICE','NDAQ']
+PEERS = ['SCHW','SOFI','COIN','MSFT','WMT','META','AMD','AVGO','AVAV','LHX','SMR','NNE','RTX','BWXT','ICE','NDAQ','AMAT','LRCX']
 FIELDS = {
  'revenue': ['Total Revenue'], 'gross_profit':['Gross Profit'],
  'operating_profit':['Operating Income'], 'pretax':['Pretax Income'],
@@ -64,7 +65,7 @@ def safe(call, default=None):
         return default
 
 
-CIKS = {'IBKR':1381197,'HOOD':1783879,'AMZN':1018724,'GOOGL':1652044,'NVDA':1045810,'KTOS':1069258,'OKLO':1849056}
+CIKS = {'ASML':937966,'IBKR':1381197,'HOOD':1783879,'AMZN':1018724,'GOOGL':1652044,'NVDA':1045810,'KTOS':1069258,'OKLO':1849056}
 SEC_TAGS = {
     'revenue': ['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax','InterestAndDividendIncomeOperating'],
     'operating_profit':['OperatingIncomeLoss'],
@@ -248,7 +249,8 @@ def generate(output):
             payload['screening_requests'][symbol]='unsupported_or_unverified_currency'
             if symbol not in PEERS and not watchlist_entry: continue
             is_screening=False
-        if watchlist_entry and symbol not in PILOTS and info.get('financialCurrency')!='USD':
+        asml_eur = symbol == 'ASML' and info.get('financialCurrency') == 'EUR' and info.get('currency') == 'USD'
+        if watchlist_entry and symbol not in PILOTS and info.get('financialCurrency')!='USD' and not asml_eur:
             q,annual=[],[]
         history_period='10y'
         h=safe(lambda:t.history(period=history_period,auto_adjust=False,actions=True,timeout=25)) if symbol in full else None
@@ -269,9 +271,24 @@ def generate(output):
         peer_prior = safe(lambda:peer_comparatives(q,facts),{}) if facts else {}
         quality_prior = safe(lambda:quality_comparatives(q,facts),{}) if facts and symbol in full else {}
         valuation = safe(lambda:historical_valuation(symbol,facts,h),[]) if symbol in full and info.get('currency') == 'USD' else []
+        statement_note = None
+        if asml_eur:
+            fx = safe(lambda:yf.Ticker('EURUSD=X').history(period='10y',auto_adjust=False))
+            converted = safe(lambda:asml_financials(q, annual, quote, h, fx))
+            if converted:
+                q, annual, prior, valuation, statement_note = converted
+                peer_prior = quality_prior = prior
+                filing_source = {'source':'ASML quarterly results'}
+            else:
+                q, annual, valuation = [], [], []
+                for field in ('trailingPE','priceToBook','enterpriseToRevenue','enterpriseToEbitda','priceToSalesTrailing12Months','enterpriseValue','trailingEps'):
+                    quote[field] = None
         profile = 'exchange' if symbol in ('CME', 'CBOE', 'ICE', 'NDAQ') else screening_profile(info, q)
         if is_screening: payload['screening_requests'][symbol]='available' if q and prices else 'data_unavailable'
-        payload['stocks'][symbol]={'screening':is_screening,'metadata':{'name':info.get('shortName') or info.get('longName') or watchlist_entry.get('name') or symbol,'tradingviewSymbol':watchlist_entry.get('symbol'),'sector':info.get('sector'),'industry':info.get('industry'),'exchange':info.get('exchange'),'cik':cik,'profile':profile,'currency':info.get('financialCurrency')},'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'valuation_filing_source':filing_source,'status':'available' if q else 'unavailable'}
+        payload['stocks'][symbol]={'screening':is_screening,'metadata':{'name':info.get('shortName') or info.get('longName') or watchlist_entry.get('name') or symbol,'tradingviewSymbol':watchlist_entry.get('symbol'),'sector':info.get('sector'),'industry':info.get('industry'),'exchange':info.get('exchange'),'cik':cik,'profile':profile,'currency':quote['financialCurrency']},'quarterly':q,'annual':annual,'quote':quote,'prices':prices,'prior_year':prior,'peer_prior':peer_prior,'quality_prior':quality_prior,'valuation_history':valuation,'valuation_filing_source':filing_source,'status':'available' if q else 'unavailable'}
+        if statement_note:
+            payload['stocks'][symbol]['statement_note'] = statement_note
+            payload['stocks'][symbol]['metadata']['name'] = 'ASML Holding N.V.'
         print(f'{symbol}: {len(q)} quarters, {len(annual)} years; valuation {filing_source["source"]} '+str({k:sum(k in r for r in valuation) for k in ('price','eps','pe','market_cap_proxy','evop','pb','pfcf','fcf')}))
     output.parent.mkdir(parents=True,exist_ok=True)
     tmp=output.with_suffix('.tmp')

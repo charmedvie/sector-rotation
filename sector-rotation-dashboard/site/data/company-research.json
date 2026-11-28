@@ -1,5 +1,5 @@
 {
-  "reviewed_at": "2026-11-27",
+  "reviewed_at": "2026-11-28",
   "companies": {
     "JNJ": {
       "date": "2026-10-13",
@@ -1162,6 +1162,107 @@
           "Next earnings · Data and expenses",
           "Compare Data Vantage growth with the mid-teens target and 2026 adjusted expenses with the $830–845 million range.",
           "https://ir.cboe.com/news/news-details/2026/Cboe-Global-Markets-Reports-Results-for-Third-Quarter-2026/default.aspx"
+        ]
+      ]
+    },
+    "ASML": {
+      "date": "2026-10-14",
+      "source": "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026",
+      "thesis": "Chipmakers can add wafer capacity by installing ASML scanners or upgrading machines they already own. Q3 showed both routes working. The investment case now depends on ASML delivering more systems while keeping the higher-margin upgrade business strong.",
+      "confirmation": "New system volumes rise from 113, service and upgrade sales hold near €3.3B, and gross margin stays close to the 57% Q4 target.",
+      "invalidation": "Customer fab delays, export licence restrictions or bottlenecks push deliveries out. A drop in upgrade sales alongside falling margins would weaken the case even if orders stay strong.",
+      "drivers": [
+        [
+          "New lithography systems",
+          "113 sold in Q3",
+          "Up from 86 in Q2. Watch units alongside product mix because different scanners command different prices.",
+          "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
+        ],
+        [
+          "Service and upgrades",
+          "€3.29B in Q3",
+          "About 28% of sales, up from €2.76B in Q2. Productivity upgrades helped gross margin reach 57.5%.",
+          "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
+        ],
+        [
+          "Production capacity",
+          "30% planned increase for 2027",
+          "The plan covers conventional EUV and immersion DUV. Management expects customer demand to exceed planned supply into 2028.",
+          "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
+        ],
+        [
+          "Orders entering 2026",
+          "€38.8B backlog at December 2025",
+          "This year-end order book gives a starting point. Later customer expressions of interest for 2029–30 still need to become orders.",
+          "https://www.asml.com/news/press-releases/2026/q4-2025-financial-results"
+        ]
+      ],
+      "risks": [
+        [
+          "Cash conversion",
+          "€11.35B Q3 free cash flow",
+          "Changes in operating assets and liabilities contributed €7.01B. Compare cash generation over four quarters before extrapolating this quarter.",
+          "https://live.euronext.com/sites/default/files/company_press_releases/attachments/2026/10/14/cpr01_notified_Financial%20statements%20US%20GAAP%20Q3%202026.pdf"
+        ],
+        [
+          "Export licences",
+          "Equipment and service exposure",
+          "Restrictions can prevent shipments or service work even after an order is placed. Track affected product lines and changes to guidance.",
+          "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
+        ],
+        [
+          "Factory execution",
+          "€11.91B inventory at Q3 end",
+          "Monitor inventory, completed deliveries and customer acceptance together. Delays can tie up cash while pushing revenue into later quarters.",
+          "https://live.euronext.com/sites/default/files/company_press_releases/attachments/2026/10/14/cpr01_notified_Financial%20statements%20US%20GAAP%20Q3%202026.pdf"
+        ],
+        [
+          "Customer timing",
+          "Fab ramps set the pace",
+          "A customer can defer tools if its fabrication plant or process is late. Track confirmed production schedules alongside ASML’s capacity additions.",
+          "https://pr.tsmc.com/english/news/3338"
+        ]
+      ],
+      "catalysts": [
+        [
+          "27 Jan 2027 · Q4 and full year",
+          "Compare Q4 sales with €14.2–15.2B and gross margin with ~57%. The full-year benchmarks are €44–45B and ~56%.",
+          "https://investor.asml.com/"
+        ],
+        [
+          "2027 · More scanners available",
+          "Track delivered systems against the planned 30% capacity increase. Watch whether suppliers can raise output without squeezing margins.",
+          "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
+        ],
+        [
+          "2028 · Samsung memory adoption",
+          "Samsung targets high-volume DRAM production using High NA EUV by 2028. Qualification and tool acceptance are the milestones before volume sales.",
+          "https://news.samsungsemiconductor.com/global/samsung-electronics-and-asml-expand-strategic-collaboration-for-next-generation-semiconductor-manufacturing/"
+        ],
+        [
+          "2030 onward · TSMC adoption",
+          "TSMC intends to use High NA in volume manufacturing from 2030. Its separate large-mask program targets a 2031 pilot and 2033 production readiness.",
+          "https://pr.tsmc.com/english/news/3338"
+        ]
+      ],
+      "updates": [
+        [
+          "23 Nov 2026",
+          "445,000 shares repurchased",
+          "ASML spent €557.0M on its own shares during November 16–20. This is a company capital return.",
+          "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-transactions-under-its-current-share-buyback-program-10"
+        ],
+        [
+          "4 Nov 2026",
+          "€1.88 interim dividend",
+          "ASML set the Nasdaq payment conversion at $1.1148 per euro.",
+          "https://www.investor.asml.com/investor-resources/capital-return-and-financing"
+        ],
+        [
+          "14 Oct 2026",
+          "€11.66B sales · €4.96B net income",
+          "Stronger upgrade demand lifted gross margin from 54.0% to 57.5%. Q3 operating profit reached €5.17B.",
+          "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026"
         ]
       ]
     }
