@@ -172,7 +172,7 @@ async function loadData() {
     $('observation-status').textContent = data.is_demo ? 'SIMULATION · NOT LIVE PRICES' : 'WEEKLY ADJUSTED CLOSE';
     $('source-label').textContent = data.is_demo ? 'Synthetic demo' : 'yfinance / Yahoo Finance';
     const universe = $('universe-select');
-    for (const key of ['Volatile','Stablish','Invest','Defensive']) {
+    for (const key of ['Volatile','Stablish','Explore','Defensive']) {
       if (!data.watchlists?.[key]) continue;
       const option = document.createElement('option');
       option.value=key; option.textContent=key; universe.appendChild(option);
