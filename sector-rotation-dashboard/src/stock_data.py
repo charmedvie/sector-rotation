@@ -241,7 +241,7 @@ def generate(output):
     for symbol in dict.fromkeys(PILOTS+PEERS+list(watchlist_stocks)+requested):
         is_screening=symbol in requested
         watchlist_entry=watchlist_stocks.get(symbol, {})
-        provider_symbol=symbol.replace('.', '-')
+        provider_symbol=watchlist_entry.get('provider_symbol') or symbol.replace('.', '-')
         t=yf.Ticker(provider_symbol)
         q=extract([safe(lambda:t.quarterly_income_stmt),safe(lambda:t.quarterly_balance_sheet),safe(lambda:t.quarterly_cashflow)])
         annual=extract([safe(lambda:t.income_stmt),safe(lambda:t.balance_sheet),safe(lambda:t.cashflow)]) if symbol in full else []
@@ -267,6 +267,8 @@ def generate(output):
             prices=[]
         if prices: quote['lastClose']=prices[-1]['close']; quote['date']=prices[-1]['date']
         cik=CIKS.get(symbol,peer_ciks.get(symbol) or peer_ciks.get(symbol.replace('-','.')) or peer_ciks.get(symbol.replace('.','-')))
+        if watchlist_entry.get('provider_symbol'):
+            cik = None
         facts, filing_source = filings.get(symbol, cik) if cik is not None else ({}, {'source': 'Unavailable'})
         if symbol in ('FTNT','PANW') and info.get('financialCurrency') == 'USD':
             q = filing_quarters(q, facts, h) if any('revenue' in row for row in q) else q

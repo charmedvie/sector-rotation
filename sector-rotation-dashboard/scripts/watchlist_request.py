@@ -6,7 +6,7 @@ from pathlib import Path
 
 CONFIG = Path(__file__).resolve().parents[1] / 'src' / 'stock_watchlists.json'
 TICKER = re.compile(r'[A-Z][A-Z0-9.-]{0,9}')
-LIST_IDS = {'Defensive': 340008219, 'Stablish': 353388331, 'Volatile': 353388098}
+LIST_IDS = {'Defensive': 340008219, 'Stablish': 353388331, 'Volatile': 353388098, 'Explore': 356596752}
 
 
 def apply(config, title, remote=None):
@@ -25,6 +25,7 @@ def apply(config, title, remote=None):
         if not isinstance(symbols, list):
             raise ValueError('TradingView membership unavailable')
         current = {}
+        known_listings = {entry.get('symbol'): key for key, entry in config['stocks'].items()}
         for symbol in symbols:
             if not isinstance(symbol, str):
                 raise ValueError('Invalid TradingView symbol')
@@ -33,6 +34,7 @@ def apply(config, title, remote=None):
             exchange, sep, ticker = symbol.partition(':')
             if not sep or not exchange or not TICKER.fullmatch(ticker):
                 raise ValueError('Unsupported TradingView equity symbol: '+symbol)
+            ticker = known_listings.get(symbol, ticker)
             existing = config['stocks'].get(ticker, {}).get('symbol')
             if (existing and existing != symbol) or (ticker in current and current[ticker] != symbol):
                 raise ValueError('Ticker is already associated with a different exchange: '+ticker)

@@ -34,6 +34,18 @@
       "SKHY",
       "SPCX",
       "TSLA"
+    ],
+    "Explore": [
+      "ASML.AS",
+      "CBOE",
+      "CIBR",
+      "CME",
+      "FTNT",
+      "IBKR",
+      "LRCX",
+      "NVDA",
+      "PANW",
+      "WCBR"
     ]
   },
   "stocks": {
@@ -172,6 +184,25 @@
     "PANW": {
       "name": "Palo Alto Networks, Inc.",
       "symbol": "NASDAQ:PANW"
+    },
+    "ASML.AS": {
+      "name": "ASML Holding N.V. · Amsterdam",
+      "symbol": "EURONEXT:ASML",
+      "provider_symbol": "ASML.AS"
+    },
+    "CIBR": {
+      "name": "First Trust Nasdaq Cybersecurity UCITS ETF",
+      "symbol": "LSE:CIBR",
+      "provider_symbol": "CIBR.L"
+    },
+    "WCBR": {
+      "name": "WisdomTree Cybersecurity UCITS ETF",
+      "symbol": "LSE:WCBR",
+      "provider_symbol": "WCBR.L"
+    },
+    "LRCX": {
+      "name": "Lam Research Corporation",
+      "symbol": "NASDAQ:LRCX"
     }
   },
   "manual_memberships": {},
@@ -210,6 +241,18 @@
       "SKHY",
       "SPCX",
       "TSLA"
+    ],
+    "Explore": [
+      "ASML.AS",
+      "CBOE",
+      "CIBR",
+      "CME",
+      "FTNT",
+      "IBKR",
+      "LRCX",
+      "NVDA",
+      "PANW",
+      "WCBR"
     ]
   }
 }

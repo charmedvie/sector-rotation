@@ -84,7 +84,9 @@ def main() -> None:
     for start in range(0, len(stock_tickers), 8):
         batch = stock_tickers[start:start+8]
         try:
-            stock_daily = stock_daily.join(fetch_daily(batch, strict=False), how='outer')
+            provider_to_ticker = {config['stocks'][ticker].get('provider_symbol', ticker): ticker for ticker in batch}
+            quotes = fetch_daily(list(provider_to_ticker), strict=False)
+            stock_daily = stock_daily.join(quotes.rename(columns=provider_to_ticker), how='outer')
         except Exception as exc:
             print(f'Optional stock batch unavailable: {batch}: {exc}')
     payload['watchlists'] = config['watchlists']

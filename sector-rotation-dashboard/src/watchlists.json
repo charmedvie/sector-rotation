@@ -7,14 +7,6 @@
       "WMT",
       "RTX"
     ],
-    "Invest": [
-      "AFRM",
-      "AMZN",
-      "HOOD",
-      "MSFT",
-      "NVDA",
-      "RTX"
-    ],
     "Stablish": [
       "AAPL",
       "AMD",
@@ -42,6 +34,18 @@
       "SKHY",
       "SPCX",
       "TSLA"
+    ],
+    "Explore": [
+      "ASML.AS",
+      "CBOE",
+      "CIBR",
+      "CME",
+      "FTNT",
+      "IBKR",
+      "LRCX",
+      "NVDA",
+      "PANW",
+      "WCBR"
     ]
   },
   "stocks": {
@@ -189,6 +193,49 @@
       "name": "Ondas Inc.",
       "sector": "XLI",
       "symbol": "NASDAQ:ONDS"
+    },
+    "ASML.AS": {
+      "name": "ASML Holding N.V. · Amsterdam",
+      "sector": "XLK",
+      "symbol": "EURONEXT:ASML",
+      "provider_symbol": "ASML.AS"
+    },
+    "CIBR": {
+      "name": "First Trust Nasdaq Cybersecurity UCITS ETF",
+      "sector": "XLK",
+      "symbol": "LSE:CIBR",
+      "provider_symbol": "CIBR.L"
+    },
+    "WCBR": {
+      "name": "WisdomTree Cybersecurity UCITS ETF",
+      "sector": "XLK",
+      "symbol": "LSE:WCBR",
+      "provider_symbol": "WCBR.L"
+    },
+    "LRCX": {
+      "name": "Lam Research Corporation",
+      "sector": "XLK",
+      "symbol": "NASDAQ:LRCX"
+    },
+    "CBOE": {
+      "name": "Cboe Global Markets, Inc.",
+      "sector": "XLF",
+      "symbol": "CBOE:CBOE"
+    },
+    "CME": {
+      "name": "CME Group Inc.",
+      "sector": "XLF",
+      "symbol": "NASDAQ:CME"
+    },
+    "FTNT": {
+      "name": "Fortinet, Inc.",
+      "sector": "XLK",
+      "symbol": "NASDAQ:FTNT"
+    },
+    "PANW": {
+      "name": "Palo Alto Networks, Inc.",
+      "sector": "XLK",
+      "symbol": "NASDAQ:PANW"
     }
   }
 }
