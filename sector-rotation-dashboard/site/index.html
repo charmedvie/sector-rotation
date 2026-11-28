@@ -8,37 +8,35 @@
   <title>Sector Rotation Lab — Relative Strength</title>
   <meta name="description" content="Interactive sector Relative Rotation Graph with historical trails, sector strength rankings, and automatically refreshed data." />
   <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="dashboard-shell.css?v=1" />
   <script src="https://cdn.plot.ly/plotly-3.3.1.min.js" defer></script>
   <script src="app.js?v=9" defer></script>
 </head>
-<body>
+<body class="rotation-page">
   <div class="app-shell">
     <header class="site-header">
       <div class="brand-wrap">
         <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-        <div>
-          <div class="brand-name">SECTOR <span>ROTATION</span> LAB</div>
-          <div class="brand-caption">RELATIVE STRENGTH INTELLIGENCE</div>
-        </div>
+        <div class="brand-name">Sector Rotation <span>Lab</span></div>
       </div>
-      <div class="header-right"><a href="stocks.html" style="color:#a9c9ff;font-weight:700;text-decoration:none;white-space:nowrap">Stock Intelligence ↗</a>
-        <div class="signal-indicator"><span class="signal-dot"></span><span id="data-indicator">Loading data</span></div>
-        <span class="header-divider"></span>
-        <span class="header-hint">US EQUITIES <span> / </span> WEEKLY</span>
-      </div>
+      <nav class="site-navigation" aria-label="Dashboard">
+        <a href="index.html" aria-current="page">Sector Rotation</a>
+        <a href="stocks.html">Stock Intelligence</a>
+      </nav>
     </header>
 
     <main>
       <section class="intro-row">
         <div>
-          <div class="eyebrow">MARKET STRUCTURE <span class="eyebrow-line"></span> SECTOR MONITOR</div>
-          <h1>Where is strength <em>rotating?</em></h1>
-          <p class="intro-sub">Track relative leadership, momentum shifts, and sector rotation through time.</p>
+          <div class="eyebrow">US equities · Weekly</div>
+          <h1>Sector <em>Rotation</em></h1>
+          <p class="intro-sub">Compare relative strength and momentum across sectors and stock watchlists.</p>
         </div>
         <div class="asof-card">
           <div class="asof-label">LATEST OBSERVATION</div>
           <div id="latest-date" class="asof-date">—</div>
           <div id="observation-status" class="asof-foot">Awaiting data</div>
+          <div class="signal-indicator"><span class="signal-dot" aria-hidden="true"></span><span id="data-indicator">Loading data</span></div>
         </div>
       </section>
 
@@ -57,7 +55,7 @@
       <section class="content-grid">
         <div class="visual-card">
           <div class="panel-heading">
-            <div><div class="section-kicker">01 / ROTATION MAP</div><h2>Relative Rotation Graph <span class="title-suffix">RRG-STYLE</span></h2></div>
+            <div><h2>Relative Rotation Graph</h2></div>
           </div>
           <div class="controls-row">
             <label class="control-group">UNIVERSE
@@ -111,7 +109,7 @@
 
         <aside class="side-column">
           <section class="side-card">
-            <div class="section-kicker">02 / FILTERS</div>
+            
             <div class="side-title-row"><h2 id="universe-title">Sector universe</h2><button id="select-all" class="text-button" type="button">Select all</button></div>
             <p class="side-description"><span id="selected-count">11</span> of <span id="universe-total">11</span> symbols visible</p>
             <div class="sector-filters" id="sector-filters" aria-label="Choose sectors"></div>
@@ -119,7 +117,7 @@
             <div class="filter-footer"><button id="select-none" class="text-button" type="button">Clear selection</button><span>Click a symbol to show/hide</span></div>
           </section>
           <section class="side-card movers-card">
-            <div class="section-kicker">03 / SIGNAL WATCH</div>
+            
             <h2>New quadrant moves</h2>
             <div class="moves-list" id="moves-list"><div class="empty-moves">Loading…</div></div>
             <p class="small-note">Crossings are descriptive and not entry/exit signals.</p>
@@ -129,10 +127,10 @@
 
       <section class="ranking-card">
         <div class="panel-heading ranking-heading">
-          <div><div class="section-kicker">04 / STRENGTH MATRIX</div><h2 id="standings-title">Sector standings</h2></div>
-          <div class="rank-caption">CLICK A COLUMN TO SORT · CLICK ROW TO SPOTLIGHT</div>
+          <div><h2 id="standings-title">Sector standings</h2></div>
+          <div class="rank-caption">Select a column to sort or a row to spotlight</div>
         </div>
-        <div class="table-scroll">
+        <div class="table-scroll" tabindex="0" role="region" aria-labelledby="standings-title">
           <table id="standings-table">
             <thead><tr>
               <th><button type="button" data-sort="ticker">SECTOR <span class="sort-hint">↕</span></button></th>
