@@ -212,7 +212,9 @@ test('TradingView groups preserve duplicate membership and keep missing-data sto
  assert.match(watchlist,/aria-label="Stablish"/);
  assert.match(nodes.get('company').textContent,/AAPL · Apple/);
  assert.match(nodes.get('tradingview-link').href,/NASDAQ%3AAAPL/);
- assert.match(watchlist,/aria-label="Other research"/);
+ assert.doesNotMatch(watchlist,/aria-label="Other research"|data-symbol="GOOGL"/);
+ vm.runInContext("el('ticker-search').value='GOOGL';tickerSearch()",ctx);
+ assert.match(nodes.get('company').textContent,/GOOGL · Alphabet/);
 });
 
 test('filing-backed profiles render drivers, risks and thesis for every newly researched ticker',()=>{

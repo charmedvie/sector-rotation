@@ -24,7 +24,7 @@ const screeningProfiles={
  real_estate:['Real estate / REIT',['liquidity','shortterm'],['FFO/AFFO and property NOI','Occupancy','Debt maturities']],
  unclassified:['Unclassified business',[],['Business model and relevant metrics','Operating drivers and risk disclosures']]
 };
-const screeningTickers=new Set(),lookupOnlyTickers=new Set(),profileOf=s=>get(s).metadata?.profile||'unclassified',isScreening=s=>screeningTickers.has(s);
+const screeningTickers=new Set(),profileOf=s=>get(s).metadata?.profile||'unclassified',isScreening=s=>screeningTickers.has(s);
 const restrictedProfile=s=>isScreening(s)&&['financial','bank','insurance','real_estate','unclassified'].includes(profileOf(s));
 const precommercial=s=>s==='OKLO'||isScreening(s)&&profileOf(s)==='precommercial';
 function screeningTabs(s){
@@ -40,7 +40,6 @@ function registerScreeningStocks(){
   const inWatchlist=Object.values(data.watchlists||{}).some(list=>list.includes(s));
   const publishedPeer=!d.screening&&d.quarterly?.length&&meta.currency==='USD'&&d.quote?.currency==='USD';
   if(!approved&&!publishedPeer&&!inWatchlist)continue;
-  if(!approved&&!inWatchlist)lookupOnlyTickers.add(s);
   const profile=screeningProfiles[meta.profile]||screeningProfiles.unclassified;
   screeningTickers.add(s);M[s]={name:meta.name||s,industry:meta.industry||profile[0],question:'',peers:[],risks:[],sec:meta.cik||'',kpis:profile[2]};
   const names={liquidity:'Debt and financing exposure',coverage:'Interest service coverage',shortterm:'Short-term obligation coverage',inventory:'Inventory exposure',receivables:'Receivables exposure',shares:'Share dilution',capex:'Capital spending',runway:'Historical cash runway proxy',capital:'Regulatory capital'};
@@ -187,11 +186,8 @@ function controls(){
  window.refreshStockListManager?.();
  const tickerButton=s=>'<button aria-pressed="'+(s===symbol)+'" data-symbol="'+esc(s)+'">'+esc(s)+'</button>';
  const groups=Object.entries(data.watchlists||{});
- const grouped=new Set(groups.flatMap(([,tickers])=>tickers));
- const other=Object.keys(M).filter(s=>!lookupOnlyTickers.has(s)&&!grouped.has(s));
  const row=(name,tickers)=>'<div class="stock-watchlist-group" role="group" aria-label="'+esc(name)+'"><span>'+esc(name)+'</span><div>'+tickers.filter(s=>Object.hasOwn(M,s)&&!window.stockListHidden?.(name,s)).map(tickerButton).join('')+'</div></div>';
- el('watchlist').innerHTML=groups.length?groups.map(([name,tickers])=>row(name,tickers)).join('')+
-  (other.length?row('Other research',other):''):other.map(tickerButton).join('');
+ el('watchlist').innerHTML=groups.map(([name,tickers])=>row(name,tickers)).join('');
  el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=screeningTabs(symbol).map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}
 function select(s){if(!Object.prototype.hasOwnProperty.call(M,s))return;symbol=s;tab='Overview';location.hash=s;render();}
 function spark(values,color='#8caee1'){
