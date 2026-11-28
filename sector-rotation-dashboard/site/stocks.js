@@ -192,11 +192,19 @@ function table(headers,rows){return '<div class="table-scroll"><table><thead><tr
 function box(title,body){return '<div class="stock-item"><h3>'+esc(title)+'</h3>'+body+'</div>';}
 function list(arr){return '<ul>'+arr.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';}
 function chart(id,traces,ytitle){if(!window.Plotly)return;Plotly.react(id,traces,{paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#b7c6db'},margin:{l:64,r:18,t:18,b:45},legend:{orientation:'h'},xaxis:{gridcolor:'#28364a'},yaxis:{title:ytitle,gridcolor:'#28364a'},hovermode:'x unified'},{responsive:true,displayModeBar:false});}
+let preferredResearchList='';
 function controls(){
  window.refreshStockListManager?.();
  const tickerButton=s=>'<button aria-pressed="'+(s===(selectedListing?.company===symbol?selectedListing.ticker:symbol))+'" data-symbol="'+esc(s)+'">'+esc(s)+'</button>';
  const groups=Object.entries(data.watchlists||{});
- const row=(name,tickers)=>'<div class="stock-watchlist-group" role="group" aria-label="'+esc(name)+'"><span>'+esc(name)+'</span><div>'+tickers.filter(s=>isKnownListing(s)&&!window.stockListHidden?.(name,s)).map(tickerButton).join('')+'</div></div>';
+ const listing=selectedListing?.company===symbol?selectedListing.ticker:symbol;
+ const current=groups.find(([name])=>name===preferredResearchList)||groups.find(([,tickers])=>tickers.includes(listing))||groups[0];
+ const picker=el('research-list');
+ picker.innerHTML=groups.map(([name])=>'<option>'+esc(name)+'</option>').join('');
+ picker.value=current?.[0]||'';
+ picker.disabled=!current;
+ picker.onchange=()=>{preferredResearchList=picker.value;controls();};
+ const row=(name,tickers)=>'<div class="stock-watchlist-group" role="group"'+(name===current?.[0]?'':' hidden')+' aria-label="'+esc(name)+'"><span>'+esc(name)+'</span><div>'+tickers.filter(s=>isKnownListing(s)&&!window.stockListHidden?.(name,s)).map(tickerButton).join('')+'</div></div>';
  el('watchlist').innerHTML=groups.map(([name,tickers])=>row(name,tickers)).join('');
  el('watchlist').querySelectorAll('button').forEach(b=>b.onclick=()=>select(b.dataset.symbol));el('tabs').innerHTML=screeningTabs(symbol).map(t=>'<button aria-pressed="'+(t===tab)+'">'+esc(t)+'</button>').join('');el('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=b.textContent;render();});}
 function selectListing(s){
