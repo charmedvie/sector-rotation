@@ -415,7 +415,7 @@ function layoutLabels(points,b,width,height) {
     const best=candidates[0];occupied.push(best.rect);
     annotations.push({x:p.x,y:p.y,xref:'x',yref:'y',text:label,showarrow:true,ax:best.cx-pos.x,ay:best.cy-pos.y,
       axref:'pixel',ayref:'pixel',xanchor:'center',yanchor:'middle',arrowhead:0,arrowwidth:.8,arrowcolor:p.color,
-      standoff:7,font:{color:p.color,size:12,family:'Arial, sans-serif'},bgcolor:'rgba(37,27,24,.92)',borderpad:2,captureevents:false,align:'center'});
+      standoff:7,font:{color:p.color,size:12,family:'Arial, sans-serif'},bgcolor:'rgba(20,20,20,.92)',borderpad:2,captureevents:false,align:'center'});
   }
   return annotations;
 }
@@ -475,7 +475,7 @@ function renderChart() {
       marker:{color,size:4.5,opacity:.75},hoverinfo:'skip',showlegend:false,cliponaxis:true,
     },{
       type:'scatter',mode:'markers',x:[mark.x],y:[mark.y],
-      marker:{color,size:off?14:13,symbol:off?'diamond-open':'circle',line:{color:off?color:'#211815',width:2}},
+      marker:{color,size:off?14:13,symbol:off?'diamond-open':'circle',line:{color:off?color:'#0c0c0c',width:2}},
       customdata:[[sector.name,q,dates.at(-1),ticker,state.benchmark==='sector'?sector.sector:state.benchmark,actualX,actualY,off?' · OFF CHART':'']],
       hovertemplate:`<b>${ticker} · %{customdata[0]}</b><br>%{customdata[1]} · vs %{customdata[4]}%{customdata[7]}<br>RS Ratio: %{customdata[5]:.3f}<br>RS Momentum: %{customdata[6]:.3f}<br>%{customdata[2]}<extra></extra>`,
       showlegend:false,cliponaxis:true,
@@ -500,18 +500,18 @@ function renderChart() {
     opacity: 0.83,
   });
   const layout = {
-    paper_bgcolor: '#251b18', plot_bgcolor: '#251b18',
+    paper_bgcolor: '#141414', plot_bgcolor: '#141414',
     margin, showlegend: false, hovermode: 'closest', dragmode: false,
     xaxis: {
-      range: [b.xmin, b.xmax], color: '#d2b6a2', tickfont: { size: 10 },
-      gridcolor: '#543c31', gridwidth: 1, zeroline: false,
-      linecolor: '#755644', mirror: false, title: { text: 'RS RATIO →', font: { color: '#d4bca9', size: 11 }, standoff: 12 },
+      range: [b.xmin, b.xmax], color: '#b9b9b9', tickfont: { size: 10 },
+      gridcolor: '#383838', gridwidth: 1, zeroline: false,
+      linecolor: '#525252', mirror: false, title: { text: 'RS RATIO →', font: { color: '#bdbdbd', size: 11 }, standoff: 12 },
       tickformat: '.1f', fixedrange: true,
     },
     yaxis: {
-      range: [b.ymin, b.ymax], color: '#d2b6a2', tickfont: { size: 10 },
-      gridcolor: '#543c31', gridwidth: 1, zeroline: false,
-      linecolor: '#755644', title: { text: 'RS MOMENTUM →', font: { color: '#d4bca9', size: 11 }, standoff: 12 },
+      range: [b.ymin, b.ymax], color: '#b9b9b9', tickfont: { size: 10 },
+      gridcolor: '#383838', gridwidth: 1, zeroline: false,
+      linecolor: '#525252', title: { text: 'RS MOMENTUM →', font: { color: '#bdbdbd', size: 11 }, standoff: 12 },
       tickformat: '.1f', fixedrange: true,
     },
     shapes: [
@@ -529,9 +529,9 @@ function renderChart() {
       quadrantLabel('Weakening', 0.97, 0.045, 'right', 'bottom', '#c59662'),
       ...labels,
       ...(!state.selected.size ? [{ x: 0.5, y: 0.5, xref: 'paper', yref: 'paper', showarrow: false,
-        text: 'Select one or more available symbols', font: { color: '#c4d3e5', size: 15 } }] : []),
+        text: 'Select one or more available symbols', font: { color: '#dedede', size: 15 } }] : []),
     ],
-    font: { family: 'Arial, sans-serif', color: '#a9bcd3' },
+    font: { family: 'Arial, sans-serif', color: '#c7c7c7' },
   };
   Plotly.react('rrg-chart', traces, layout, {
     responsive: true, displaylogo: false, scrollZoom: false, doubleClick: false, displayModeBar: false,
